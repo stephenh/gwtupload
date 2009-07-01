@@ -1,0 +1,50 @@
+<html>
+<head>
+<title>Example using the JsUpload library</title>
+<body>
+   <script language="javascript" src="jsupload.JsUpload.nocache.js"></script>
+   <script language='javascript'>
+      function loadImage(upl_data) {
+         if (upl_data && upl_data.url) {
+            var image = new jsu.PreloadImage({
+              url: upl_data.url,
+              containerId: "photos", 
+              onLoad: function(img_data) {
+                image.setSize(100, -1);
+              }
+            });
+         }
+      }
+      
+      function jsuOnLoad() {
+        new jsu.Upload({
+          containerId: "uploader1",
+          multiple: true, 
+          auto: true,
+          type: "incubator",
+          onFinish: loadImage
+        });
+
+        new jsu.Upload({
+          containerId: "uploader2",
+          multiple: true, 
+          auto: true,
+          onStart: function(data) {},
+          onFinish: loadImage
+        });
+
+        new jsu.Upload({
+          containerId: "uploader3",
+          onFinish: loadImage,
+          sendMsg: "Upload image",	
+          validExtensions: ".jpg, .gif, .png"
+        });
+        
+      }
+   </script>
+   <div id="uploader1" style="width: 450px; border: 3px groove pink">Upload: auto=true, multiple=true, type=incubator<br><br></div>
+   <div id="uploader2" style="width: 450px; border: 3px groove pink; margin-top: 10px">Upload: auto=true, multiple=true, type=chismes<br><br></div>
+   <div id="uploader3" style="width: 450px; border: 3px groove pink; margin-top: 10px">Uloader: auto=false, multiple=false, dialog=true<br><br></div>
+   <div id="photos" style="width: 450px; border: 3px groove pink; margin-top: 10px"> Photos <br></div>
+ </body>
+</html>

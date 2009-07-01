@@ -1,0 +1,53 @@
+_JSUpload is the exported version of the GWTUpload library._
+
+_The library has been developed using java and exported to javascript using gwt-compiler and [http://code.google.com/p/gwt-exporter/ gwt-exporter] library._
+
+<wiki:toc max_depth="3" />
+
+= Goals =
+
+Usage of the library without the need of knowing anything about gwt and java.
+The generated javascript code is minimized, optimized and obfuscated and works fine in all Gwt supported browsers. 
+
+= Setup instructions =
+
+ # Download last version of the library: jsupload-x.x.x.jar and uncompress it in a folder.
+ # Include either obfuscated or readable version of the javascript library in your html file.  You can use relative paths or full qualified ones because the library has been compiled using cross-site linker. The library takes care loading dynamically the needed images and css.
+ # In the server path you have to install one of the provided server programs to receive the files:
+   # Java: include the servlet provided in the gwtupload-x.x.x.jar in your application and configure your WEB-INF/web.xml file. 
+{{
+     <!-- Servlets -->
+  <servlet>
+    <servlet-name>uploadServlet</servlet-name>
+    <servlet-class>gwtupload.server.UploadServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>uploadServlet</servlet-name>
+    <url-pattern>/upload-servlet</url-pattern>
+  </servlet-mapping>
+}}
+   # CGI: put the provided jsupload.cgi script provided into a script folder of your web server, and set the correct action parameter.    
+ # Define the function jsuOnLoad() wich is called once the library is loaded, and create the widgets using native javascript in your page.
+{{{
+<html>
+<body>
+   <script language="javascript" src="jsupload.JsUpload.nocache.js"></script>
+   <script language='javascript'>
+      function jsuOnLoad() {
+        uploader = new jsu.Upload({
+          action: "/jsupload.cgi"
+          containerId: "uploader",
+          multiple: true, 
+          auto: true,
+          onFinish: function(data) {
+             Window.alert("Uploaded a file: " + data.url);
+          }
+        });
+      }
+   </script>
+   <div id="uploader"></div>
+ </body>
+</html>
+}}}
+
+= Library API =

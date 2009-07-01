@@ -1,0 +1,37 @@
+.GWTUpld {
+  font-family: Verdana, Arial;
+  font-size: 12px;
+}
+
+.upld-status {
+  font-family: arial;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.upld-status .filename {
+  width: 300px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.upld-status .status {
+  width: 200px;
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.upld-status .status-3 {
+  color: green;
+}
+
+.upld-status .status-4 {
+  color: red;
+}
+
+.GWTUpld .changed {
+  color: red;
+  font-weight: bold;  
+  /* It doesn't work in IE */
+  text-decoration: blink;
+}

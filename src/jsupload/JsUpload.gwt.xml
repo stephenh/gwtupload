@@ -1,0 +1,9 @@
+<module>
+
+	<inherits name="gwtupload.GWTUpload" />
+	<inherits name="gwtuploadsample.Sample" />
+	<inherits name="org.timepedia.exporter.Exporter" />
+	<entry-point class="jsupload.client.JsUpload" />
+	<set-property name="export" value="yes" />
+    <stylesheet src="JsUpload.css"/>
+</module>

@@ -1,0 +1,185 @@
+#!/usr/bin/perl -w
+
+##
+## @author: Manolo Carrasco Moñino
+##
+## Perl version of a CGI script for the GWTUpload library.
+##
+
+use CGI;
+use Digest::MD5;
+use strict;
+use warnings;
+
+my $idname  = "CGISESSID";
+my $tmp_dir = "/tmp/uploader";
+my $max_size = 5000000;
+
+# Get the sessionId or create a new one
+# do not use CGI here, because we need to handle STDIN
+my $sid = new Digest::MD5()->add( $$, time(), rand(time) )->hexdigest();
+if ( $ENV{'HTTP_COOKIE'} =~ /$idname="*([^";]+)/ ) {
+    $sid = $1;
+}
+my $user_dir = "$tmp_dir/$sid/";
+
+# Controller:
+#   POST is used for uploading. 
+#   GET is used to get the upload progress or get the content of the uploaded item.
+my $method = $ENV{'REQUEST_METHOD'} || 'POST';
+my $cgi;
+if ( $method =~ /POST/i ) {
+    doPost();
+} else {
+    $cgi = new CGI;
+    if ( $cgi->param('show') ) {
+        writeItemContent( $cgi->param('show') );
+    } else {
+        writeResponse( getProgress() );
+    }
+}
+exit;
+
+## This method receives the form content and stores each item in a temporary folder.
+## This folder is uniq for each user (session)
+sub doPost {
+    $| = 1;
+
+    ## Validate request size
+    my $len = $ENV{'CONTENT_LENGTH'} || 3000;
+    if ( $len && $len > $max_size ) {
+        writeResponse(
+                    "<error>The maximum upload size has been exceeded</error>");
+    }
+
+    ## Validate permissions
+    if ( !-d "$user_dir" ) {
+        mkdir( "$user_dir", 0777 )
+          || writeResponse("<error>Unable to create: $user_dir $!</error>");
+        chmod( 0777, "$user_dir" );
+    }
+
+    ## Receive the request, and update progress data
+    my $data_file = "$user_dir/data.$$";
+    open( P, ">$data_file" )
+      || writeResponse(
+                   "<error>Can't open postfile: $user_dir/postdata $!</error>");
+    my ( $n, $done, $line ) = ( 0, 0, "" );
+    do {
+        $done += $n;
+        updateProgress( $done, $len );
+        print P $line;
+        select( undef, undef, undef, 0.3 );
+    } while ( ( $n = read( STDIN, $line, 4096 ) ) > 0 );
+    close(P);
+
+    ## Process received data
+    my $msg = "OK\n";
+    open( STDIN, "$data_file" );
+    $cgi = new CGI();
+    foreach my $key ( $cgi->param() ) {
+        my $value = $cgi->param($key);
+        if ( defined($value) ) {
+            my $fh = $cgi->upload($key);
+            if ( defined($fh) ) {
+                my $type = $cgi->uploadInfo($value)->{'Content-Type'}
+                  || 'unknown';
+                my $name = saveFile( $key, $value, $type, $fh );
+                my $size = -s $name;
+                $msg .= "<file><name>$key</name><value>$value</value>"
+                  . "<size>$size</size><type>$type</type></file>\n";
+            } else {
+                $msg .= "<parameter><name>$key</name>"
+                  . "<value>$value</value></parameter>\n";
+            }
+        }
+    }
+    unlink($data_file);
+    writeResponse($msg);
+}
+
+## Save each received file in the user folder.
+## It generates two files, one has the content of the uploaded data i
+## and one with the item information (original name and content-type)
+sub saveFile {
+    my ( $key, $name, $type, $fd ) = @_;
+    $name =~ s/[^\w]/_/g;
+    my $bin_file = $user_dir . $key . ".bin";
+    open( BIN, ">$bin_file" ) || return;
+    while (<$fd>) {
+        print BIN $_;
+    }
+    close(BIN);
+    my $info_file = $user_dir . $key . ".info";
+    open( INFO, ">$info_file" ) || return;
+    print INFO "$name\n$type\n";
+    close(INFO);
+    return $bin_file;
+}
+
+## Write the server response for each request.
+## This response is a simple xml response easy to handle in the browser side.
+sub writeResponse {
+    my $msg = shift;
+    close(STDIN);
+    if ( $cgi->cookie($idname) ) {
+        print $cgi->header( -type => 'text/plain' );
+    } else {
+        print $cgi->header( -cookie => $cgi->cookie( $idname => $sid ),
+                            -type   => 'text/plain' );
+    }
+    print "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+      . "<response>\n$msg</response>";
+    exit;
+}
+
+## write the upload progress in the status file
+sub updateProgress {
+    my ( $done, $total ) = @_;
+    open( F, ">$user_dir/progress" );
+    print F "$done/$total";
+    close(F);
+}
+
+## read the upload progress from the status file
+sub getProgress {
+    my ( $done, $total, $percent ) = ( 0, 0, 0 );
+    if ( open( F, "$user_dir/progress" ) ) {
+        my $l = <F>;
+        if ( $l =~ /^(\d+)\/(\d+)/ ) {
+            ( $done, $total ) = ( $1, $2 );
+            $percent = $total != 0 ? $done * 100 / $total : 0;
+        }
+        close(F);
+    }
+    my $ret = "<percent>$percent</percent>"
+      . "<currentBytes>$done</currentBytes>"
+      . "<totalBytes>$total</totalBytes>";
+    $ret .= "<finished>ok</finished>" if ( $done >= $total );
+    return $ret;
+}
+
+## Generates the response when the client ask for an item content
+## if the item is a form item it returns a xml response with the item value
+## if it is an uploaded file it returns the content of this file, setting the content-type to the original value.
+sub writeItemContent {
+    my $item = shift;
+    if ( open( F, "$user_dir/$item.info" ) ) {
+        my $value = <F>;
+        $value =~ s/[\r\n]+$//g;
+        my $type = <F>;
+        $type =~ s/[\r\n]+$//g;
+        close(F);
+        if ( open( F, "$user_dir/$item.bin" ) ) {
+            print "Content-type: $type\n\n";
+            while (<F>) {
+                print $_;
+            }
+            close(F);
+        } else {
+            writeResponse("<item name='$item'>$value</item>");
+        }
+    } else {
+        writeResponse("<error>unable to find file</error>");
+    }
+}
