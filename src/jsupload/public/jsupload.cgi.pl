@@ -1,9 +1,28 @@
 #!/usr/bin/perl -w
+##
+## Copyright 2002 Manolo Carrasco Moñino. (manuel_carrasco at users.sourceforge.net)
+## http://code.google.com/p/gwtupload
+##
+## Licensed under the Apache License, Version 2.0 (the "License"); you may not
+## use this file except in compliance with the License. You may obtain a copy of
+## the License at
+##
+## http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+## License for the specific language governing permissions and limitations under
+## the License.
+##
 
 ##
-## @author: Manolo Carrasco Moñino
+## Server script written in perl for the GWTUpload library.
 ##
-## Perl version of a CGI script for the GWTUpload library.
+## It receives a POST web request, updates a status file with the progress, and stores
+## all received form elements in a temporary folder for the user session.
+##
+## When it receives GET requests, returns a xml response with the progess information.
 ##
 
 use CGI;
@@ -11,12 +30,12 @@ use Digest::MD5;
 use strict;
 use warnings;
 
-my $idname  = "CGISESSID";
-my $tmp_dir = "/tmp/uploader";
+my $idname   = "CGISESSID";
+my $tmp_dir  = "/tmp/uploader";
 my $max_size = 5000000;
 
 # Get the sessionId or create a new one
-# do not use CGI here, because we need to handle STDIN
+# do not use CGI here, because we need to handle STDIN in order to update the progress status.
 my $sid = new Digest::MD5()->add( $$, time(), rand(time) )->hexdigest();
 if ( $ENV{'HTTP_COOKIE'} =~ /$idname="*([^";]+)/ ) {
     $sid = $1;
@@ -24,7 +43,7 @@ if ( $ENV{'HTTP_COOKIE'} =~ /$idname="*([^";]+)/ ) {
 my $user_dir = "$tmp_dir/$sid/";
 
 # Controller:
-#   POST is used for uploading. 
+#   POST is used for uploading.
 #   GET is used to get the upload progress or get the content of the uploaded item.
 my $method = $ENV{'REQUEST_METHOD'} || 'POST';
 my $cgi;
@@ -41,15 +60,13 @@ if ( $method =~ /POST/i ) {
 exit;
 
 ## This method receives the form content and stores each item in a temporary folder.
-## This folder is uniq for each user (session)
 sub doPost {
     $| = 1;
 
     ## Validate request size
     my $len = $ENV{'CONTENT_LENGTH'} || 3000;
     if ( $len && $len > $max_size ) {
-        writeResponse(
-                    "<error>The maximum upload size has been exceeded</error>");
+        writeResponse("<error>The maximum upload size has been exceeded</error>");
     }
 
     ## Validate permissions
@@ -62,8 +79,7 @@ sub doPost {
     ## Receive the request, and update progress data
     my $data_file = "$user_dir/data.$$";
     open( P, ">$data_file" )
-      || writeResponse(
-                   "<error>Can't open postfile: $user_dir/postdata $!</error>");
+      || writeResponse("<error>Can't open postfile: $user_dir/postdata $!</error>");
     my ( $n, $done, $line ) = ( 0, 0, "" );
     do {
         $done += $n;
@@ -152,7 +168,8 @@ sub getProgress {
         }
         close(F);
     }
-    my $ret = "<percent>$percent</percent>"
+    my $ret =
+        "<percent>$percent</percent>"
       . "<currentBytes>$done</currentBytes>"
       . "<totalBytes>$total</totalBytes>";
     $ret .= "<finished>ok</finished>" if ( $done >= $total );

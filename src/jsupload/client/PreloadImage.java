@@ -1,7 +1,7 @@
 package jsupload.client;
 
 import gwtupload.client.PreloadedImage;
-import gwtupload.client.hasJsData;
+import gwtupload.client.HasJsData;
 
 import org.timepedia.exporter.client.Export;
 import org.timepedia.exporter.client.ExportPackage;
@@ -15,15 +15,15 @@ import com.google.gwt.user.client.Element;
 /**
  * @author Manolo Carrasco Moñino
  * 
- * This class preloads an image in the browser from the server and in the case of
- * success executes an user defined function.
+ * This class preloads an image in the browser, and in the case of
+ * success executes a user defined function.
  * 
  * It stores the original size of the image.
  *
  */
 @Export
 @ExportPackage("jsu")
-public class PreloadImage extends PreloadedImage implements Exportable, hasJsData {
+public class PreloadImage extends PreloadedImage implements Exportable, HasJsData {
 
   private JsProperties jsProp;
 
@@ -83,8 +83,8 @@ public class PreloadImage extends PreloadedImage implements Exportable, hasJsDat
     return super.getRealHeight();
   }
   
-  /* (non-Javadoc)
-   * @see com.google.gwt.user.client.ui.UIObject#addStyleName(java.lang.String)
+  /**
+   * Adds a classname to the image
    */
   @Override
   public void addStyleName(String style) {

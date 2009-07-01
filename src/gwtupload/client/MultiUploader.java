@@ -96,33 +96,27 @@ public class MultiUploader extends Composite implements IUploader {
 		current.avoidRepeatFiles(avoidRepeat);
 	}
 
-	@Override
 	public JavaScriptObject getData() {
 		assert false: "Dont use this instance method, use the current instance instead";
 		return null;
 	}
 
-	@Override
 	public String fileUrl() {
 		return current.fileUrl();
 	}
 
-	@Override
 	public Widget getUploaderWidget() {
 		return this;
 	}
 
-	@Override
 	public void add(Widget w) {
 		current.add(w);
 	}
 
-	@Override
 	public void submit() {
 		current.submit();
 	}
 
-	@Override
   public Uploader getCurrentUploader() {
 	  return current;
   }

@@ -19,7 +19,7 @@ import com.google.gwt.user.client.ui.RootPanel;
  * <p> An Image widget that preloads the image and in the case of success executes a user acction. 
  * It stores the original width and height ofo the image that can be used for calculations. </p>
  */
-public class PreloadedImage extends Image implements hasJsData {
+public class PreloadedImage extends Image implements HasJsData {
   private HandlerRegistration onloadReg = null;
   private ValueChangeHandler<PreloadedImage> handler = null;
   private int realWidth = 0, realHeight = 0;

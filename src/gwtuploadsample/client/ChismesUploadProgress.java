@@ -1,6 +1,6 @@
 package gwtuploadsample.client;
 
-import gwtupload.client.BaseProgress;
+import gwtupload.client.BasicProgress;
 import gwtupload.client.IUploadStatus;
 
 import com.google.code.p.gwtchismes.client.GWTCAlert;
@@ -12,7 +12,7 @@ import com.google.gwt.user.client.ui.Widget;
  *
  * Upload progress using Chismes's progress-bar widget 
  */
-public class ChismesUploadProgress extends BaseProgress {
+public class ChismesUploadProgress extends BasicProgress {
 
   public int prgBarElements = 40;
   public int prgBarOption = GWTCProgress.SHOW_NUMBERS | GWTCProgress.SHOW_TEXT;

@@ -1,0 +1,202 @@
+<?xml version="1.0"?>
+
+<project name="GWTUpload" basedir="." default="all">
+	<property name="project" value="gwtupload" />
+	<property name="version" value="0.2.0" />
+	
+	<target name="all" depends="clean, prepare, compile-class, compile-gwt, deploy" />
+	
+	<property environment="env" />
+	<property name="deploy.dir" value="${env.TOMCAT_HOME}/webapps" />
+	
+	<property name="gwt.dir" value="${env.GWT_HOME}" />
+	<property name="gwt.user.jar" value="${gwt.dir}/gwt-user.jar" />
+	<property name="gwt.dev.jar" value="${gwt.dir}/gwt-dev-linux.jar" />
+	<property name="gwt.servlet.jar" value="${gwt.dir}/gwt-servlet.jar" />
+	
+	<property name="src.dir" value="src" />
+	<property name="tmp.dir" value="${project}-${version}" />
+	<property name="class.dir" value="${tmp.dir}/classes" />
+	<property name="doc.dir" value="${tmp.dir}/doc" />
+	<property name="www.dir" value="${tmp.dir}/www" />
+
+	<property name="package.dir" value="gwtupload" />
+	<property name="package.name" value="gwtupload" />
+	<property name="sample.dir" value="gwtuploadsample" />
+	<property name="sample.module" value="gwtuploadsample.ChismesUploadSample" />
+	
+	
+	<target name="prepare">
+		<tstamp />
+		<mkdir dir="build" />
+		<mkdir dir="build/WEB-INF/lib" />
+		<copy file="${gwt.servlet.jar}" todir="build/WEB-INF/lib" />
+		<copy file="lib/gwtchismes-0.9.2.jar" todir="build/WEB-INF/lib" />
+		<copy file="lib/commons-fileupload-1.2.jar" todir="build/WEB-INF/lib" />
+		<copy file="lib/commons-io-1.3.1.jar" todir="build/WEB-INF/lib" />
+		<copy file="lib/gwt-dnd-2.0.7.jar" todir="build/WEB-INF/lib" />
+		<copy file="lib/log4j.jar" todir="build/WEB-INF/lib" />
+		<mkdir dir="build/WEB-INF/classes" />
+		<mkdir dir="build/WEB-INF/META-INF" />
+		<copy todir="build/WEB-INF/META-INF">
+			<fileset dir="web/WEB-INF/META-INF" />
+		</copy>
+		<copy todir="build/" file="web/index.html" />
+		<delete file="build/WEB-INF/web.xml" />
+	</target>
+	<path id="compile.lib.classpath">
+		<pathelement location="${gwt.user.jar}" />
+		<pathelement location="war/WEB-INF/lib/commons-fileupload-1.2.jar"/>
+		<pathelement location="war/WEB-INF/lib/commons-io-1.3.1.jar"/>
+		<pathelement location="war/WEB-INF/lib/gwt-dnd-2.0.7.jar"/>
+		<pathelement location="war/WEB-INF/lib/log4j.jar"/>
+		<pathelement location="war/WEB-INF/lib/gwtchismes-0.9.2.jar"/>
+	</path>
+	<path id="compile.sample.classpath">
+		<pathelement location="${src.dir}" />
+		<pathelement location="${gwt.user.jar}" />
+		<pathelement location="${gwt.servlet.jar}" />
+		<pathelement location="${gwt.dev.jar}" />
+		<pathelement location="war/WEB-INF/lib/gwtchismes-0.9.2.jar"/>
+	</path>
+	
+	<path id="compile.classpath">
+		<fileset dir="build/WEB-INF/lib">
+			<include name="*.jar" />
+		</fileset>
+		<pathelement location="src" />
+		<pathelement location="bin" />
+		<pathelement location="${gwt.user.jar}" />
+		<pathelement location="${gwt.dev.jar}" />
+	</path>
+	<target name="compile-class" depends="prepare">
+		<javac srcdir="src" destdir="build/WEB-INF/classes" deprecation="on" debug="on" fork="true" memoryMaximumSize="1024m" encoding="ISO-8859-1">
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+	<target name="compile-gwt">
+		<echo message="Compiling GWT client classes to javascript" />
+		<java classname="com.google.gwt.dev.GWTCompiler" fork="yes" failonerror="true" classpathref="compile.classpath">
+			<arg value="-style" />
+			<arg value="OBFUSCATED" />
+			<arg value="-out" />
+			<arg file="build" />
+			<arg value="${sample.module}" />
+		</java>
+	</target>
+	<target name="build" depends="prepare,compile-class,compile-gwt">
+	</target>
+	<target name="compile">
+		<echo message="Usar: ant compile-class|compile-gwt|build" />
+	</target>
+
+	<target name="jar" description="Generates the jar distribution file">
+		<delete dir="${project}-${version}" />
+		<delete file="${project}-${version}.jar" />
+		<mkdir dir="${class.dir}" />
+		<javac srcdir="${src.dir}" excludes="${sample.dir}/**" destdir="${class.dir}" 
+		       deprecation="off" debug="on" fork="true" encoding="UTF-8">
+			<classpath refid="compile.lib.classpath" />
+		</javac>
+		<copy todir="${class.dir}">
+			<fileset dir="${src.dir}" excludes="${sample.dir}/**" />
+		</copy>
+		<copy todir="${class.dir}" file="LICENSE" />
+		<jar jarfile="${project}-${version}.jar" basedir="${class.dir}" />
+	</target>
+
+	<target name="javadoc" description="Generates de Java documentation files for the project">
+		<delete dir="${doc.dir}" />
+
+		<javadoc sourcepath="${src.dir}" packagenames="${package.name}.*" 
+			excludepackagenames="${sample.module}.*" destdir="${doc.dir}" 
+			encoding="UTF-8" charset="UTF-8" author="true" version="true" 
+                        windowtitle="${project}"
+			>
+			<!-- use="false" nohelp="true" nonavbar="true" nodeprecatedlist="true" -->
+			<classpath refid="compile.lib.classpath" />
+		</javadoc>
+	</target>
+
+	<target name="sample" description="Generates the static javascript files needed for deploy the provided example">
+		<echo message="Compiling sample code from java to javascript" />
+		<java classname="com.google.gwt.dev.GWTCompiler" fork="yes" failonerror="true" 
+		      classpathref="compile.sample.classpath">
+			<sysproperty key="ENCODING" value="UTF-8"/>
+			<arg value="-style"/>
+			<arg value="PRETTY"/>
+			<arg value="-out" />
+			<arg file="${www.dir}" />
+			<arg value="${sample.module}" />
+		</java>
+	</target>
+
+	<target name="zip" depends=" jar, javadoc, sample" 
+		description="Generates the distibution file that includes the source, license, docs, and jar">
+		<delete file="${project}-${version}.zip" />
+		<copy todir="${project}-${version}/${src.dir}">
+			<fileset dir="${src.dir}" />
+		</copy>
+		<copy todir="${project}-${version}/" file="${project}-${version}.jar" />
+		<copy todir="${project}-${version}/" file="LICENSE" />
+		<copy todir="${project}-${version}/" file="build.xml" />
+		<copy todir="${project}-${version}/" file=".classpath" />
+		<copy todir="${project}-${version}/" file=".project" />
+		<echo message="Creating distribution file: ${project}-${version}.zip" />
+		<exec dir="." executable="zip">
+			<arg line="-q -r ${project}-${version}.zip ${project}-${version}" />
+		</exec>
+		<delete dir="${project}-${version}" />
+	</target>	
+	
+	<target name="war" depends="build" description="Create war file">
+		<copy todir="build/WEB-INF/classes" file="../JDB2/resources/hibernate_mirai.cfg.xml" />
+		<mkdir dir="dist" />
+		<war basedir="build" warfile="dist/${project}.war" webxml="web/WEB-INF/web.xml">
+			<exclude name="dist/${project}.war" />
+		</war>
+	</target>
+	
+	<target name="deploy" depends="war">
+		<delete file="${deploy.dir}/${project}.war" />
+		<delete dir="${deploy.dir}/${project}.war" />
+		<copy file="dist/${project}.war" todir="${deploy.dir}" />
+	</target>
+	
+	<target name="clean" description="Prepare for clean build">
+		<delete dir="${class.dir}" />
+		<delete dir="${doc.dir}" />
+		<delete dir="${project}-${version}" />
+		<delete file="${project}-${version}.jar" />
+		<delete file="${project}-${version}.zip" />
+		<delete dir ="build"/>
+		<delete dir="dist" />
+		<delete dir =".gwt-cache"/>
+		<delete dir ="tomcat"/>
+		<delete dir ="www"/>
+	</target>
+        <target name="install">
+            <exec dir="." executable="mvn">
+               <arg line="deploy:deploy-file" />
+               <arg line="-DgroupId=com.miraiespana 
+                          -DartifactId=GWTUpload
+                          -DrepositoryId=gwtupload
+                          -Durl=http://draco:8080/archiva/repository/internal/
+                          -Dfile=${project}-${version}.jar
+                          -Dversion=${version} -Dpackaging=jar 
+                          -DgeneratePom=true"
+                          />
+            </exec>
+<!--
+                          -DpomFile=mpom.xml"
+            mvn deploy:deploy-file -DrepositoryId=organisation-internal
+            -Durl=http://localhost:8080/artifactory/private-internal-repository
+            -DgroupId=test -DartifactId=test -Dversion=1.1 -Dpackaging=jar
+            -Dfile=target/test-1.1.jar
+            -->
+        </target>
+
+	<target name="undeploy">
+		<delete dir="${jboss-deploy.dir}/XMAS.war" />
+	</target>
+</project>

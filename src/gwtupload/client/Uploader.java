@@ -86,8 +86,14 @@ import com.google.gwt.xml.client.XMLParser;
  *         <li>.GWTUpld .upld-button { style for submit button if present }</li>
  *         </ul>
  */
-public class Uploader extends Composite implements IUpdateable, IUploader, hasJsData {
+public class Uploader extends Composite implements IUpdateable, IUploader, HasJsData {
 
+  private static final String MSG_SERVER_UNAVAILABLE = "Unable to contact with the application server: ";
+  private static final String MSG_SEND_TIMEOUT = "Timeout sending attachment:\nperhups your browser does not send files correctly\nor the server raised an error.\nPlease try again.";
+  private static final String MSG_INVALID_EXTENSION = "Invalid file.\nOnly these types are allowed:\n";
+  private static final String MSG_FILE_DONE = "This file was already uploaded";
+  private static final String MSG_ACTIVE_UPLOAD = "There is already an active upload, try later.";
+  
   static String STYLE_MAIN = "GWTUpld";
   static String STYLE_INPUT = "upld-input";
   static String STYLE_STATUS = "upld-status";
@@ -100,7 +106,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
   static HashSet<String> fileDone = new HashSet<String>();
   private String fileName = "";
 
-  private boolean avoidRepeat = false;
+  static boolean avoidRepeat = false;
   private String[] validExtensions = null;
   private String validExtensionsMsg = "";
 
@@ -124,7 +130,9 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
   private ValueChangeHandler<IUploader> onChange;
   private ValueChangeHandler<IUploader> onStart;
   private ValueChangeHandler<IUploader> onFinish;
-
+  public FileUpload fileInput;
+  
+  public String servletPath = servletBase + "upload-servlet";
   public void setOnChangeHandler(ValueChangeHandler<IUploader> handler) {
     onChange = handler;
   }
@@ -166,8 +174,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
       onChange.onValueChange(new ValueChangeEvent<IUploader>(this) {});
   }
 
-  public FileUpload fileInput;
-  public String servletPath = servletBase + "upload-servlet";
+
  
   public final FormPanel uploadForm = new FormPanel() {
     FlowPanel formElements = new FlowPanel();
@@ -265,7 +272,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
   }
   
   public String getFilename() {
-    return fileInput.getName();
+    return successful ? fileInput.getName() : "";
   }
 
   boolean waiting = false;
@@ -277,7 +284,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
     try {
       getRequestBuilder().sendRequest("create_session", new RequestCallback() {
         public void onError(Request request, Throwable exception) {
-          statusWidget.setError("Unable to contact with the application server: " + servletPath);
+          statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath);
         }
 
         public void onResponseReceived(Request request, Response response) {
@@ -325,7 +332,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
           statusWidget.setProgress(transferredKB, totalKB);
         } else if ((numOfTries * prgBarInterval) > maxTimeWithoutResponse) {
           successful = false;
-          cancelUpload("Timeout sending attachment:\n" + " perhups your browser does not send files correctly\n" + " or the server raised an error.\nPlease try again.");
+          cancelUpload(MSG_SEND_TIMEOUT);
         } else {
           numOfTries++;
           System.out.println("incorrect response: " + fileName + " " + response.getText());
@@ -369,7 +376,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
     public void onSubmit(SubmitEvent event) {
       
       if (!autoSubmit && fileQueue.size() > 0) {
-        statusWidget.setError("There is already an active upload, try later.");
+        statusWidget.setError(MSG_ACTIVE_UPLOAD);
         event.cancel();
         return;
       }
@@ -380,8 +387,8 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
       }
 
       if (fileDone.contains(fileName)) {
-        event.cancel();
         successful = true;
+        event.cancel();
         uploadFinished();
         return;
       }
@@ -411,7 +418,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
           }
         }).schedule(200);
       } else {
-//        onStartUpload();
         statusWidget.setVisible(true);
       }
       repeater.start();
@@ -451,7 +457,12 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
     public void run() {
       if (isTheFirstInQueue()) {
         this.cancel();
-        statusWidget.setVisible(false);
+        
+        // Most browsers don't submit files if fileInput is hidden or has a 0 size, 
+        // so before submiting it is necessary to show it.
+        resizeInput(1);
+        fileInput.setHeight("1px");
+        fileInput.setWidth("2px");
         fileInput.setVisible(true);
         uploadForm.submit();
       }
@@ -470,8 +481,18 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
     repeater.finish();
 
     if (successful) {
-      if (avoidRepeat)
-        fileDone.add(fileName);
+      if (avoidRepeat) {
+        if (fileDone.contains(fileName)) {
+          if (autoSubmit) {
+            statusWidget.setVisible(false);
+          } else {
+            successful = false;
+            statusWidget.setError(MSG_FILE_DONE);
+          }
+        } else {
+          fileDone.add(fileName);
+        }
+      }
       statusWidget.setStatus(IUploadStatus.FINISHED);
     } else {
       statusWidget.setStatus(IUploadStatus.ERROR);
@@ -518,7 +539,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
         valid = true;
     }
     if (!valid)
-      statusWidget.setError("Invalid file.\nOnly these types are allowed:\n" + validExtensionsMsg);
+      statusWidget.setError(MSG_INVALID_EXTENSION + validExtensionsMsg);
 
     return valid;
   }
@@ -529,7 +550,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
    * @param avoidRepeat
    */
   public void avoidRepeatFiles(boolean avoidRepeat) {
-    this.avoidRepeat = avoidRepeat;
+    Uploader.avoidRepeat = avoidRepeat;
   }
 
   /**
@@ -579,7 +600,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, hasJs
 		return this;
 	}
 
-	@Override
   public Uploader getCurrentUploader() {
 	  return this;
   }

@@ -5,10 +5,8 @@ use strict;
 
 
 ###
-###  This 'ugly' perl script creates the wiki page for JsChismes
+###  This 'ugly' perl script creates the wiki page for JsUpload
 ###  It inspects the java classes looking for comments and put them in the wiki page.
-###
-###
 ###
 
 
@@ -20,12 +18,13 @@ my @classes = ('Upload', 'PreloadImage');
 my $constants = 'Const';
 # Html file with javascript sample code
 my $htmlsample = "src/jsupload/public/JsUpload.html";
+# Location of the sample aplication
+my $sample_location = "no_link_at_the_moment";
 # Wiki template with library description
 my $wikitpl = "src/jsupload/public/JsUpload.wiki.txt";
 
 
 my %const;
-
 
 ######## MAIN
 %const = processConst($constants);
@@ -287,7 +286,7 @@ sub docsample {
       $on = 1 if (/<script / && !/<\/script>/);
    }
    close(F);
-   $ret = "= Sample Code =\nYou can view this example  [http://gwtchismes.googlecode.com/svn/trunk/website/jslib/JsChismes.html here]\n{{{\n$ret\n}}}\n";
+   $ret = "= Sample Code =\nYou can view this example  [$sample_location here]\n{{{\n$ret\n}}}\n";
    return $ret;
 }
 exit;

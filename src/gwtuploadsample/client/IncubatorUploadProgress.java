@@ -1,6 +1,6 @@
 package gwtuploadsample.client;
 
-import gwtupload.client.BaseProgress;
+import gwtupload.client.BasicProgress;
 import gwtupload.client.IUploadStatus;
 
 import com.google.gwt.widgetideas.client.ProgressBar;
@@ -11,7 +11,7 @@ import com.google.gwt.widgetideas.client.ProgressBar.TextFormatter;
  *
  * Upload progress using Incubator progress-bar widget 
  */
-public class IncubatorUploadProgress extends BaseProgress {
+public class IncubatorUploadProgress extends BasicProgress {
 
 	ProgressBar prg = new ProgressBar();
 	TextFormatter formater = new TextFormatter() {

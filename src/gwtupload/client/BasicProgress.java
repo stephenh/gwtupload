@@ -9,42 +9,33 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * @author Manolo Carrasco Moñino
  * 
- *         <p>
- *         A Simple widget implementing IUploadStatus interface.
- *         </p>
+ * <p>
+ * An extensible widget implementing the IUploadStatus interface.
+ * It has a very simple progress label.
+ *</p>
  * 
  */
 public class BasicProgress implements IUploadStatus {
 	int status = 0;
 	int percent = 0;
 
-	Panel panel = new HorizontalPanel();
-	Label fileNameLabel = new Label();
-	Label statusLabel = new Label();
+	protected Panel panel = new HorizontalPanel();
+	protected Label fileNameLabel = new Label();
+	Widget prg = null;
+	
+	protected Label statusLabel = new Label();
+	
 	{
 		panel.add(fileNameLabel);
 		panel.add(statusLabel);
 		fileNameLabel.setStyleName("filename");
 		statusLabel.setStyleName("status");
 	}
-
-	private void display() {
-		String st = "";
-		switch (status) {
-		case QUEUED:
-			st = " Waiting...";
-			break;
-		case INPROGRESS:
-			st = " Sending (" + percent + "%)";
-			break;
-		case FINISHED:
-			st = " OK";
-			break;
-		case ERROR:
-			st = " ERROR";
-			break;
-		}
-		statusLabel.setText(st);
+	
+	protected void setProgressWidget(Widget progress) {
+		prg = progress;
+		panel.add(prg);
+		prg.setVisible(false);
 	}
 
 	/*
@@ -63,8 +54,12 @@ public class BasicProgress implements IUploadStatus {
 	 */
 	public void setProgress(int done, int total) {
 		int percent = total > 0 ? done * 100 / total : 0;
-		this.percent = percent;
-		display();
+		setPercent(percent);
+	}
+	
+	public void setPercent(int percent) {
+		this.percent = percent;	
+		setStatus(status);
 	}
 
 	/*
@@ -83,21 +78,40 @@ public class BasicProgress implements IUploadStatus {
 	 */
 	public void setFileName(String name) {
 		fileNameLabel.setText(name);
-		display();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gwtupload.client.IUploadStatus#setStatus(int)
-	 */
-	public void setStatus(int stat) {
+  protected void updateStatusPanel(boolean hasFinished, String message) {
+  	if (prg != null) {
+      prg.setVisible(!hasFinished);
+      fileNameLabel.setVisible(hasFinished);
+      statusLabel.setVisible(hasFinished);
+  	} else if (status == INPROGRESS) {
+			message += "(" + percent + "%)";
+  	}
+    statusLabel.setText(message);
+  }
+
+	
+  public void setStatus(int stat) {
 		assert stat >= 0 && stat <= 4;
-		statusLabel.removeStyleDependentName("" + status);
+    statusLabel.removeStyleDependentName("" + status);
 		status = stat;
-		statusLabel.addStyleDependentName("" + status);
-		display();
-	}
+    statusLabel.addStyleDependentName("" + status);
+    switch (status) {
+      case QUEUED:
+        updateStatusPanel(true, "Queued");
+        break;
+      case INPROGRESS:
+        updateStatusPanel(false, "Sending");
+        break;
+      case FINISHED:
+        updateStatusPanel(true, "OK");
+        break;
+      case ERROR:
+        updateStatusPanel(true, "ERROR");
+        break;
+    }
+  }
 
 	/*
 	 * (non-Javadoc)
@@ -109,7 +123,6 @@ public class BasicProgress implements IUploadStatus {
 		Window.alert(msg);
 	}
 
-	@Override
 	public IUploadStatus newInstance() {
 		return new BasicProgress();
 	}

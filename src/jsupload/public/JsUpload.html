@@ -4,19 +4,10 @@
 <body>
    <script language="javascript" src="jsupload.JsUpload.nocache.js"></script>
    <script language='javascript'>
-      function loadImage(upl_data) {
-         if (upl_data && upl_data.url) {
-            var image = new jsu.PreloadImage({
-              url: upl_data.url,
-              containerId: "photos", 
-              onLoad: function(img_data) {
-                image.setSize(100, -1);
-              }
-            });
-         }
-      }
-      
+
+      // Method called once the JsUpload library has been loaded
       function jsuOnLoad() {
+      
         new jsu.Upload({
           containerId: "uploader1",
           multiple: true, 
@@ -29,7 +20,9 @@
           containerId: "uploader2",
           multiple: true, 
           auto: true,
-          onStart: function(data) {},
+          onStart: function(data) {
+            //do nothing
+          },
           onFinish: loadImage
         });
 
@@ -40,6 +33,20 @@
           validExtensions: ".jpg, .gif, .png"
         });
         
+      }
+      
+      // Method that shows a picture using the class PreloadImage
+      // The image is not shown until it has been sucessfully downloaded
+      function loadImage(upl_data) {
+         if (upl_data && upl_data.url) {
+            var image = new jsu.PreloadImage({
+              url: upl_data.url,
+              containerId: "photos", 
+              onLoad: function(img_data) {
+                image.setSize(100, -1);
+              }
+            });
+         }
       }
    </script>
    <div id="uploader1" style="width: 450px; border: 3px groove pink">Upload: auto=true, multiple=true, type=incubator<br><br></div>

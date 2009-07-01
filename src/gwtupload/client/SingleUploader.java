@@ -60,6 +60,7 @@ public class  SingleUploader extends Uploader {
   protected void onFinishUpload() {
     super.onFinishUpload();
     button.setEnabled(true);
+    button.removeStyleName("changed");
   }
 	
 	public void setText(String text) {

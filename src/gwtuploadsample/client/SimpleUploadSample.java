@@ -1,6 +1,6 @@
 package gwtuploadsample.client;
 
-import gwtupload.client.BaseProgress;
+import gwtupload.client.BasicProgress;
 import gwtupload.client.IUploader;
 import gwtupload.client.MultiUploader;
 import gwtupload.client.PreloadedImage;
@@ -25,7 +25,7 @@ public class SimpleUploadSample implements EntryPoint {
 	FlowPanel panelImages = new FlowPanel();
 
 	public void onModuleLoad() {
-		MultiUploader uploader = new MultiUploader(new BaseProgress());
+		MultiUploader uploader = new MultiUploader(new BasicProgress());
 		uploader.setOnFinishHandler(onFinishHandler);
 		RootPanel.get().add(uploader);
 		RootPanel.get().add(panelImages);

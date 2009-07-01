@@ -3,7 +3,7 @@ package gwtupload.client;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public interface IUploader extends hasJsData{
+public interface IUploader extends HasJsData{
 	
 	public Widget getUploaderWidget();
 
