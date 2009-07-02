@@ -36,7 +36,7 @@ public abstract class UploadAction extends UploadServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        String error = super.parseRequest(request, response);
+        String error = super.parsePostRequest(request, response);
 
         String message = null;
         if (error == null) {

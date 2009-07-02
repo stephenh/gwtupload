@@ -66,10 +66,10 @@ public class Upload implements Exportable {
 			uploader.setStatusWidget(new ChismesUploadProgress(!autoSubmit));
 		}
 
-		ValueChangeHandler<IUploader> onStart = JsUtils.getClosureHandler(uploader.getCurrentUploader(), jsProp.getClosure(Const.ON_START));
-		ValueChangeHandler<IUploader> onFinish = JsUtils.getClosureHandler(uploader.getCurrentUploader(), jsProp.getClosure(Const.ON_FINISH));
+		ValueChangeHandler<IUploader> onStart = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_START));
+		ValueChangeHandler<IUploader> onFinish = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_FINISH));
 		uploader.setOnStartHandler(onStart);
-		uploader.setOnFinishHandler((ValueChangeHandler<IUploader>)onFinish);
+		uploader.setOnFinishHandler(onFinish);
 
 		
 		Panel panel = RootPanel.get(jsProp.get(Const.CONT_ID, "NoId"));

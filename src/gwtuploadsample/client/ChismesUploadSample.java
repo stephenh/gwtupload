@@ -57,7 +57,7 @@ public class ChismesUploadSample implements EntryPoint {
 
 		thumbnailsBox.addStyleName("thumbnailsBox");
 		thumbPanel.setStyleName("thumbPanel");
-		thumbnailsBox.setText("Image viewer: thumbnails of the uploaded image files will be shown here");
+		thumbnailsBox.setText("Image thumbs: click on the images to view them in a popup window");
 		thumbnailsBox.add(thumbPanel);
 
 		multiUploadBox.addStyleName("mutiUploadBox");
@@ -83,13 +83,13 @@ public class ChismesUploadSample implements EntryPoint {
 		tabPanel.add(multiUploadBox, "Multiple Uploader");
 
 		// FIXME: GWTCButton here doesn't handle onClick
-		Uploader simpleUploader = new SingleUploader(new ChismesUploadProgress(true));
+		SingleUploader simpleUploader = new SingleUploader(new ChismesUploadProgress(true));
 		simpleUploader.setOnFinishHandler(onFinishListener);
 		simpleUploader.setValidExtensions(validExtensions);
 
 		// FIXME: changing the order of these two lines makes onchange fail.
 		simpleUploadBox.add(simpleUploader);
-		tabPanel.add(simpleUploadBox, "Simple Uploader");
+		tabPanel.add(simpleUploadBox, "Single Uploader");
 
 		tabPanel.selectTab(0);
 	}

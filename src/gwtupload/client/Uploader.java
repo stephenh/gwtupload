@@ -93,6 +93,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
   private static final String MSG_INVALID_EXTENSION = "Invalid file.\nOnly these types are allowed:\n";
   private static final String MSG_FILE_DONE = "This file was already uploaded";
   private static final String MSG_ACTIVE_UPLOAD = "There is already an active upload, try later.";
+  private static final String MSG_SERVER_ERROR = "Invalid server response. Have you configured correctly your application in server-side?";
   
   static String STYLE_MAIN = "GWTUpld";
   static String STYLE_INPUT = "upld-input";
@@ -110,14 +111,15 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
   private String[] validExtensions = null;
   private String validExtensionsMsg = "";
 
-  public static final String servletBase = "/"; //GWT.isScript() ? getSrvltContext() : GWT.getModuleBaseURL();
+  public static final String servletBase = ""; //GWT.isScript() ? getSrvltContext() : GWT.getModuleBaseURL();
+  public String servletPath = servletBase + "servlet.gupld";
+  
   public static int fileInputSize = 40;
 
   private int maxTimeWithoutResponse = 10000;
-  private int autoUploadDelay = 500;
+  private int autoUploadDelay = 600;
   private int prgBarInterval = 1500;
 
-  private String serverXmlResponse = null;
   private RequestBuilder reqBuilder = null;
   private UpdateTimer repeater = new UpdateTimer(this, prgBarInterval);
   private IUploadStatus statusWidget = new BasicProgress();
@@ -132,7 +134,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
   private ValueChangeHandler<IUploader> onFinish;
   public FileUpload fileInput;
   
-  public String servletPath = servletBase + "upload-servlet";
   public void setOnChangeHandler(ValueChangeHandler<IUploader> handler) {
     onChange = handler;
   }
@@ -167,6 +168,8 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
   protected void onFinishUpload() {
     if (onFinish != null)
       onFinish.onValueChange(new ValueChangeEvent<IUploader>(this) {});
+    if (autoSubmit == false)
+      changeInputName();
   }
   
   protected void onChangeInput() {
@@ -237,7 +240,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
       }
     };
 
-    fileInput.setName(calculateRandomName());
+    changeInputName();
     resizeInput(fileInputSize);
     setServletPath(servletPath);
 
@@ -255,6 +258,14 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     super.initWidget(uploaderPanel);
   }
 
+  private void changeInputName() {
+    String fileInputName = ("GWTCU_" + Math.random()).replaceAll("\\.", ""); 
+    fileInput.setName(fileInputName);
+    reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?filename=" + fileInputName);
+    reqBuilder.setTimeoutMillis(prgBarInterval - 100);
+  }
+
+
   public Uploader(boolean automaticUpload) {
     this();
     setAutoSubmit(automaticUpload);
@@ -262,11 +273,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 
   private RequestBuilder getRequestBuilder() {
     if (reqBuilder == null) {
-      reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?filename=" + fileInput.getName()) {
-        {
-          setTimeoutMillis(autoUploadDelay - 100);
-        }
-      };
     }
     return reqBuilder;
   }
@@ -277,6 +283,10 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 
   boolean waiting = false;
   boolean session = false;
+  
+  private String removeHtmlTags(String message) {
+    return message.replaceAll("<[^>]+>","");
+  }
 
   private void validateSessionAndSubmit() {
     if (waiting)
@@ -284,7 +294,8 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     try {
       getRequestBuilder().sendRequest("create_session", new RequestCallback() {
         public void onError(Request request, Throwable exception) {
-          statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath);
+          String message = removeHtmlTags(exception.getMessage());
+          statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
         }
 
         public void onResponseReceived(Request request, Response response) {
@@ -305,13 +316,17 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     getRequestBuilder().sendRequest("get_status", new RequestCallback() {
       public void onError(Request request, Throwable exception) {
         waiting = false;
-        if (false == (exception instanceof RequestTimeoutException)) {
+        if (!(exception instanceof RequestTimeoutException)) {
           repeater.finish();
-          statusWidget.setError(exception.getMessage());
+          String message = removeHtmlTags(exception.getMessage());
+          message += "\n" + exception.getClass().getName();
+          message += "\n" + exception.toString();
+          statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
         }
       }
 
       public void onResponseReceived(Request request, Response response) {
+      	response.getStatusCode();
         waiting = false;
         if (finished == true) { return; }
         Document doc = XMLParser.parse(response.getText());
@@ -427,20 +442,32 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
   SubmitCompleteHandler onSubmitCompleteFormHandler = new SubmitCompleteHandler() {
     // TODO: Check that this method is called in safari
     public void onSubmitComplete(SubmitCompleteEvent event) {
-      serverXmlResponse = event.getResults();
       if (finished == true)
         return;
 
+      System.out.println("onSubmitComplete");
+      String serverXmlResponse = event.getResults();
+      String serverMessage = removeHtmlTags(serverXmlResponse);
+      
+      if (serverMessage.length() > 0)
+         serverMessage = "\nServerMessage: \n" + serverMessage;
+      
       successful = true;
       if (serverXmlResponse != null) {
-        serverXmlResponse = serverXmlResponse.replaceAll("</*pre>", "").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-        String error;
-        try {
-          Document doc = XMLParser.parse(serverXmlResponse);
-          error = getXmlNodeValue(doc, "error");
-        } catch (Exception e) {
-          error = e.getMessage();
-        }
+        String error = null;
+      	if (serverXmlResponse.toLowerCase().matches("not[ _]+found")||
+      	    serverXmlResponse.toLowerCase().matches("server[ _]+error")) {
+      	  error = MSG_SERVER_ERROR + "\nAction: " + servletPath + serverMessage;
+      	} else {
+          serverXmlResponse = serverXmlResponse.replaceAll("</*pre>", "").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+          try {
+            Document doc = XMLParser.parse(serverXmlResponse);
+            error = getXmlNodeValue(doc, "error");
+          } catch (Exception e) {
+            error = MSG_SERVER_ERROR + "\nAction: " + servletPath + "\nException: " + e.getMessage() + serverMessage;
+          }
+      	}
+      			
         if (error != null) {
           successful = false;
           statusWidget.setError(error);
@@ -528,10 +555,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     return name.replaceAll("^.*[/\\\\]", "");
   }
 
-  static private String calculateRandomName() {
-    return ("GWTCU_" + Math.random()).replaceAll("\\.", "");
-  }
-
   private boolean validateExtension(String fileName) {
     boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
     for (int i = 0; valid == false && i < validExtensions.length; i++) {
@@ -596,12 +619,4 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     };
   }-*/;
   
-	public Widget getUploaderWidget() {
-		return this;
-	}
-
-  public Uploader getCurrentUploader() {
-	  return this;
-  }
-
 }

@@ -5,8 +5,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public interface IUploader extends HasJsData{
 	
-	public Widget getUploaderWidget();
-
 	public void setStatusWidget(IUploadStatus status);
 
 	public void setOnChangeHandler(ValueChangeHandler<IUploader> handler);
@@ -27,6 +25,4 @@ public interface IUploader extends HasJsData{
 	
 	public void add(Widget w);
 	
-	public IUploader getCurrentUploader();
-
 }

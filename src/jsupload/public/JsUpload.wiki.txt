@@ -11,27 +11,25 @@ The generated javascript code is minimized, optimized and obfuscated and works f
 
 = Setup instructions =
 
- # Download last version of the library: jsupload-x.x.x.jar and uncompress it in a folder.
+ # Download last version of the library: jsupload-x.x.x.zip and uncompress it in a folder.
  # In the server path you have to install one of the provided server programs to receive the files:
-   Java: include the servlet provided with the gwtupload-x.x.x.jar in your application and configure your WEB-INF/web.xml file.
-   {{{
-    <servlet>
-     <servlet-name>uploadServlet</servlet-name>
-     <servlet-class>gwtupload.server.UploadServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-     <servlet-name>uploadServlet</servlet-name>
-     <url-pattern>/upload-servlet</url-pattern>
-    </servlet-mapping>
-   }}} 
-   CGI: put the provided jsupload.cgi script into a script folder in your web server, and set the action parameter in your javascript code.
+   CGI: put the jsupload.cgi.pl (included in jsupload-x.x.x.zip) into the cgi-bin folder of your web server, and set the action parameter in your javascript code.
    {{{
    uploader = new jsu.Upload({
-      action: "/cgi-bin/jsupload.cgi" 
+      action: "/cgi-bin/jsupload.cgi.pl" 
       [...]
    });
-          
-   }}}    
+   }}}
+   Java: You can use the servlet provided with gwtupload.jar and setup it in WEB-INF/web.xml file.
+   Rails: I'm planning to create a rails plugin soon.
+   Others: You can use the provided cgi script and use the files/information left in the temporary folder. Use an ajax request to inform your application that the upload process has finished. 
+   {{{
+   uploader = new jsu.Upload({
+      onFinish: function(data) {
+        [call to your application]
+      } 
+   });
+   }}}
  # Include either the obfuscated or readable version of the javascript library in your html file.  You can use relative paths or full qualified ones because the library has been compiled using cross-site linker. The library takes care loading dynamically the needed images and css.
  {{{
      <script language="javascript" src="jsupload.JsUpload.nocache.js"></script>

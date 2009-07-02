@@ -44,8 +44,12 @@ public class MultiUploader extends Composite implements IUploader {
 
 	ValueChangeHandler<IUploader> onStartHandler = new ValueChangeHandler<IUploader>() {
 		public void onValueChange(ValueChangeEvent<IUploader> event) {
-			if (current != null)
+			if (current != null) {
+				if (onStart != null) {
+					onStart.onValueChange(new ValueChangeEvent<IUploader>(current) {});
+				}
 				statusWidget = current.getStatusWidget().newInstance();
+			}
 
 			current = new Uploader(true);
 			current.setStatusWidget(statusWidget);
@@ -57,9 +61,6 @@ public class MultiUploader extends Composite implements IUploader {
 			current.avoidRepeatFiles(avoidRepeat);
 			multiUploaderPanel.add(current);
 
-			if (onStart != null) {
-				onStart.onValueChange(new ValueChangeEvent<IUploader>(current) {});
-			}
 		}
 	};
 
@@ -105,10 +106,6 @@ public class MultiUploader extends Composite implements IUploader {
 		return current.fileUrl();
 	}
 
-	public Widget getUploaderWidget() {
-		return this;
-	}
-
 	public void add(Widget w) {
 		current.add(w);
 	}
@@ -116,8 +113,4 @@ public class MultiUploader extends Composite implements IUploader {
 	public void submit() {
 		current.submit();
 	}
-
-  public Uploader getCurrentUploader() {
-	  return current;
-  }
 }

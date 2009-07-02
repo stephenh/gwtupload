@@ -1,35 +1,36 @@
 package gwtupload.server;
 
-import java.io.File;
-
 import org.apache.commons.fileupload.ProgressListener;
 
 /**
  * This is a File Upload Listener that is used by Apache Commons File Upload to
  * monitor the progress of the uploaded file.
  * 
- * @author Manuel Carrasco & Frank T. Rios
+ * @author Manolo Carrasco Moñino
  * 
  */
 public class UploadListener implements ProgressListener {
-  private volatile long bytesRead = 0L, contentLength = 0L, item = 0L;
 
-  // The existence of this file allow us to see the progress bar 
-  // when the upload servlet is called using fast networks.
-  // It is useful in development mode.
-  private File sleepFile = new File("/var/tmp/gwtcu-sleep");
+	private volatile long bytesRead = 0L, contentLength = 0L, item = 0L;
 
-  public void update(long aBytesRead, long aContentLength, int anItem) {
-    try {
-      if (sleepFile.canRead()) {
-        try {
-          Thread.sleep(50);
-        } catch (Exception e) {}
-      }
-    } catch (Exception e) {}
-    bytesRead = aBytesRead;
-    contentLength = aContentLength;
-    item = anItem;
+  /**
+   * Setting this parameter to true allows us to see the progress bar
+   * when we are using a local network. It is useful for developing or demos
+   */
+  protected static boolean slowUploads =  false;
+
+  /**
+   * This method is called each time the server receives a block of bytes.
+   */
+  public void update(long done, long total, int item) {
+    if (slowUploads) {
+      try {
+        Thread.sleep(50);
+      } catch (Exception e) {}
+    }
+    bytesRead = done;
+    contentLength = total;
+    this.item = item;
   }
 
   public long getBytesRead() {

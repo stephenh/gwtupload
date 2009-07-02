@@ -1,11 +1,27 @@
 <html>
 <head>
-<title>Example using the JsUpload library</title>
+	<title>JsUpload Example, Manolo Carrasco, 2009</title>
+	<style type="text/css">
+	body {
+        font-family:verdana,arial,helvetica,clean,sans-serif;
+        font-size: 12px;
+	}
+	h1, .jsubox {
+	    margin-top: 10px;
+	    margin-left: auto;
+	    margin-right: auto;
+        width: 600px; 
+	}
+    .jsubox {
+        border: 3px groove pink;
+        padding: 5px; 
+    }
+	</style>
+</head>
 <body>
    <script language="javascript" src="jsupload.JsUpload.nocache.js"></script>
    <script language='javascript'>
-
-      // Method called once the JsUpload library has been loaded
+      // Method called after the JsUpload library has been loaded
       function jsuOnLoad() {
       
         new jsu.Upload({
@@ -49,9 +65,10 @@
          }
       }
    </script>
-   <div id="uploader1" style="width: 450px; border: 3px groove pink">Upload: auto=true, multiple=true, type=incubator<br><br></div>
-   <div id="uploader2" style="width: 450px; border: 3px groove pink; margin-top: 10px">Upload: auto=true, multiple=true, type=chismes<br><br></div>
-   <div id="uploader3" style="width: 450px; border: 3px groove pink; margin-top: 10px">Uloader: auto=false, multiple=false, dialog=true<br><br></div>
-   <div id="photos" style="width: 450px; border: 3px groove pink; margin-top: 10px"> Photos <br></div>
+   <h1>Examples using the <i>JsUpload</i> library</h1>
+   <div id="uploader1" class="jsubox">jsu.Upload: auto=true, multiple=true, type=incubator<br><br></div>
+   <div id="uploader2" class="jsubox">jsu.Upload: auto=true, multiple=true, type=chismes<br><br></div>
+   <div id="uploader3" class="jsubox">jsu.Upload: auto=false, multiple=false, dialog=true, validExtensions=".jpg, .gif, .png"<br><br></div>
+   <div id="photos" class="jsubox"> <br></div>
  </body>
 </html>

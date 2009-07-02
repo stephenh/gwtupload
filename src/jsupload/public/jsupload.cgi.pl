@@ -16,14 +16,19 @@
 ## the License.
 ##
 
-##
+############################################################################################
 ## Server script written in perl for the GWTUpload library.
+##
+## You have to put this file in a cgi-bin enabled folder of your web server.
+##
+## Thi script requires perl, CGI and Digest::MD5, which are installed by default in
+## most linux/unix distributions.
 ##
 ## It receives a POST web request, updates a status file with the progress, and stores
 ## all received form elements in a temporary folder for the user session.
 ##
 ## When it receives GET requests, returns a xml response with the progess information.
-##
+############################################################################################
 
 use CGI;
 use Digest::MD5;

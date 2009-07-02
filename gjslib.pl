@@ -3,13 +3,12 @@
 use Data::Dumper;
 use strict;
 
-
 ###
 ###  This 'ugly' perl script creates the wiki page for JsUpload
 ###  It inspects the java classes looking for comments and put them in the wiki page.
 ###
 
-
+my $author = "Manuel Carrasco Moñino";
 # Folder with source java files
 my $path = "src/jsupload/client/";
 # Java classes to inspect
@@ -24,25 +23,19 @@ my $sample_location = "no_link_at_the_moment";
 my $wikitpl = "src/jsupload/public/JsUpload.wiki.txt";
 
 
-my %const;
-
 ######## MAIN
-%const = processConst($constants);
-
-my $txt = "";
-
-$txt .= docheader();
+my %const = processConst($constants);
+my $txt = docheader();
 $txt .= printConst("Const");
 foreach my $cl (@classes) {
    $txt .= printClass($cl, processFile($cl));
 }
 $txt .= docsample();
-$txt .= "*Author:* _Manolo Carrasco Moñino_\n\n";
+$txt .= "*Author:* _" . $author. "_\n\n";
 my $date = `date`;
 $date =~ s/[\r\n]+//g;
 $txt .= "*Date:* _${date}_\n\n";
 $txt .= "This documentation has been generated automatically parsing comments in java files, if you realise any error, please report it\n\n";
-
 $txt =~ s/,(\s*\/\/[^\n]*\n\s*\})/$1/sg;
 
 print $txt;
