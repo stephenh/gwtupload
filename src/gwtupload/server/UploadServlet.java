@@ -168,16 +168,14 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			return error;
 		}
 
+		if (session.getAttribute(ATTR_LISTENER) != null) {
+		 logger.debug(" UPLOAD removing old listener from session"); 
+	    session.removeAttribute(ATTR_LISTENER);
+		}
+    
 		@SuppressWarnings("unchecked")
 		Vector<FileItem> sessionFiles = (Vector<FileItem>) session.getAttribute(ATTR_FILES);
 
-		if (request.getContentLength() > maxSize) {
-			error = "\nThe request was rejected because the size of the request (" + request.getContentLength()/1024 + " kB.)" +
-					    "\nexceeds the limit allowed by the server (" + maxSize/1024 + " kB.)";
-      logger.error(session.getId() + " UPLOAD " + error); 
-			return error;
-		}
-		
     logger.debug(session.getId() + " UPLOAD servlet procesing request " + request.getContentLength() + " < " + maxSize);
     try {
       // create file upload factory, and the listener
@@ -201,6 +199,14 @@ public class UploadServlet extends HttpServlet implements Servlet {
       @SuppressWarnings("unchecked")
       List<FileItem> uploadedItems = uploader.parseRequest(request);
       logger.debug(session.getId() + " UPLOAD servlet servlet received items: " + uploadedItems.size());
+      
+      if (request.getContentLength() > maxSize) {
+        error = "\nThe request was rejected because the size of the request (" + request.getContentLength()/1024 + " kB.)" +
+                "\nexceeds the limit allowed by the server (" + maxSize/1024 + " kB.)";
+        logger.error(session.getId() + " UPLOAD " + error); 
+        return error;
+      }
+      
 
       // Put received files in session
       for (FileItem fileItem : uploadedItems) {
@@ -256,6 +262,9 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	protected static Map<String, String> getUploadStatus(HttpSession session, String filename) {
+	  
+    logger.debug(session.getId() + " UPLOAD, getUploadStatus: " + session.getAttribute(ATTR_LISTENER) != null);
+
 		Map<String, String> ret = new HashMap<String, String>();
 		Long currentBytes = null;
 		Long totalBytes = null;
@@ -287,6 +296,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 				}
 			}
 		} else {
+      logger.debug(session.getId() + " UPLOAD wait listener is null");
 			ret.put("wait", "listener is null");
 			percent = 5L;
 			totalBytes = currentBytes = 0L;
@@ -305,6 +315,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	public static boolean getFileContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String parameter = request.getParameter(PARAM_SHOW);
 		String contentRegexp = request.getParameter(PARAM_CONTENT);
+    logger.debug(" UPLOAD, getFileContent: " + parameter + " " + contentRegexp);
 		if (parameter != null) {
 			@SuppressWarnings("unchecked")
 			Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);

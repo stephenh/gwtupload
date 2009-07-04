@@ -1,3 +1,19 @@
+/*
+ * Copyright 2009 Manuel Carrasco Moñino. (manuel_carrasco at users.sourceforge.net) 
+ * http://code.google.com/p/gwtupload
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package gwtuploadsample.client;
 
 import gwtupload.client.BasicProgress;
@@ -13,11 +29,12 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 
 /**
- * @author Manolo Carrasco Moñino
- * <p>
+ *  * <p>
  * An example of a MultiUploader panel using a very simple upload progress widget
  * The example also uses PreloadedImage to display uploaded images.
  * </p>
+ * 
+ * @author Manolo Carrasco Moñino
  *
  */
 public class SimpleUploadSample implements EntryPoint {

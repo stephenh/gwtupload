@@ -18,7 +18,7 @@ my $constants = 'Const';
 # Html file with javascript sample code
 my $htmlsample = "src/jsupload/public/JsUpload.html";
 # Location of the sample aplication
-my $sample_location = "no_link_at_the_moment";
+my $sample_location = "http://gwtupload.alcala.org/jsupload.JsUpload/JsUpload.html";
 # Wiki template with library description
 my $wikitpl = "src/jsupload/public/JsUpload.wiki.txt";
 
@@ -48,8 +48,7 @@ sub processConst {
   my $class = shift;
   my %c;
   $c{class} = $class;
-  
-  my %c;
+
   my $file=$path . $class . ".java";
   open(F, "$file") || die $!;
   my $on = 0;

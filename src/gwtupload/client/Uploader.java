@@ -1,11 +1,32 @@
+/*
+ * Copyright 2009 Manuel Carrasco Moñino. (manuel_carrasco at users.sourceforge.net) 
+ * http://code.google.com/p/gwtupload
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package gwtupload.client;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Vector;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ErrorEvent;
+import com.google.gwt.event.dom.client.ErrorHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
@@ -32,51 +53,24 @@ import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
 
 /**
- *         <p>
- *         </p>
+ * <p>
+ * Uploader panel
+ * </p>
  *         
  * @author Manolo Carrasco Moñino
  * 
  *         <h3>Features</h3>
  *         <ul>
  *         <li>Renders a form with an input file for sending the file, and a hidden iframe where is received the server response</li>  
- *         <li>The form used can be used to add more form elements</li>
- *         <li>It asks the server for the upload progress continously.</li>
+ *         <li>The user can add more elements to the form</li>
+ *         <li>It asks the server for the upload progress continously until the submit process has finished.</li>
  *         <li>It expects xml responses instead of gwt-rpc, so the server part can be implemented in any language</li>
  *         <li>It uses a progress interface so it is easy to use customized progress bars</li>
  *         <li>By default it renders a basic progress bar</li>
  *         <li>It can be configured to automatic submit after the user has selected the file</li>
- *         <li>If you need a custimized uploader, you can overrite these these methods:</li>
- *         <ul>
- *         <li>onStartUpload called after the form has been submited</li>
- *         <li>onFinishUpload called after the upload process has finished</li>
+ *         <li>If you need a custimized uploader, you can overrite these these class</li>
+ *         <li>It uses a queue that avoid submit more than a file at the same time</li>
  *         </ul>
- *         </ul>
- * 
- *         <h3>Example</h3>
- * 
- *         <pre>
- * public class GWTCUpload extends Uploader {
- * 
- *   UploadProgress simpleProgress = new SimpleUploadProgress();
- * 
- *   public GWTCUpload() {
- *     super.initWidget(true, new SimpleUploadProgress(), onStart, onComplete);
- *   }
- * 
- *   &#064;Override
- *   void onStartUpload() {
- *   }
- * 
- *   &#064;Override
- *   void onFinishUpload() {
- *      RootPanel.get().add(
- *        new Image(servletPath + "?show=" + fileInput.getName()));
- *   }
- * 
- * }
- * 
- * </pre>
  * 
  *         <h3>CSS Style Rules</h3>
  *         <ul>
@@ -133,19 +127,48 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
   private ValueChangeHandler<IUploader> onStart;
   private ValueChangeHandler<IUploader> onFinish;
   public FileUpload fileInput;
+  boolean waiting = false;
+  boolean session = false;
+  private final FormPanel uploadForm = new FormPanel() {
+    FlowPanel formElements = new FlowPanel();
+    {
+      super.add(formElements);
+    }
+
+    @Override public void add(Widget w) {
+      formElements.add(w);
+    }
+  };
   
+  
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setOnChangeHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
+   */
+  @Override
   public void setOnChangeHandler(ValueChangeHandler<IUploader> handler) {
     onChange = handler;
   }
 
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setOnStartHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
+   */
+  @Override
   public void setOnStartHandler(ValueChangeHandler<IUploader> handler) {
     onStart = handler;
   }
 
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setOnFinishHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
+   */
+  @Override
   public void setOnFinishHandler(ValueChangeHandler<IUploader> handler) {
     onFinish = handler;
   }
   
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setStatusWidget(gwtupload.client.IUploadStatus)
+   */
+  @Override
   public void setStatusWidget(IUploadStatus stat) {
     if (stat == null) 
       return;
@@ -156,15 +179,31 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     statusWidget.setVisible(false);
   }
   
+  /**
+   * Get the status progress used
+   * 
+   * @return
+   */
   public IUploadStatus getStatusWidget() {
   	return statusWidget;
   }
 
+  /**
+   * Method called when the file is added to the upload queue.
+   * Override this method if you want to add a customized behavior,
+   * but remember to call this in your function
+   */
   protected void onStartUpload() {
     if (onStart != null)
       onStart.onValueChange(new ValueChangeEvent<IUploader>(this) {});
   }
 
+  
+  /**
+   * Method called when the file upload process has finished
+   * Override this method if you want to add a customized behavior,
+   * but remember to call this in your function
+   */
   protected void onFinishUpload() {
     if (onFinish != null)
       onFinish.onValueChange(new ValueChangeEvent<IUploader>(this) {});
@@ -172,28 +211,30 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
       changeInputName();
   }
   
+  /**
+   * Method called when the file input has changed. This happens when the 
+   * user selects a file.
+   * 
+   * Override this method if you want to add a customized behavior,
+   * but remember to call this in your function
+   */
   protected void onChangeInput() {
     if (onChange != null)
       onChange.onValueChange(new ValueChangeEvent<IUploader>(this) {});
   }
 
 
- 
-  public final FormPanel uploadForm = new FormPanel() {
-    FlowPanel formElements = new FlowPanel();
-    {
-      super.add(formElements);
-    }
-
-    @Override public void add(Widget w) {
-      formElements.add(w);
-    }
-  };
-
-  public void resizeInput(int length) {
+  /**
+   * Changes the number of characters shown in the file input text
+   * @param length
+   */
+  public void setFileInputSize(int length) {
     DOM.setElementAttribute(fileInput.getElement(), "size", "" + length);
   }
 
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setServletPath(java.lang.String)
+   */
   public void setServletPath(String path) {
     if (path != null) {
       this.servletPath = path;
@@ -201,12 +242,39 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     }
   }
 
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#submit()
+   */
   public void submit() {
     this.uploadForm.submit();
   }
   
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
+   */
   public void add(Widget w) {
   	uploadForm.add(w);
+  }
+  
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasWidgets#clear()
+   */
+  public void clear() {
+  	uploadForm.clear();
+  }
+
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasWidgets#remove(com.google.gwt.user.client.ui.Widget)
+   */
+  public boolean remove(Widget w) {
+  	return uploadForm.remove(w);
+  }
+  
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasWidgets#iterator()
+   */
+  public Iterator<Widget> iterator() {
+	  return uploadForm.iterator();
   }
 
   private ChangeHandler onInputChanged = new ChangeHandler() {
@@ -222,12 +290,18 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     }
   };
   
+  /**
+   * Enable/disable automatic submit when the user selects a file
+   * @param b
+   */
   public void setAutoSubmit(boolean b) {
     autoSubmit = b;
   }
   
   /**
-   * Initialize widget and layout elements
+   * Default constructor.
+   * 
+   * Initialize widget components and layout elements
    */
   public Uploader() {
     fileInput = new FileUpload() {
@@ -241,7 +315,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     };
 
     changeInputName();
-    resizeInput(fileInputSize);
+    setFileInputSize(fileInputSize);
     setServletPath(servletPath);
 
     uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
@@ -258,62 +332,93 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     super.initWidget(uploaderPanel);
   }
 
+  public Uploader(boolean automaticUpload) {
+    this();
+    setAutoSubmit(automaticUpload);
+  }
+
+  
   private void changeInputName() {
     String fileInputName = ("GWTCU_" + Math.random()).replaceAll("\\.", ""); 
     fileInput.setName(fileInputName);
     reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?filename=" + fileInputName);
     reqBuilder.setTimeoutMillis(prgBarInterval - 100);
   }
-
-
-  public Uploader(boolean automaticUpload) {
-    this();
-    setAutoSubmit(automaticUpload);
-  }
-
-  private RequestBuilder getRequestBuilder() {
-    if (reqBuilder == null) {
-    }
-    return reqBuilder;
-  }
   
+  /**
+   * Return the name of the file input
+   * @return
+   */
   public String getFilename() {
     return successful ? fileInput.getName() : "";
   }
 
-  boolean waiting = false;
-  boolean session = false;
-  
   private String removeHtmlTags(String message) {
     return message.replaceAll("<[^>]+>","");
   }
 
-  private void validateSessionAndSubmit() {
-    if (waiting)
-      return;
-    try {
-      getRequestBuilder().sendRequest("create_session", new RequestCallback() {
-        public void onError(Request request, Throwable exception) {
-          String message = removeHtmlTags(exception.getMessage());
-          statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
-        }
-
-        public void onResponseReceived(Request request, Response response) {
-          session = true;
-          uploadForm.submit();
-        }
-      });
-    } catch (RequestException e) {
-      System.out.println("Error submiting form: " + e.getMessage());
-    }
+  /**
+   * Sends a request to the server in order to get the session cookie, and
+   * when the response with the session comes, it submit the form.
+   * 
+   * This is needed because this client application usually is part of 
+   * static files, and the server doesn't set the session until dynamic pages
+   * are requested.
+   * 
+   * If we submit the form without a session, the server creates a new
+   * one and send a cookie in the response, but the response with the
+   * cookie comes to the client at the end of the request, and in the
+   * meanwhile the client needs to know the session in order to ask
+   * the server for the upload status.
+   */
+  private void validateSessionAndSubmitUsingHiddenImage() {
+  	PreloadedImage img = new PreloadedImage();
+  	img.addErrorHandler(new ErrorHandler(){
+      public void onError(ErrorEvent event) {
+      	System.out.println("onError en validate");
+      	session = true;
+      	uploadForm.submit();
+      }
+  	});
+  	img.addLoadHandler(new LoadHandler(){
+      public void onLoad(LoadEvent event) {
+      	System.out.println("onLoad en validate");
+      	session = true;
+      	uploadForm.submit();
+      }
+  	});
+  	img.setUrl(servletPath + "?");
   }
+  
+  /**
+   * This method is similar to the last one, but using ajax.
+   * This doesn't work some times
+   */
+  @SuppressWarnings("unused")
+  private void validateSessionAndSubmitUsingAjaxRequest() throws RequestException {
+    reqBuilder.sendRequest("create_session", new RequestCallback() {
+      public void onError(Request request, Throwable exception) {
+        String message = removeHtmlTags(exception.getMessage());
+        cancelUpload(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
+      }
 
-  void asyncUpdateFileProgress() throws RequestException {
+      public void onResponseReceived(Request request, Response response) {
+        session = true;
+        uploadForm.submit();
+      }
+    });
+  }
+  
+
+  /**
+   * Asks the server for the upload process, and updates the status widget
+   */
+  private void asyncUpdateFileProgress() throws RequestException {
     if (waiting)
       return;
 
     waiting = true;
-    getRequestBuilder().sendRequest("get_status", new RequestCallback() {
+    reqBuilder.sendRequest("get_status", new RequestCallback() {
       public void onError(Request request, Throwable exception) {
         waiting = false;
         if (!(exception instanceof RequestTimeoutException)) {
@@ -356,12 +461,15 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     });
   }
 
-  void cancelUpload(String msg) {
+  private void cancelUpload(String msg) {
     statusWidget.setError(msg);
     successful = false;
     uploadFinished();
   }
 
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUpdateable#update()
+   */
   public void update() {
     try {
       asyncUpdateFileProgress();
@@ -370,7 +478,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     }
   }
 
-  void addToQueue() {
+  private void addToQueue() {
     statusWidget.setStatus(IUploadStatus.QUEUED);
     statusWidget.setProgress(0, 0);
     if (!fileQueue.contains(fileInput.getName())) {
@@ -379,15 +487,23 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     }
   }
 
-  boolean isTheFirstInQueue() {
+  private boolean isTheFirstInQueue() {
     return fileQueue.size() > 0 && fileQueue.get(0).equals(fileInput.getName());
   }
 
-  void removeFromQueue() {
+  private void removeFromQueue() {
     fileQueue.remove(fileInput.getName());
   }
 
-  SubmitHandler onSubmitFormHandler = new SubmitHandler() {
+  /**
+   *  Method called when the file form is submitted
+   *  
+   *  If any validation fails, the upload process is cancelled.
+   *  
+   *  If the client hasn't got the session, it asks for a new one 
+   *  and the submit process is delayed until the client has got it
+   */
+  private SubmitHandler onSubmitFormHandler = new SubmitHandler() {
     public void onSubmit(SubmitEvent event) {
       
       if (!autoSubmit && fileQueue.size() > 0) {
@@ -415,7 +531,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 
       if (!session) {
         event.cancel();
-        validateSessionAndSubmit();
+        validateSessionAndSubmitUsingHiddenImage();
         return;
       }
 
@@ -439,13 +555,16 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     }
   };
 
-  SubmitCompleteHandler onSubmitCompleteFormHandler = new SubmitCompleteHandler() {
+  
+  /**
+   * Method called when the form has been sent to the server
+   */
+  private SubmitCompleteHandler onSubmitCompleteFormHandler = new SubmitCompleteHandler() {
     // TODO: Check that this method is called in safari
     public void onSubmitComplete(SubmitCompleteEvent event) {
       if (finished == true)
         return;
 
-      System.out.println("onSubmitComplete");
       String serverXmlResponse = event.getResults();
       String serverMessage = removeHtmlTags(serverXmlResponse);
       
@@ -477,7 +596,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     }
   };
 
-  Timer automaticUploadTimer = new Timer() {
+  private Timer automaticUploadTimer = new Timer() {
     
     boolean firstTime = true;
 
@@ -487,7 +606,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
         
         // Most browsers don't submit files if fileInput is hidden or has a 0 size, 
         // so before submiting it is necessary to show it.
-        resizeInput(1);
+        setFileInputSize(1);
         fileInput.setHeight("1px");
         fileInput.setWidth("2px");
         fileInput.setVisible(true);
@@ -501,8 +620,8 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
       }
     }
   };
-  
-  void uploadFinished() {
+
+  private void uploadFinished() {
     removeFromQueue();
     finished = true;
     repeater.finish();
@@ -532,54 +651,20 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     onFinishUpload();
   }
 
-  private static String getXmlNodeValue(Document doc, String tag) {
-    NodeList list = doc.getElementsByTagName(tag);
-    if (list.getLength() == 0)
-      return null;
 
-    Node node = list.item(0);
-    if (node.getNodeType() != Node.ELEMENT_NODE)
-      return null;
 
-    String ret = "";
-    NodeList textNodes = node.getChildNodes();
-    for (int i = 0; i < textNodes.getLength(); i++) {
-      Node n = textNodes.item(i);
-      if (n.getNodeType() == Node.TEXT_NODE && n.getNodeValue().replaceAll("[ \\n\\t\\r]", "").length() > 0)
-        ret += n.getNodeValue();
-    }
-    return ret.length() == 0 ? null : ret;
-  }
-
-  private static String basename(String name) {
-    return name.replaceAll("^.*[/\\\\]", "");
-  }
-
-  private boolean validateExtension(String fileName) {
-    boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
-    for (int i = 0; valid == false && i < validExtensions.length; i++) {
-      if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i]))
-        valid = true;
-    }
-    if (!valid)
-      statusWidget.setError(MSG_INVALID_EXTENSION + validExtensionsMsg);
-
-    return valid;
-  }
-
-  /**
-   * Enable control of files that have been already uploaded
-   * 
-   * @param avoidRepeat
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#avoidRepeatFiles(boolean)
    */
+  @Override
   public void avoidRepeatFiles(boolean avoidRepeat) {
     Uploader.avoidRepeat = avoidRepeat;
   }
 
-  /**
-   * Enable file-name control in client part based on the extension
-   * @param validExtensions
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setValidExtensions(java.lang.String[])
    */
+  @Override
   public void setValidExtensions(String[] validExtensions) {
   	if (validExtensions==null) return;
     this.validExtensions = new String[validExtensions.length];
@@ -602,21 +687,64 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
     }
   }
 
-  /**
-   * Returns the server url for the uploaded file
+  
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#fileUrl()
    */
+  @Override
   public String fileUrl() {
     return servletPath + "?" + PARAMETER_SHOW + "=" + getFilename();
   }
 
+  /* (non-Javadoc)
+   * @see gwtupload.client.HasJsData#getData()
+   */
+  @Override
   public JavaScriptObject getData() {
     return getDataImpl(fileUrl());
   }
+
   
+  private static String basename(String name) {
+    return name.replaceAll("^.*[/\\\\]", "");
+  }
+
+  private boolean validateExtension(String fileName) {
+    boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
+    for (int i = 0; valid == false && i < validExtensions.length; i++) {
+      if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i]))
+        valid = true;
+    }
+    if (!valid)
+      statusWidget.setError(MSG_INVALID_EXTENSION + validExtensionsMsg);
+
+    return valid;
+  }
+  private static String getXmlNodeValue(Document doc, String tag) {
+    NodeList list = doc.getElementsByTagName(tag);
+    if (list.getLength() == 0)
+      return null;
+
+    Node node = list.item(0);
+    if (node.getNodeType() != Node.ELEMENT_NODE)
+      return null;
+
+    String ret = "";
+    NodeList textNodes = node.getChildNodes();
+    for (int i = 0; i < textNodes.getLength(); i++) {
+      Node n = textNodes.item(i);
+      if (n.getNodeType() == Node.TEXT_NODE && n.getNodeValue().replaceAll("[ \\n\\t\\r]", "").length() > 0)
+        ret += n.getNodeValue();
+    }
+    return ret.length() == 0 ? null : ret;
+  }
+
   private native JavaScriptObject getDataImpl(String url) /*-{
     return {
        url: url
     };
   }-*/;
+
+  
   
 }

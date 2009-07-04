@@ -37,20 +37,22 @@
   <target name="gwtc" depends="javac" description="GWT compile to JavaScript">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
       <jvmarg value="-Xmx256M"/>
-      <arg value="gwtuploadsample.ChismesUploadSample"/>
-    </java>
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
-      <jvmarg value="-Xmx256M"/>
       <arg value="gwtuploadsample.SimpleUploadSample"/>
     </java>
+<!--
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
       <jvmarg value="-Xmx256M"/>
       <arg value="gwtuploadsample.IncubatorUploadSample"/>
     </java>
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
       <jvmarg value="-Xmx256M"/>
+      <arg value="gwtuploadsample.ChismesUploadSample"/>
+    </java>
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+      <jvmarg value="-Xmx256M"/>
       <arg value="jsupload.JsUpload"/>
     </java>
+-->
   </target>
 
   <target name="hosted" depends="javac" description="Run hosted mode">

@@ -25,7 +25,7 @@ public class UploadListener implements ProgressListener {
   public void update(long done, long total, int item) {
     if (slowUploads) {
       try {
-        Thread.sleep(50);
+        Thread.sleep(200);
       } catch (Exception e) {}
     }
     bytesRead = done;

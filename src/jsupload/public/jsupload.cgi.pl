@@ -140,6 +140,7 @@ sub saveFile {
 
 ## Write the server response for each request.
 ## This response is a simple xml response easy to handle in the browser side.
+## Set the session cookie to the client if it has not been setted yet.
 sub writeResponse {
     my $msg = shift;
     close(STDIN);
@@ -181,8 +182,8 @@ sub getProgress {
     return $ret;
 }
 
-## Generates the response when the client ask for an item content
-## if the item is a form item it returns a xml response with the item value
+## Generates the response when the client asks for an item
+## if it is a form item it returns a xml response with its value
 ## if it is an uploaded file it returns the content of this file, setting the content-type to the original value.
 sub writeItemContent {
     my $item = shift;

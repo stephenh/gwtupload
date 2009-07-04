@@ -13,16 +13,16 @@ The generated javascript code is minimized, optimized and obfuscated and works f
 
  # Download last version of the library: jsupload-x.x.x.zip and uncompress it in a folder.
  # In the server path you have to install one of the provided server programs to receive the files:
-   CGI: put the jsupload.cgi.pl (included in jsupload-x.x.x.zip) into the cgi-bin folder of your web server, and set the action parameter in your javascript code.
+   * CGI: put the jsupload.cgi.pl (included in jsupload-x.x.x.zip) into the cgi-bin folder of your web server, and set the action parameter in your javascript code.
    {{{
    uploader = new jsu.Upload({
       action: "/cgi-bin/jsupload.cgi.pl" 
       [...]
    });
    }}}
-   Java: You can use the servlet provided with gwtupload.jar and setup it in WEB-INF/web.xml file.
-   Rails: I'm planning to create a rails plugin soon.
-   Others: You can use the provided cgi script and use the files/information left in the temporary folder. Use an ajax request to inform your application that the upload process has finished. 
+   * Java: You can use the servlet provided with gwtupload.jar and setup it in WEB-INF/web.xml file.
+   * Rails: I'm planning to create a rails plugin soon.
+   * Others: You can use the provided cgi script and use the files/information left in the temporary folder. Use an ajax request to inform your application that the upload process has finished. 
    {{{
    uploader = new jsu.Upload({
       onFinish: function(data) {
