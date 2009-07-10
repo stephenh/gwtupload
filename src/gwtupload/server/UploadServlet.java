@@ -263,8 +263,6 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	protected static Map<String, String> getUploadStatus(HttpSession session, String filename) {
 	  
-    logger.debug(session.getId() + " UPLOAD, getUploadStatus: " + session.getAttribute(ATTR_LISTENER) != null);
-
 		Map<String, String> ret = new HashMap<String, String>();
 		Long currentBytes = null;
 		Long totalBytes = null;
@@ -315,7 +313,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	public static boolean getFileContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String parameter = request.getParameter(PARAM_SHOW);
 		String contentRegexp = request.getParameter(PARAM_CONTENT);
-    logger.debug(" UPLOAD, getFileContent: " + parameter + " " + contentRegexp);
+    logger.debug(request.getSession().getId() + " UPLOAD, getFileContent: " + parameter + " " + contentRegexp);
 		if (parameter != null) {
 			@SuppressWarnings("unchecked")
 			Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);

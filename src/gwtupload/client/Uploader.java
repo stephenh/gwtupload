@@ -23,10 +23,6 @@ import java.util.Vector;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ErrorEvent;
-import com.google.gwt.event.dom.client.ErrorHandler;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
@@ -82,669 +78,656 @@ import com.google.gwt.xml.client.XMLParser;
  */
 public class Uploader extends Composite implements IUpdateable, IUploader, HasJsData {
 
-  private static final String MSG_SERVER_UNAVAILABLE = "Unable to contact with the application server: ";
-  private static final String MSG_SEND_TIMEOUT = "Timeout sending attachment:\nperhups your browser does not send files correctly\nor the server raised an error.\nPlease try again.";
-  private static final String MSG_INVALID_EXTENSION = "Invalid file.\nOnly these types are allowed:\n";
-  private static final String MSG_FILE_DONE = "This file was already uploaded";
-  private static final String MSG_ACTIVE_UPLOAD = "There is already an active upload, try later.";
-  private static final String MSG_SERVER_ERROR = "Invalid server response. Have you configured correctly your application in server-side?";
-  
-  static String STYLE_MAIN = "GWTUpld";
-  static String STYLE_INPUT = "upld-input";
-  static String STYLE_STATUS = "upld-status";
-  static String STYLE_BUTTON = "upld-button";
-  
-  public final static String PARAMETER_SHOW = "show";
-  public final static String PARAMETER_FILENAME = "filename";
+	static boolean avoidRepeat = false;
+	static HashSet<String> fileDone = new HashSet<String>();
+	public static int fileInputSize = 40;
+	static Vector<String> fileQueue = new Vector<String>();
+	private static final String MSG_ACTIVE_UPLOAD = "There is already an active upload, try later.";
+	private static final String MSG_FILE_DONE = "This file was already uploaded";
 
-  static Vector<String> fileQueue = new Vector<String>();
-  static HashSet<String> fileDone = new HashSet<String>();
-  private String fileName = "";
+	private static final String MSG_INVALID_EXTENSION = "Invalid file.\nOnly these types are allowed:\n";
+	private static final String MSG_SEND_TIMEOUT = "Timeout sending attachment:\nperhups your browser does not send files correctly\nor the server raised an error.\nPlease try again.";
+	private static final String MSG_SERVER_ERROR = "Invalid server response. Have you configured correctly your application in server-side?";
+	private static final String MSG_SERVER_UNAVAILABLE = "Unable to contact with the application server: ";
 
-  static boolean avoidRepeat = false;
-  private String[] validExtensions = null;
-  private String validExtensionsMsg = "";
+	public final static String PARAMETER_FILENAME = "filename";
+	public final static String PARAMETER_SHOW = "show";
 
-  public static final String servletBase = ""; //GWT.isScript() ? getSrvltContext() : GWT.getModuleBaseURL();
-  public String servletPath = servletBase + "servlet.gupld";
-  
-  public static int fileInputSize = 40;
+	public static final String servletBase = ""; //GWT.isScript() ? getSrvltContext() : GWT.getModuleBaseURL();
+	static String STYLE_BUTTON = "upld-button";
+	static String STYLE_INPUT = "upld-input";
 
-  private int maxTimeWithoutResponse = 10000;
-  private int autoUploadDelay = 600;
-  private int prgBarInterval = 1500;
+	static String STYLE_MAIN = "GWTUpld";
+	static String STYLE_STATUS = "upld-status";
 
-  private RequestBuilder reqBuilder = null;
-  private UpdateTimer repeater = new UpdateTimer(this, prgBarInterval);
-  private IUploadStatus statusWidget = new BasicProgress();
+	private static String basename(String name) {
+		return name.replaceAll("^.*[/\\\\]", "");
+	}
 
-  protected boolean finished = false;
-  protected boolean autoSubmit = false;
-  protected boolean successful = false;
-  private int numOfTries = 0;
-  protected HorizontalPanel uploaderPanel = new HorizontalPanel();
-  private ValueChangeHandler<IUploader> onChange;
-  private ValueChangeHandler<IUploader> onStart;
-  private ValueChangeHandler<IUploader> onFinish;
-  public FileUpload fileInput;
-  boolean waiting = false;
-  boolean session = false;
-  private final FormPanel uploadForm = new FormPanel() {
-    FlowPanel formElements = new FlowPanel();
-    {
-      super.add(formElements);
-    }
+	private static String getXmlNodeValue(Document doc, String tag) {
+		NodeList list = doc.getElementsByTagName(tag);
+		if (list.getLength() == 0)
+			return null;
 
-    @Override public void add(Widget w) {
-      formElements.add(w);
-    }
-  };
-  
-  
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#setOnChangeHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
-   */
-  @Override
-  public void setOnChangeHandler(ValueChangeHandler<IUploader> handler) {
-    onChange = handler;
-  }
+		Node node = list.item(0);
+		if (node.getNodeType() != Node.ELEMENT_NODE)
+			return null;
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#setOnStartHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
-   */
-  @Override
-  public void setOnStartHandler(ValueChangeHandler<IUploader> handler) {
-    onStart = handler;
-  }
+		String ret = "";
+		NodeList textNodes = node.getChildNodes();
+		for (int i = 0; i < textNodes.getLength(); i++) {
+			Node n = textNodes.item(i);
+			if (n.getNodeType() == Node.TEXT_NODE && n.getNodeValue().replaceAll("[ \\n\\t\\r]", "").length() > 0)
+				ret += n.getNodeValue();
+		}
+		return ret.length() == 0 ? null : ret;
+	}
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#setOnFinishHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
-   */
-  @Override
-  public void setOnFinishHandler(ValueChangeHandler<IUploader> handler) {
-    onFinish = handler;
-  }
-  
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#setStatusWidget(gwtupload.client.IUploadStatus)
-   */
-  @Override
-  public void setStatusWidget(IUploadStatus stat) {
-    if (stat == null) 
-      return;
-    uploaderPanel.remove(statusWidget.getWidget());
-    statusWidget = stat;
-    uploaderPanel.add(statusWidget.getWidget());
-    statusWidget.getWidget().addStyleName(STYLE_STATUS);
-    statusWidget.setVisible(false);
-  }
-  
-  /**
-   * Get the status progress used
-   * 
-   * @return
-   */
-  public IUploadStatus getStatusWidget() {
-  	return statusWidget;
-  }
+	private Timer automaticUploadTimer = new Timer() {
 
-  /**
-   * Method called when the file is added to the upload queue.
-   * Override this method if you want to add a customized behavior,
-   * but remember to call this in your function
-   */
-  protected void onStartUpload() {
-    if (onStart != null)
-      onStart.onValueChange(new ValueChangeEvent<IUploader>(this) {});
-  }
+		boolean firstTime = true;
 
-  
-  /**
-   * Method called when the file upload process has finished
-   * Override this method if you want to add a customized behavior,
-   * but remember to call this in your function
-   */
-  protected void onFinishUpload() {
-    if (onFinish != null)
-      onFinish.onValueChange(new ValueChangeEvent<IUploader>(this) {});
-    if (autoSubmit == false)
-      changeInputName();
-  }
-  
-  /**
-   * Method called when the file input has changed. This happens when the 
-   * user selects a file.
-   * 
-   * Override this method if you want to add a customized behavior,
-   * but remember to call this in your function
-   */
-  protected void onChangeInput() {
-    if (onChange != null)
-      onChange.onValueChange(new ValueChangeEvent<IUploader>(this) {});
-  }
+		public void run() {
+			if (isTheFirstInQueue()) {
+				this.cancel();
+				// Most browsers don't submit files if fileInput is hidden or has a 0 size because of security reasons, 
+				// so before sending the form, it is necessary to show the fileInput elements.
+				setFileInputSize(1);
+				fileInput.setHeight("1px");
+				fileInput.setWidth("2px");
+				fileInput.setVisible(true);
+				uploadForm.submit();
+			}
+			if (firstTime) {
+				addToQueue();
+				firstTime = false;
+				fileInput.setVisible(false);
+				statusWidget.setVisible(true);
+			}
+		}
+	};
 
+	protected boolean autoSubmit = false;
 
-  /**
-   * Changes the number of characters shown in the file input text
-   * @param length
-   */
-  public void setFileInputSize(int length) {
-    DOM.setElementAttribute(fileInput.getElement(), "size", "" + length);
-  }
+	private int autoUploadDelay = 600;
+	public FileUpload fileInput;
+	private String fileName = "";
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#setServletPath(java.lang.String)
-   */
-  public void setServletPath(String path) {
-    if (path != null) {
-      this.servletPath = path;
-      uploadForm.setAction(path);
-    }
-  }
+	protected boolean finished = false;
+	private int maxTimeWithoutResponse = 10000;
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#submit()
-   */
-  public void submit() {
-    this.uploadForm.submit();
-  }
-  
-  /* (non-Javadoc)
-   * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
-   */
-  public void add(Widget w) {
-  	uploadForm.add(w);
-  }
-  
-  /* (non-Javadoc)
-   * @see com.google.gwt.user.client.ui.HasWidgets#clear()
-   */
-  public void clear() {
-  	uploadForm.clear();
-  }
+	private int numOfTries = 0;
+	private ValueChangeHandler<IUploader> onChange;
+	private ValueChangeHandler<IUploader> onFinish;
+	
+	private ChangeHandler onInputChanged = new ChangeHandler() {
+		public void onChange(ChangeEvent event) {
+			if (autoSubmit && validateExtension(fileInput.getFilename())) {
+				fileName = fileInput.getFilename();
+				if (fileName.length() > 0) {
+					statusWidget.setFileName(basename(fileName));
+					automaticUploadTimer.scheduleRepeating(autoUploadDelay);
+				}
+			}
+			onChangeInput();
+		}
+	};
+	
+	RequestCallback onSessionReceivedCallback = new RequestCallback() {
+		public void onError(Request request, Throwable exception) {
+			String message = removeHtmlTags(exception.getMessage());
+			cancelUpload(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
+		}
 
-  /* (non-Javadoc)
-   * @see com.google.gwt.user.client.ui.HasWidgets#remove(com.google.gwt.user.client.ui.Widget)
-   */
-  public boolean remove(Widget w) {
-  	return uploadForm.remove(w);
-  }
-  
-  /* (non-Javadoc)
-   * @see com.google.gwt.user.client.ui.HasWidgets#iterator()
-   */
-  public Iterator<Widget> iterator() {
-	  return uploadForm.iterator();
-  }
+		public void onResponseReceived(Request request, Response response) {
+			session = true;
+			uploadForm.submit();
+		}
+	};
+	
+	private ValueChangeHandler<IUploader> onStart;
 
-  private ChangeHandler onInputChanged = new ChangeHandler() {
-    public void onChange(ChangeEvent event) {
-      if (autoSubmit && validateExtension(fileInput.getFilename())) {
-        fileName = fileInput.getFilename();
-        if (fileName.length() > 0) {
-          statusWidget.setFileName(basename(fileName));
-          automaticUploadTimer.scheduleRepeating(autoUploadDelay);
-        }
-      }
-      onChangeInput();
-    }
-  };
-  
-  /**
-   * Enable/disable automatic submit when the user selects a file
-   * @param b
-   */
-  public void setAutoSubmit(boolean b) {
-    autoSubmit = b;
-  }
-  
-  /**
-   * Default constructor.
-   * 
-   * Initialize widget components and layout elements
-   */
-  public Uploader() {
-    fileInput = new FileUpload() {
-      {
-        addDomHandler(new ChangeHandler() {
-          public void onChange(ChangeEvent event) {
-             onInputChanged.onChange(null);
-          }
-        }, ChangeEvent.getType());
-      }
-    };
+	RequestCallback onStatusReceivedCallback = new RequestCallback() {
+		public void onError(Request request, Throwable exception) {
+			waiting = false;
+			if (!(exception instanceof RequestTimeoutException)) {
+				repeater.finish();
+				String message = removeHtmlTags(exception.getMessage());
+				message += "\n" + exception.getClass().getName();
+				message += "\n" + exception.toString();
+				statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
+			}
+		}
 
-    changeInputName();
-    setFileInputSize(fileInputSize);
-    setServletPath(servletPath);
+		public void onResponseReceived(Request request, Response response) {
+			waiting = false;
+			if (finished == true)
+				return;
+			Document doc = XMLParser.parse(response.getText());
+			String error = getXmlNodeValue(doc, "error");
+			if (error != null) {
+				successful = false;
+				cancelUpload(error);
+			} else if (getXmlNodeValue(doc, "wait") != null) {
+				numOfTries++;
+			} else if (getXmlNodeValue(doc, "finished") != null) {
+				successful = true;
+				uploadFinished();
+			} else if (getXmlNodeValue(doc, "percent") != null) {
+				numOfTries = 0;
+				int transferredKB = Integer.valueOf(getXmlNodeValue(doc, "currentBytes")) / 1024;
+				int totalKB = Integer.valueOf(getXmlNodeValue(doc, "totalBytes")) / 1024;
+				statusWidget.setProgress(transferredKB, totalKB);
+			} else if ((numOfTries * prgBarInterval) > maxTimeWithoutResponse) {
+				successful = false;
+				cancelUpload(MSG_SEND_TIMEOUT);
+			} else {
+				numOfTries++;
+				System.out.println("incorrect response: " + fileName + " " + response.getText());
+			}
+		}
+	};
 
-    uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
-    uploadForm.setMethod(FormPanel.METHOD_POST);
-    uploadForm.addSubmitHandler(onSubmitFormHandler);
-    uploadForm.addSubmitCompleteHandler(onSubmitCompleteFormHandler);
-    uploadForm.add(fileInput);
+	/**
+	 * Handler called when the form has been sent to the server
+	 */
+	private SubmitCompleteHandler onSubmitCompleteFormHandler = new SubmitCompleteHandler() {
+		public void onSubmitComplete(SubmitCompleteEvent event) {
+			if (finished == true)
+				return;
 
-    uploaderPanel.add(uploadForm);
-    uploaderPanel.setStyleName(STYLE_MAIN);
-    
-    setStatusWidget(statusWidget);
+			String serverXmlResponse = event.getResults();
+			String serverMessage = removeHtmlTags(serverXmlResponse);
 
-    super.initWidget(uploaderPanel);
-  }
+			if (serverMessage.length() > 0)
+				serverMessage = "\nServerMessage: \n" + serverMessage;
 
-  public Uploader(boolean automaticUpload) {
-    this();
-    setAutoSubmit(automaticUpload);
-  }
+			successful = true;
+			if (serverXmlResponse != null) {
+				String error = null;
+				if (serverXmlResponse.toLowerCase().matches("not[ _]+found") || serverXmlResponse.toLowerCase().matches("server[ _]+error")
+				    || serverXmlResponse.toLowerCase().matches("exception")) {
+					error = MSG_SERVER_ERROR + "\nAction: " + servletPath + serverMessage;
+				} else {
+					serverXmlResponse = serverXmlResponse.replaceAll("</*pre>", "").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+					try {
+						Document doc = XMLParser.parse(serverXmlResponse);
+						error = getXmlNodeValue(doc, "error");
+					} catch (Exception e) {
+						if (serverXmlResponse.toLowerCase().matches("error"))
+							error = MSG_SERVER_ERROR + "\nAction: " + servletPath + "\nException: " + e.getMessage() + serverMessage;
+					}
+				}
 
-  
-  private void changeInputName() {
-    String fileInputName = ("GWTCU_" + Math.random()).replaceAll("\\.", ""); 
-    fileInput.setName(fileInputName);
-    reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?filename=" + fileInputName);
-    reqBuilder.setTimeoutMillis(prgBarInterval - 100);
-  }
-  
-  /**
-   * Return the name of the file input
-   * @return
-   */
-  public String getFilename() {
-    return successful ? fileInput.getName() : "";
-  }
+				if (error != null) {
+					successful = false;
+					statusWidget.setError(error);
+				}
+			}
+			uploadFinished();
+		}
+	};
 
-  private String removeHtmlTags(String message) {
-    return message.replaceAll("<[^>]+>","");
-  }
+	/**
+	 *  Handler called when the file form is submitted
+	 *  
+	 *  If any validation fails, the upload process is canceled.
+	 *  
+	 *  If the client hasn't got the session, it asks for a new one 
+	 *  and the submit process is delayed until the client has got it
+	 */
+	private SubmitHandler onSubmitFormHandler = new SubmitHandler() {
+		public void onSubmit(SubmitEvent event) {
 
-  /**
-   * Sends a request to the server in order to get the session cookie, and
-   * when the response with the session comes, it submit the form.
-   * 
-   * This is needed because this client application usually is part of 
-   * static files, and the server doesn't set the session until dynamic pages
-   * are requested.
-   * 
-   * If we submit the form without a session, the server creates a new
-   * one and send a cookie in the response, but the response with the
-   * cookie comes to the client at the end of the request, and in the
-   * meanwhile the client needs to know the session in order to ask
-   * the server for the upload status.
-   */
-  private void validateSessionAndSubmitUsingHiddenImage() {
-  	PreloadedImage img = new PreloadedImage();
-  	img.addErrorHandler(new ErrorHandler(){
-      public void onError(ErrorEvent event) {
-      	System.out.println("onError en validate");
-      	session = true;
-      	uploadForm.submit();
-      }
-  	});
-  	img.addLoadHandler(new LoadHandler(){
-      public void onLoad(LoadEvent event) {
-      	System.out.println("onLoad en validate");
-      	session = true;
-      	uploadForm.submit();
-      }
-  	});
-  	img.setUrl(servletPath + "?");
-  }
-  
-  /**
-   * This method is similar to the last one, but using ajax.
-   * This doesn't work some times
-   */
-  @SuppressWarnings("unused")
-  private void validateSessionAndSubmitUsingAjaxRequest() throws RequestException {
-    reqBuilder.sendRequest("create_session", new RequestCallback() {
-      public void onError(Request request, Throwable exception) {
-        String message = removeHtmlTags(exception.getMessage());
-        cancelUpload(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
-      }
+			if (!autoSubmit && fileQueue.size() > 0) {
+				statusWidget.setError(MSG_ACTIVE_UPLOAD);
+				event.cancel();
+				return;
+			}
 
-      public void onResponseReceived(Request request, Response response) {
-        session = true;
-        uploadForm.submit();
-      }
-    });
-  }
-  
+			if (fileInput.getFilename().length() > 0) {
+				fileName = fileInput.getFilename();
+				statusWidget.setFileName(basename(fileName));
+			}
 
-  /**
-   * Asks the server for the upload process, and updates the status widget
-   */
-  private void asyncUpdateFileProgress() throws RequestException {
-    if (waiting)
-      return;
+			if (fileDone.contains(fileName)) {
+				successful = true;
+				event.cancel();
+				uploadFinished();
+				return;
+			}
 
-    waiting = true;
-    reqBuilder.sendRequest("get_status", new RequestCallback() {
-      public void onError(Request request, Throwable exception) {
-        waiting = false;
-        if (!(exception instanceof RequestTimeoutException)) {
-          repeater.finish();
-          String message = removeHtmlTags(exception.getMessage());
-          message += "\n" + exception.getClass().getName();
-          message += "\n" + exception.toString();
-          statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
-        }
-      }
+			if (fileName.length() == 0 || !validateExtension(fileName)) {
+				event.cancel();
+				return;
+			}
 
-      public void onResponseReceived(Request request, Response response) {
-      	response.getStatusCode();
-        waiting = false;
-        if (finished == true) { return; }
-        Document doc = XMLParser.parse(response.getText());
-        String error = getXmlNodeValue(doc, "error");
-        if (error != null) {
-          successful = false;
-          cancelUpload(error);
-        } else if (getXmlNodeValue(doc, "wait") != null) {
-          numOfTries++;
-        } else if (getXmlNodeValue(doc, "finished") != null) {
-          successful = true;
-          uploadFinished();
-        } else if (getXmlNodeValue(doc, "percent") != null) {
-          numOfTries = 0;
-          // int percent = Integer.valueOf(getXmlValue(doc, "percent"));
-          int transferredKB = Integer.valueOf(getXmlNodeValue(doc, "currentBytes")) / 1024;
-          int totalKB = Integer.valueOf(getXmlNodeValue(doc, "totalBytes")) / 1024;
-          statusWidget.setProgress(transferredKB, totalKB);
-        } else if ((numOfTries * prgBarInterval) > maxTimeWithoutResponse) {
-          successful = false;
-          cancelUpload(MSG_SEND_TIMEOUT);
-        } else {
-          numOfTries++;
-          System.out.println("incorrect response: " + fileName + " " + response.getText());
-        }
-      }
-    });
-  }
+			if (!session) {
+				event.cancel();
+				try {
+					validateSessionAndSubmitUsingAjaxRequest();
+				} catch (Exception e) {}
+				return;
+			}
 
-  private void cancelUpload(String msg) {
-    statusWidget.setError(msg);
-    successful = false;
-    uploadFinished();
-  }
+			addToQueue();
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUpdateable#update()
-   */
-  public void update() {
-    try {
-      asyncUpdateFileProgress();
-    } catch (RequestException e) {
-      e.printStackTrace();
-    }
-  }
+			finished = false;
+			numOfTries = 0;
+			statusWidget.setStatus(IUploadStatus.INPROGRESS);
 
-  private void addToQueue() {
-    statusWidget.setStatus(IUploadStatus.QUEUED);
-    statusWidget.setProgress(0, 0);
-    if (!fileQueue.contains(fileInput.getName())) {
-      onStartUpload();
-      fileQueue.add(fileInput.getName());
-    }
-  }
+			if (autoSubmit) {
+				(new Timer() {
+					public void run() {
+						statusWidget.setVisible(true);
+						fileInput.setVisible(false);
+					}
+				}).schedule(200);
+			} else {
+				statusWidget.setVisible(true);
+			}
+			repeater.start();
+		}
+	};
+	private int prgBarInterval = 1500;
+	private UpdateTimer repeater = new UpdateTimer(this, prgBarInterval);
+	private int reqCounter = 0;
 
-  private boolean isTheFirstInQueue() {
-    return fileQueue.size() > 0 && fileQueue.get(0).equals(fileInput.getName());
-  }
+	public String servletPath = servletBase + "servlet.gupld";
 
-  private void removeFromQueue() {
-    fileQueue.remove(fileInput.getName());
-  }
+	boolean session = false;
 
-  /**
-   *  Method called when the file form is submitted
-   *  
-   *  If any validation fails, the upload process is cancelled.
-   *  
-   *  If the client hasn't got the session, it asks for a new one 
-   *  and the submit process is delayed until the client has got it
-   */
-  private SubmitHandler onSubmitFormHandler = new SubmitHandler() {
-    public void onSubmit(SubmitEvent event) {
-      
-      if (!autoSubmit && fileQueue.size() > 0) {
-        statusWidget.setError(MSG_ACTIVE_UPLOAD);
-        event.cancel();
-        return;
-      }
+	private IUploadStatus statusWidget = new BasicProgress();
 
-      if (fileInput.getFilename().length() > 0) {
-        fileName = fileInput.getFilename();
-        statusWidget.setFileName(basename(fileName));
-      }
+	protected boolean successful = false;
 
-      if (fileDone.contains(fileName)) {
-        successful = true;
-        event.cancel();
-        uploadFinished();
-        return;
-      }
+	protected HorizontalPanel uploaderPanel = new HorizontalPanel();
 
-      if (fileName.length() == 0 || !validateExtension(fileName)) {
-        event.cancel();
-        return;
-      }
+	private final FormPanel uploadForm = new FormPanel() {
+		FlowPanel formElements = new FlowPanel();
+		{
+			super.add(formElements);
+		}
 
-      if (!session) {
-        event.cancel();
-        validateSessionAndSubmitUsingHiddenImage();
-        return;
-      }
+		@Override
+		public void add(Widget w) {
+			formElements.add(w);
+		}
+	};
 
-      addToQueue();
+	private String[] validExtensions = null;
 
-      finished = false;
-      numOfTries = 0;
-      statusWidget.setStatus(IUploadStatus.INPROGRESS);
+	private String validExtensionsMsg = "";
 
-      if (autoSubmit) {
-        (new Timer() {
-          public void run() {
-            statusWidget.setVisible(true);
-            fileInput.setVisible(false);
-          }
-        }).schedule(200);
-      } else {
-        statusWidget.setVisible(true);
-      }
-      repeater.start();
-    }
-  };
+	boolean waiting = false;
 
-  
-  /**
-   * Method called when the form has been sent to the server
-   */
-  private SubmitCompleteHandler onSubmitCompleteFormHandler = new SubmitCompleteHandler() {
-    // TODO: Check that this method is called in safari
-    public void onSubmitComplete(SubmitCompleteEvent event) {
-      if (finished == true)
-        return;
+	/**
+	 * Default constructor.
+	 * 
+	 * Initialize widget components and layout elements
+	 */
+	public Uploader() {
+		fileInput = new FileUpload() {
+			{
+				addDomHandler(new ChangeHandler() {
+					public void onChange(ChangeEvent event) {
+						onInputChanged.onChange(null);
+					}
+				}, ChangeEvent.getType());
+			}
+		};
 
-      String serverXmlResponse = event.getResults();
-      String serverMessage = removeHtmlTags(serverXmlResponse);
-      
-      if (serverMessage.length() > 0)
-         serverMessage = "\nServerMessage: \n" + serverMessage;
-      
-      successful = true;
-      if (serverXmlResponse != null) {
-        String error = null;
-      	if (serverXmlResponse.toLowerCase().matches("not[ _]+found")||
-      	    serverXmlResponse.toLowerCase().matches("server[ _]+error")) {
-      	  error = MSG_SERVER_ERROR + "\nAction: " + servletPath + serverMessage;
-      	} else {
-          serverXmlResponse = serverXmlResponse.replaceAll("</*pre>", "").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-          try {
-            Document doc = XMLParser.parse(serverXmlResponse);
-            error = getXmlNodeValue(doc, "error");
-          } catch (Exception e) {
-            error = MSG_SERVER_ERROR + "\nAction: " + servletPath + "\nException: " + e.getMessage() + serverMessage;
-          }
-      	}
-      			
-        if (error != null) {
-          successful = false;
-          statusWidget.setError(error);
-        }
-      }
-      uploadFinished();
-    }
-  };
+		changeInputName();
+		setFileInputSize(fileInputSize);
+		setServletPath(servletPath);
 
-  private Timer automaticUploadTimer = new Timer() {
-    
-    boolean firstTime = true;
+		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
+		uploadForm.setMethod(FormPanel.METHOD_POST);
+		uploadForm.addSubmitHandler(onSubmitFormHandler);
+		uploadForm.addSubmitCompleteHandler(onSubmitCompleteFormHandler);
+		uploadForm.add(fileInput);
 
-    public void run() {
-      if (isTheFirstInQueue()) {
-        this.cancel();
-        
-        // Most browsers don't submit files if fileInput is hidden or has a 0 size, 
-        // so before submiting it is necessary to show it.
-        setFileInputSize(1);
-        fileInput.setHeight("1px");
-        fileInput.setWidth("2px");
-        fileInput.setVisible(true);
-        uploadForm.submit();
-      }
-      if (firstTime) {
-        addToQueue();
-        firstTime = false;
-        fileInput.setVisible(false);
-        statusWidget.setVisible(true);
-      }
-    }
-  };
+		uploaderPanel.add(uploadForm);
+		uploaderPanel.setStyleName(STYLE_MAIN);
 
-  private void uploadFinished() {
-    removeFromQueue();
-    finished = true;
-    repeater.finish();
+		setStatusWidget(statusWidget);
 
-    if (successful) {
-      if (avoidRepeat) {
-        if (fileDone.contains(fileName)) {
-          if (autoSubmit) {
-            statusWidget.setVisible(false);
-          } else {
-            successful = false;
-            statusWidget.setError(MSG_FILE_DONE);
-          }
-        } else {
-          fileDone.add(fileName);
-        }
-      }
-      statusWidget.setStatus(IUploadStatus.FINISHED);
-    } else {
-      statusWidget.setStatus(IUploadStatus.ERROR);
-    }
-    if (!autoSubmit) {
-      statusWidget.setVisible(false);
-    } else {
-      uploaderPanel.remove(uploadForm);
-    }
-    onFinishUpload();
-  }
+		super.initWidget(uploaderPanel);
+	}
+
+	public Uploader(boolean automaticUpload) {
+		this();
+		setAutoSubmit(automaticUpload);
+	}
+
+	/**
+	 * Adds a widget to formPanel
+	 */
+	public void add(Widget w) {
+		uploadForm.add(w);
+	}
+
+	/**
+	 * Adds a file to the upload queue
+	 */
+	private void addToQueue() {
+		statusWidget.setStatus(IUploadStatus.QUEUED);
+		statusWidget.setProgress(0, 0);
+		if (!fileQueue.contains(fileInput.getName())) {
+			onStartUpload();
+			fileQueue.add(fileInput.getName());
+		}
+	}
+
+	/**
+	 * Don't send files that have already been uploaded 
+	 */
+	public void avoidRepeatFiles(boolean avoidRepeat) {
+		Uploader.avoidRepeat = avoidRepeat;
+	}
+
+	/**
+	 * Cancel upload process and show an error message to the user
+	 */
+	private void cancelUpload(String msg) {
+		statusWidget.setError(msg);
+		successful = false;
+		uploadFinished();
+	}
+
+	/**
+	 * Change the fileInput name, because the server uses it as an uniq identifier
+	 */
+	private void changeInputName() {
+		String fileInputName = ("GWTCU_" + Math.random()).replaceAll("\\.", "");
+		fileInput.setName(fileInputName);
+	}
+
+	/**
+	 * Remove all widget from the form
+	 */
+	public void clear() {
+		uploadForm.clear();
+	}
+
+	/**
+	 * Returns the link for getting the uploaded file from the server
+	 * It's useful to display uploaded images or generate links to uploaded files
+	 */
+	public String fileUrl() {
+		return servletPath + "?" + PARAMETER_SHOW + "=" + getFilename();
+	}
+
+	/**
+	 * Returns a JavaScriptObject properties whith the fileurl information
+	 * It's useful in the exported version of the library. 
+	 * Because native javascript needs it
+	 */
+	public JavaScriptObject getData() {
+		return getDataImpl(fileUrl());
+	}
+
+	private native JavaScriptObject getDataImpl(String url) /*-{
+		return {
+		   url: url
+		};
+	}-*/;
+
+	/**
+	 * Return the name of the file input
+	 * @return
+	 */
+	public String getFilename() {
+		return fileInput.getName();
+	}
+
+	/**
+	 * Get the status progress used
+	 * 
+	 * @return
+	 */
+	public IUploadStatus getStatusWidget() {
+		return statusWidget;
+	}
+
+	private boolean isTheFirstInQueue() {
+		return fileQueue.size() > 0 && fileQueue.get(0).equals(fileInput.getName());
+	}
+
+	/**
+	 * Returns a iterator of the widgets contained in the form panel
+	 */
+	public Iterator<Widget> iterator() {
+		return uploadForm.iterator();
+	}
+
+	/**
+	 * Method called when the file input has changed. This happens when the 
+	 * user selects a file.
+	 * 
+	 * Override this method if you want to add a customized behavior,
+	 * but remember to call this in your function
+	 */
+	protected void onChangeInput() {
+		if (onChange != null)
+			onChange.onValueChange(new ValueChangeEvent<IUploader>(this) {});
+	}
+
+	/**
+	 * Method called when the file upload process has finished
+	 * Override this method if you want to add a customized behavior,
+	 * but remember to call this in your function
+	 */
+	protected void onFinishUpload() {
+		if (onFinish != null)
+			onFinish.onValueChange(new ValueChangeEvent<IUploader>(this) {});
+		if (autoSubmit == false)
+			changeInputName();
+	}
+
+	/**
+	 * Method called when the file is added to the upload queue.
+	 * Override this method if you want to add a customized behavior,
+	 * but remember to call this in your function
+	 */
+	protected void onStartUpload() {
+		if (onStart != null)
+			onStart.onValueChange(new ValueChangeEvent<IUploader>(this) {});
+	}
+
+	/**
+	 * remove a widget from the form panel
+	 */
+	public boolean remove(Widget w) {
+		return uploadForm.remove(w);
+	}
+
+	/**
+	 * remove a file from the upload queue
+	 */
+	private void removeFromQueue() {
+		fileQueue.remove(fileInput.getName());
+	}
+
+	private String removeHtmlTags(String message) {
+		return message.replaceAll("<[^>]+>", "");
+	}
+
+	/**
+	 * Enable/disable automatic submit when the user selects a file
+	 * @param b
+	 */
+	public void setAutoSubmit(boolean b) {
+		autoSubmit = b;
+	}
+
+	/**
+	 * Changes the number of characters shown in the file input text
+	 * @param length
+	 */
+	public void setFileInputSize(int length) {
+		DOM.setElementAttribute(fileInput.getElement(), "size", "" + length);
+	}
+
+	/**
+	 * set the handler that will be called when the user selects a file
+	 */
+	public void setOnChangeHandler(ValueChangeHandler<IUploader> handler) {
+		onChange = handler;
+	}
+
+	/**
+	 * set the handler that will be called when the upload process finishes 
+	 */
+	public void setOnFinishHandler(ValueChangeHandler<IUploader> handler) {
+		onFinish = handler;
+	}
+
+	/**
+	 * set the handler that will be called when the file is included in the upload queue 
+	 */
+	public void setOnStartHandler(ValueChangeHandler<IUploader> handler) {
+		onStart = handler;
+	}
+
+	/**
+	 * set the url of the server service that receives the files and informs about the progress  
+	 */
+	public void setServletPath(String path) {
+		if (path != null) {
+			this.servletPath = path;
+			uploadForm.setAction(path);
+		}
+	}
+
+	/**
+	 * set the status widget used to display the upload progress
+	 */
+	public void setStatusWidget(IUploadStatus stat) {
+		if (stat == null)
+			return;
+		uploaderPanel.remove(statusWidget.getWidget());
+		statusWidget = stat;
+		uploaderPanel.add(statusWidget.getWidget());
+		statusWidget.getWidget().addStyleName(STYLE_STATUS);
+		statusWidget.setVisible(false);
+	}
 
 
+	/* (non-Javadoc)
+	 * @see gwtupload.client.IUploader#setValidExtensions(java.lang.String[])
+	 */
+	public void setValidExtensions(String[] validExtensions) {
+		if (validExtensions == null) {
+			this.validExtensions = new String[0];
+			return;
+		}
+		this.validExtensions = new String[validExtensions.length];
+		validExtensionsMsg = "";
+		for (int i = 0, j = 0; i < validExtensions.length; i++) {
+			String ext = validExtensions[i];
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#avoidRepeatFiles(boolean)
-   */
-  @Override
-  public void avoidRepeatFiles(boolean avoidRepeat) {
-    Uploader.avoidRepeat = avoidRepeat;
-  }
+			if (ext == null)
+				continue;
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#setValidExtensions(java.lang.String[])
-   */
-  @Override
-  public void setValidExtensions(String[] validExtensions) {
-  	if (validExtensions==null) return;
-    this.validExtensions = new String[validExtensions.length];
-    validExtensionsMsg = "";
-    for (int i = 0, j=0; i < validExtensions.length; i++) {
-      String ext = validExtensions[i];
-      
-      if (ext == null)
-        continue;
-      
-      if (ext.charAt(0) != '.')
-        ext = "." + ext;
-      if (i > 0)
-        validExtensionsMsg += ", ";
-      validExtensionsMsg += ext;
+			if (ext.charAt(0) != '.')
+				ext = "." + ext;
+			if (i > 0)
+				validExtensionsMsg += ", ";
+			validExtensionsMsg += ext;
 
-      ext = ext.replaceAll("\\.", "\\\\.");
-      ext = ".+" + ext;
-      this.validExtensions[j++] = ext.toLowerCase();
-    }
-  }
+			ext = ext.replaceAll("\\.", "\\\\.");
+			ext = ".+" + ext;
+			this.validExtensions[j++] = ext.toLowerCase();
+		}
+	}
 
-  
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#fileUrl()
-   */
-  @Override
-  public String fileUrl() {
-    return servletPath + "?" + PARAMETER_SHOW + "=" + getFilename();
-  }
+	/* (non-Javadoc)
+	 * @see gwtupload.client.IUploader#submit()
+	 */
+	public void submit() {
+		this.uploadForm.submit();
+	}
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.HasJsData#getData()
-   */
-  @Override
-  public JavaScriptObject getData() {
-    return getDataImpl(fileUrl());
-  }
+	/* (non-Javadoc)
+	 * @see gwtupload.client.IUpdateable#update()
+	 */
+	public void update() {
+		try {
+			if (waiting)
+				return;
+			waiting = true;
+			// Using a reusable builder makes IE fail, because it catches the response
+			// So it's better to change the request path using a counter
+			RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?filename=" + fileInput.getName() + "&c=" + reqCounter++);
+			reqBuilder.setTimeoutMillis(prgBarInterval - 100);
+			reqBuilder.sendRequest("random=" + Math.random(), onStatusReceivedCallback);
+		} catch (RequestException e) {
+			e.printStackTrace();
+		}
+	}
 
-  
-  private static String basename(String name) {
-    return name.replaceAll("^.*[/\\\\]", "");
-  }
+	private void uploadFinished() {
+		removeFromQueue();
+		finished = true;
+		repeater.finish();
 
-  private boolean validateExtension(String fileName) {
-    boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
-    for (int i = 0; valid == false && i < validExtensions.length; i++) {
-      if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i]))
-        valid = true;
-    }
-    if (!valid)
-      statusWidget.setError(MSG_INVALID_EXTENSION + validExtensionsMsg);
+		if (successful) {
+			if (avoidRepeat) {
+				if (fileDone.contains(fileName)) {
+					if (autoSubmit) {
+						statusWidget.setVisible(false);
+					} else {
+						successful = false;
+						statusWidget.setError(MSG_FILE_DONE);
+					}
+				} else {
+					fileDone.add(fileName);
+				}
+			}
+			statusWidget.setStatus(IUploadStatus.FINISHED);
+		} else {
+			statusWidget.setStatus(IUploadStatus.ERROR);
+		}
+		if (!autoSubmit) {
+			statusWidget.setVisible(false);
+		} else {
+			uploaderPanel.remove(uploadForm);
+		}
+		onFinishUpload();
+	}
 
-    return valid;
-  }
-  private static String getXmlNodeValue(Document doc, String tag) {
-    NodeList list = doc.getElementsByTagName(tag);
-    if (list.getLength() == 0)
-      return null;
+	private boolean validateExtension(String fileName) {
+		boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
+		for (int i = 0; valid == false && i < validExtensions.length; i++) {
+			if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i]))
+				valid = true;
+		}
+		if (!valid)
+			statusWidget.setError(MSG_INVALID_EXTENSION + validExtensionsMsg);
 
-    Node node = list.item(0);
-    if (node.getNodeType() != Node.ELEMENT_NODE)
-      return null;
+		return valid;
+	}
 
-    String ret = "";
-    NodeList textNodes = node.getChildNodes();
-    for (int i = 0; i < textNodes.getLength(); i++) {
-      Node n = textNodes.item(i);
-      if (n.getNodeType() == Node.TEXT_NODE && n.getNodeValue().replaceAll("[ \\n\\t\\r]", "").length() > 0)
-        ret += n.getNodeValue();
-    }
-    return ret.length() == 0 ? null : ret;
-  }
+	/**
+	 * Sends a request to the server in order to get the session cookie,
+	 * when the response with the session comes, it submits the form.
+	 * 
+	 * This is needed because this client application usually is part of 
+	 * static files, and the server doesn't set the session until dynamic pages
+	 * are requested.
+	 * 
+	 * If we submit the form without a session, the server creates a new
+	 * one and send a cookie in the response, but the response with the
+	 * cookie comes to the client at the end of the request, and in the
+	 * meanwhile the client needs to know the session in order to ask
+	 * the server for the upload status.
+	 */
+	private void validateSessionAndSubmitUsingAjaxRequest() throws RequestException {
+		// Using a reusable builder makes IE fail
+		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?new_session=true");
+		reqBuilder.setTimeoutMillis(2000);
+		reqBuilder.sendRequest("create_session", onSessionReceivedCallback);
+	}
 
-  private native JavaScriptObject getDataImpl(String url) /*-{
-    return {
-       url: url
-    };
-  }-*/;
-
-  
-  
 }

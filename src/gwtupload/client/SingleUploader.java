@@ -107,7 +107,6 @@ public class  SingleUploader extends Uploader implements HasText {
 	/* (non-Javadoc)
 	 * @see com.google.gwt.user.client.ui.HasText#setText(java.lang.String)
 	 */
-	@Override
 	public void setText(String text) {
 		if (text != null && text.length() > 0)
 		button.setText(text);
@@ -116,7 +115,6 @@ public class  SingleUploader extends Uploader implements HasText {
 	/* (non-Javadoc)
 	 * @see com.google.gwt.user.client.ui.HasText#getText()
 	 */
-	@Override
   public String getText() {
 		return button.getText();
   }

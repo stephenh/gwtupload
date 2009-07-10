@@ -61,7 +61,7 @@ class UpdateTimer extends Timer {
     @Override
     public void cancel(){
       isRunning = false;
-      this.cancel();
+      super.cancel();
     }
 
     /**

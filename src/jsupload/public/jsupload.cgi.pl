@@ -186,6 +186,7 @@ sub getProgress {
 ## if it is a form item it returns a xml response with its value
 ## if it is an uploaded file it returns the content of this file, setting the content-type to the original value.
 sub writeItemContent {
+    select( undef, undef, undef, 0.4 );
     my $item = shift;
     if ( open( F, "$user_dir/$item.info" ) ) {
         my $value = <F>;

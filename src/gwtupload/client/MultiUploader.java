@@ -46,40 +46,34 @@ public class MultiUploader extends Composite implements IUploader {
 	boolean avoidRepeat = true;
 	private String[] validExtensions = null;
 	private String servletPath = null;
-	private Uploader current = null;
+	
+	private Uploader currentUploader = null;
+	private Uploader lastUploader = null;
+	
 	private IUploadStatus statusWidget = null;
-
-	private String lastFileUrl = null;
-	private JavaScriptObject lastData = null;
 
 	private ValueChangeHandler<IUploader> onStartHandler = new ValueChangeHandler<IUploader>() {
 		public void onValueChange(ValueChangeEvent<IUploader> event) {
-			if (current != null) {
-				if (onStart != null) {
-					onStart.onValueChange(new ValueChangeEvent<IUploader>(current) {});
-				}
-				statusWidget = current.getStatusWidget().newInstance();
+
+			if (currentUploader != null) {
+	      // Save the last uploader, create a new statusWidget and fire onChange event
+			  lastUploader = currentUploader;
+				statusWidget = lastUploader.getStatusWidget().newInstance();
+        if (onStart != null) 
+          onStart.onValueChange(new ValueChangeEvent<IUploader>(lastUploader) {});
 			}
 
-			current = new Uploader(true);
-			current.setStatusWidget(statusWidget);
-			current.setOnStartHandler(onStartHandler);
-			current.setOnChangeHandler(onChange);
-			current.setOnFinishHandler(onFinishHandler);
-			current.setValidExtensions(validExtensions);
-			current.setServletPath(servletPath);
-			current.avoidRepeatFiles(avoidRepeat);
-			multiUploaderPanel.add(current);
+			// Create a new uploader
+			currentUploader = new Uploader(true);
+			currentUploader.setStatusWidget(statusWidget);
+			currentUploader.setOnStartHandler(onStartHandler);
+			currentUploader.setOnChangeHandler(onChange);
+			currentUploader.setOnFinishHandler(onFinish);
+			currentUploader.setValidExtensions(validExtensions);
+			currentUploader.setServletPath(servletPath);
+			currentUploader.avoidRepeatFiles(avoidRepeat);
+			multiUploaderPanel.add(currentUploader);
 
-		}
-	};
-
-	private ValueChangeHandler<IUploader> onFinishHandler = new ValueChangeHandler<IUploader>() {
-		public void onValueChange(ValueChangeEvent<IUploader> event) {
-			if (onFinish != null)
-				onFinish.onValueChange(new ValueChangeEvent<IUploader>(current) {});
-			lastFileUrl = current.fileUrl();
-			lastData = current.getData();
 		}
 	};
 
@@ -104,7 +98,7 @@ public class MultiUploader extends Composite implements IUploader {
 	}
 
 	public void setStatusWidget(IUploadStatus status) {
-		current.setStatusWidget(status);
+		currentUploader.setStatusWidget(status);
 	}
 
 	/* (non-Javadoc)
@@ -112,7 +106,7 @@ public class MultiUploader extends Composite implements IUploader {
 	 */
 	public void setOnChangeHandler(ValueChangeHandler<IUploader> handler) {
 		onChange = handler;
-		current.setOnChangeHandler(handler);
+		currentUploader.setOnChangeHandler(handler);
 	}
 
 	/* (non-Javadoc)
@@ -127,6 +121,7 @@ public class MultiUploader extends Composite implements IUploader {
 	 */
 	public void setOnFinishHandler(ValueChangeHandler<IUploader> handler) {
 		onFinish = handler;
+		currentUploader.setOnFinishHandler(onFinish);
 	}
 
 	/* (non-Javadoc)
@@ -134,7 +129,7 @@ public class MultiUploader extends Composite implements IUploader {
 	 */
 	public void setValidExtensions(String[] ext) {
 		validExtensions = ext;
-		current.setValidExtensions(ext);
+		currentUploader.setValidExtensions(ext);
 	}
 
 	/* (non-Javadoc)
@@ -142,7 +137,7 @@ public class MultiUploader extends Composite implements IUploader {
 	 */
 	public void setServletPath(String path) {
 		servletPath = path;
-		current.setServletPath(path);
+		currentUploader.setServletPath(path);
 	}
 
 	/* (non-Javadoc)
@@ -150,21 +145,22 @@ public class MultiUploader extends Composite implements IUploader {
 	 */
 	public void avoidRepeatFiles(boolean avoidRepeatFiles) {
 		avoidRepeat = avoidRepeatFiles;
-		current.avoidRepeatFiles(avoidRepeat);
+		currentUploader.avoidRepeatFiles(avoidRepeat);
 	}
 
 	/* (non-Javadoc)
 	 * @see gwtupload.client.HasJsData#getData()
 	 */
 	public JavaScriptObject getData() {
-		return lastData;
+	  return lastUploader != null ? lastUploader.getData() : null;
 	}
 
 	/* (non-Javadoc)
 	 * @see gwtupload.client.IUploader#fileUrl()
 	 */
 	public String fileUrl() {
-		return lastFileUrl;
+	  System.out.println("fileUrl");
+    return lastUploader != null ? lastUploader.fileUrl() : "";
 	}
 
 
@@ -172,39 +168,35 @@ public class MultiUploader extends Composite implements IUploader {
 	 * @see gwtupload.client.IUploader#submit()
 	 */
 	public void submit() {
-		current.submit();
+		currentUploader.submit();
 	}
 
 	/* (non-Javadoc)
 	 * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
 	 */
-	@Override
 	public void add(Widget w) {
-		current.add(w);
+		currentUploader.add(w);
 	}
 
 	/* (non-Javadoc)
 	 * @see com.google.gwt.user.client.ui.HasWidgets#clear()
 	 */
-	@Override
   public void clear() {
-		current.clear();
+		currentUploader.clear();
   }
 
 	/* (non-Javadoc)
 	 * @see com.google.gwt.user.client.ui.HasWidgets#iterator()
 	 */
-	@Override
   public Iterator<Widget> iterator() {
-		return current.iterator();
+		return currentUploader.iterator();
   }
 
 	/* (non-Javadoc)
 	 * @see com.google.gwt.user.client.ui.HasWidgets#remove(com.google.gwt.user.client.ui.Widget)
 	 */
-	@Override
   public boolean remove(Widget w) {
-		return current.remove(w);
+		return currentUploader.remove(w);
   }
 	
 }
