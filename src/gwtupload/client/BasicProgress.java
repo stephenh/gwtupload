@@ -51,7 +51,7 @@ public class BasicProgress implements IUploadStatus {
 	 */
 	protected Label fileNameLabel = new Label();
 	/**
-	 * Labed with the progress status 
+	 * Label with the progress status 
 	 */
 	protected Label statusLabel = new Label();
 	

@@ -43,18 +43,12 @@ public class IncubatorUploadProgress extends BasicProgress {
 		prg.setTextFormatter(formater);
 	}
 
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploadStatus#setProgress(int, int)
-	 */
 	@Override
 	public void setPercent(int percent) {
 		super.setPercent(percent);
 		prg.setProgress(percent);
 	}
 
-	/* (non-Javadoc)
-	 * @see gwtupload.client.BaseProgress#newInstance()
-	 */
 	@Override
 	public IUploadStatus newInstance() {
 		return new IncubatorUploadProgress();

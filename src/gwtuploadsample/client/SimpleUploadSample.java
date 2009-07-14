@@ -26,7 +26,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-
+import com.google.gwt.user.client.ui.TextArea;
 
 /**
  *  * <p>
@@ -43,6 +43,9 @@ public class SimpleUploadSample implements EntryPoint {
 
 	public void onModuleLoad() {
 		MultiUploader uploader = new MultiUploader(new BasicProgress());
+		TextArea a = new TextArea();
+		a.setName("textarea_");
+		uploader.add(a);
 		uploader.setOnFinishHandler(onFinishHandler);
 		RootPanel.get().add(uploader);
 		RootPanel.get().add(panelImages);

@@ -1,82 +1,170 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <project name="GWTUpload" default="build" basedir=".">
-  <!-- Configure path to GWT SDK -->
-  <property name="gwt.sdk" location="/mirai/SOFT/j2ee/gwt/gwt-linux-1.6.4" />
+	<property name="project" value="gwtupload" />
+	<property name="jsproject" value="jsupload" />
+	<property name="version" value="0.2.0" />
 
-  <path id="project.class.path">
-    <pathelement location="war/WEB-INF/classes"/>
-    <fileset dir="${gwt.sdk}" includes="gwt-*.jar"/>
-    <fileset dir="lib" includes="**/*.jar"/>
-    <pathelement location="src"/>
-  </path>
 
-  <target name="libs" description="Copy libs to WEB-INF/lib">
-    <mkdir dir="war/WEB-INF/lib" />
-    <copy todir="war/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet.jar" />
-  	<copy todir="war/WEB-INF/lib">
-  	    <fileset dir="lib" includes="common*.jar"/>
-  	    <fileset dir="lib" includes="log4*.jar"/>
-    </copy>
-  </target>
+	<property name="tmp.dir" value="${project}-${version}" />
+	<property name="jar.file" value="${project}-${version}.jar" />
+	<property name="class.dir" value="${tmp.dir}/classes" />
+	<property name="doc.dir" value="${tmp.dir}/doc" />
+	<property name="war.dir" value="${tmp.dir}/war" />
+	<property name="lib.dir" value="${tmp.dir}/lib" />
+	<property name="src.dir" value="${tmp.dir}/src" />
 
-  <target name="javac" depends="libs" description="Compile java source">
-    <mkdir dir="war/WEB-INF/classes"/>
-    <javac srcdir="src" includes="**" encoding="utf-8"
-        destdir="war/WEB-INF/classes"
-        source="1.5" target="1.5" nowarn="true"
-        debug="true" debuglevel="lines,vars,source">
-      <classpath refid="project.class.path"/>
-    </javac>
-    <copy todir="war/WEB-INF/classes">
-      <fileset dir="src" excludes="**/*.java"/>
-    </copy>
-  </target>
+	<property name="gwt.sdk" location="/mirai/SOFT/j2ee/gwt/gwt-linux-1.6.4" />
 
-  <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-    <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
-  <target name="gwtc" depends="javac" description="GWT compile to JavaScript">
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
-      <jvmarg value="-Xmx256M"/>
-      <arg value="gwtuploadsample.SimpleUploadSample"/>
-    </java>
-<!--
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
-      <jvmarg value="-Xmx256M"/>
-      <arg value="gwtuploadsample.IncubatorUploadSample"/>
-    </java>
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
-      <jvmarg value="-Xmx256M"/>
-      <arg value="gwtuploadsample.ChismesUploadSample"/>
-    </java>
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
-      <jvmarg value="-Xmx256M"/>
-      <arg value="jsupload.JsUpload"/>
-    </java>
--->
-  </target>
+	<path id="project.class.path">
+		<pathelement location="war/WEB-INF/classes" />
+		<fileset dir="${gwt.sdk}" includes="gwt-*.jar" />
+		<fileset dir="lib" includes="**/*.jar" />
+		<pathelement location="src" />
+	</path>
 
-  <target name="hosted" depends="javac" description="Run hosted mode">
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.HostedMode">
-      <classpath>
-        <pathelement location="src"/>
-        <path refid="project.class.path"/>
-      </classpath>
-      <jvmarg value="-Xmx256M"/>
-      <arg value="-startupUrl"/>
-      <arg value="GWTUpload.html"/>
-      <arg value="gwtupload.GWTUpload"/>
-    </java>
-  </target>
+	<target name="libs" description="Copy libs to WEB-INF/lib">
+		<mkdir dir="war/WEB-INF/lib" />
+		<copy todir="war/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet.jar" />
+		<copy todir="war/WEB-INF/lib">
+			<fileset dir="lib" includes="common*.jar" />
+			<fileset dir="lib" includes="log4*.jar" />
+		</copy>
+	</target>
 
-  <target name="build" depends="gwtc" description="Build this project" />
+	<target name="javac" depends="libs" description="Compile java source">
+		<mkdir dir="war/WEB-INF/classes" />
+		<javac srcdir="src" includes="**" encoding="utf-8" destdir="war/WEB-INF/classes" source="1.5" target="1.5" nowarn="true" debug="true" debuglevel="lines,vars,source">
+			<classpath refid="project.class.path" />
+		</javac>
+		<copy todir="war/WEB-INF/classes">
+			<fileset dir="src" excludes="**/*.java" />
+		</copy>
+	</target>
 
-  <target name="war" depends="build" description="Create a war file">
-    <zip destfile="GWTUpload.war" basedir="war"/>
-  </target>
+	<!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+	<!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+	<target name="gwtc" depends="javac" description="GWT compile to JavaScript">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+			<jvmarg value="-Xmx256M" />
+			<arg value="gwtuploadsample.SimpleUploadSample" />
+		</java>
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+			<jvmarg value="-Xmx256M" />
+			<arg value="gwtuploadsample.IncubatorUploadSample" />
+		</java>
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+			<jvmarg value="-Xmx256M" />
+			<arg value="gwtuploadsample.ChismesUploadSample" />
+		</java>
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+			<jvmarg value="-Xmx256M" />
+			<arg value="jsupload.JsUpload" />
+			<arg value="-style" />
+			<arg value="PRETTY" />
+		</java>
+	</target>
 
-  <target name="clean" description="Cleans this project">
-    <delete dir="war/WEB-INF/classes" failonerror="false" />
-    <delete dir="war/gwtupload" failonerror="false" />
-    <delete dir="war/WEB-INF/lib" failonerror="false" />
-  </target>
+	<target name="hosted" depends="javac" description="Run hosted mode">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.HostedMode">
+			<classpath>
+				<pathelement location="src" />
+				<path refid="project.class.path" />
+			</classpath>
+			<jvmarg value="-Xmx256M" />
+			<arg value="-startupUrl" />
+			<arg value="ChismesUploadSample.html" />
+			<arg value="gwtuploadsample.ChismesUploadSample" />
+		</java>
+	</target>
+
+	<target name="javadoc" description="Generates de Java documentation files for the basic library">
+		<delete dir="${doc.dir}" />
+		<mkdir dir="${doc.dir}" />
+		<javadoc sourcepath="src" packagenames="gwtupload.*" destdir="${doc.dir}/library" 
+			encoding="UTF-8" charset="UTF-8" author="true" version="true" windowtitle="GWTUpload"
+			nohelp="true" nodeprecatedlist="true">
+			<classpath>
+				<pathelement location="src" />
+				<path refid="project.class.path" />
+			</classpath>
+		</javadoc>
+		<javadoc sourcepath="src" packagenames="gwtupload.*,gwtuploadsample.*,jsupload.*" destdir="${doc.dir}/all" 
+			encoding="UTF-8" charset="UTF-8" author="true" version="true" windowtitle="GWTUpload"
+			nohelp="true" nodeprecatedlist="true">
+			<classpath>
+				<pathelement location="src" />
+				<path refid="project.class.path" />
+			</classpath>
+			<!-- excludepackagenames="${sample.module}.*"  -->
+			<!-- use="false" nohelp="true" nonavbar="true" nodeprecatedlist="true" -->
+		</javadoc>
+	</target>
+
+	<target name="jar" description="Generates the jar distribution file">
+		<delete dir="${class.dir}" />
+		<delete file="${tmp.dir}.jar" />
+		<mkdir dir="${class.dir}" />
+		<javac srcdir="src" excludes="gwtuploadsample/**, jsupload/**" destdir="${class.dir}" deprecation="off" debug="on" fork="true" encoding="UTF-8">
+			<classpath refid="project.class.path" />
+		</javac>
+		<copy todir="${class.dir}">
+			<fileset dir="src" excludes="gwtuploadsample/**, jsupload/**, log4j.properties" />
+		</copy>
+		<copy todir="${class.dir}" file="LICENSE" />
+		<jar jarfile="${tmp.dir}.jar" basedir="${class.dir}" />
+	</target>
+	
+	<target name="js" depends="war" description="Generates JS library">
+		<jar jarfile="${jsproject}-${version}.zip" basedir="war/jsupload.JsUpload" />
+	</target>
+
+	<target name="zip" depends="jar, javadoc, war, js" description="Generates the distibution file that includes the source, license, docs, and jar">
+		<delete file="${tmp.dir}.zip" />
+		<delete dir="${class.dir}"/>
+		<delete dir="${war.dir}"/>
+		<delete dir="${lib.dir}"/>
+		<copy todir="${lib.dir}">
+			<fileset dir="lib" />
+		</copy>
+		<copy todir="${src.dir}">
+			<fileset dir="src" />
+		</copy>
+		<mkdir dir="${war.dir}/WEB-INF" />
+		<copy file="war/WEB-INF/web.xml" todir="${war.dir}/WEB-INF" />
+		<copy file="war/index.html" todir="${war.dir}" />
+		<copy todir="${tmp.dir}">
+			<fileset dir=".">
+			<include name="${tmp.dir}.jar" />
+			<include name="${tmp.dir}.war" />
+ 			<include name="${jsproject}-${version}.zip" />
+			<include name="LICENSE" />
+            <include name="README.txt" />
+			<include name="build.xml" />
+   		  </fileset>	
+		</copy>
+		<echo message="Creating distribution file: ${tmp.dir}.zip" />
+		<exec dir="." executable="zip">
+			<arg line="-q -r ${tmp.dir}.zip ${tmp.dir}" />
+		</exec>
+	</target>
+
+	<target name="build" depends="gwtc" description="Build this project" />
+
+	<target name="war" depends="build" description="Create a war file">
+		<zip destfile="${tmp.dir}.war" basedir="war" />
+	</target>
+
+	<target name="clean" description="Cleans this project">
+		<delete dir="${tmp.dir}" />
+		<delete file="${tmp.dir}.jar"/>
+		<delete file="${tmp.dir}.war"/>
+		<delete file="${tmp.dir}.zip"/>
+		<delete file="${jsproject}-${version}.zip"/>
+		<delete dir="war/WEB-INF/classes" failonerror="false" />
+		<delete dir="war/gwtuploadsample.IncubatorUploadSample" failonerror="false" />
+		<delete dir="war/gwtuploadsample.ChismesUploadSample" failonerror="false" />
+		<delete dir="war/gwtuploadsample.SimpleUploadSample" failonerror="false" />
+		<delete dir="war/jsupload.JsUpload" failonerror="false" />
+		<delete dir="war/WEB-INF/lib" failonerror="false" />
+	</target>
 </project>

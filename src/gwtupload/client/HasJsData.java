@@ -24,6 +24,8 @@ import com.google.gwt.core.client.JavaScriptObject;
  * with information about the instance.
  * </p>
  * 
+ * It is useful in exported classes using gwt-exporter library.
+ * 
  * @author Manolo Carrasco Moñino
  * 
  *

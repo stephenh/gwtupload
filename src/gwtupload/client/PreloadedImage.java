@@ -127,7 +127,6 @@ public class PreloadedImage extends Image implements HasJsData {
 	 * Get the real size of the image. 
 	 * It is calculated when the image loads
 	 * 
-	 * @return
 	 */
 	public int getRealWidth() {
 		return realWidth;
@@ -137,7 +136,6 @@ public class PreloadedImage extends Image implements HasJsData {
 	 * Get the real size of the image. 
 	 * It is calculated when the image loads
 	 * 
-	 * @return
 	 */
 	public int getRealHeight() {
 		return realHeight;

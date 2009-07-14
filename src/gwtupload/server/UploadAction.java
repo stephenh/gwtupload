@@ -10,12 +10,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 
-/**
- * Abstract class used to manipulate the files and data received in the server side.
+/** 
+ * <p>Abstract class used to manipulate the data received in the server side.</p>
  * 
- * The user has to implement the method doAction which has a list with the FileItems
- * present in session. Each FileItem represents a file or a form parameter. 
- * After this method is called, the FileItem is deleted from the server.
+ * The user has to implement the method doAction which receives a list of the FileItems
+ * sent to the server. Each FileItem represents a file or a form field. 
+ * 
+ * <p>Note: After this method is called, the FileItem is deleted from the session.</p>
  * 
  * @author Manolo Carrasco Moñino
  *
@@ -24,9 +25,10 @@ public abstract class UploadAction extends UploadServlet {
     private static final long serialVersionUID = -6790246163691420791L;
 
     /**
-     * This method is called after all data is received in the server and then 
-     * all temporary upload files will be deleted. 
-     * So the user has the responsability of saving the files before. 
+     * This method is called when all data is received in the server and after this call 
+     * all temporary upload files will be deleted. So the user is responsible for saving the files before.
+     * 
+     * The method has to return an error string in the case of any error or a null one in the case of success.
      * 
      * @param sessionFiles
      * @return a message that is sent to the client.
@@ -48,13 +50,13 @@ public abstract class UploadAction extends UploadServlet {
                     fileItem.delete();
             request.getSession().removeAttribute(ATTR_FILES);
         } else {
-            message = "<error>" + error + "</error>";
+            message = "<" + TAG_ERROR +	">" + error + "</" + TAG_ERROR +	">";
         }
         writeResponse(request, response, message);
     }
 
     /**
-     * look for a field value present in the FileItem collection
+     * Returns the value of a text field present in the FileItem collection 
      * 
      * @param sessionFiles collection of fields sent by the client 
      * @param fieldName field name 
@@ -66,7 +68,7 @@ public abstract class UploadAction extends UploadServlet {
     }
 
     /**
-     * look for a file present in the FileItem collection
+     * Returns the content of a file as an InputStream, present in the FileItem collection  
      * 
      * @param sessionFiles collection of fields & files sent by the client 
      * @param fieldName field name for this file 

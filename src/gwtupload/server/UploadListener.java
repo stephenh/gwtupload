@@ -9,7 +9,7 @@ import org.apache.commons.fileupload.ProgressListener;
  * @author Manolo Carrasco Moñino
  * 
  */
-public class UploadListener implements ProgressListener {
+class UploadListener implements ProgressListener {
 
 	private volatile long bytesRead = 0L, contentLength = 0L, item = 0L;
 

@@ -25,24 +25,52 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.log4j.Logger;
 
 /**
- * Upload servlet.
+ * <p>Upload servlet for the GwtUpload library.</p>
  * 
+ * For customizable application actions, it's better to extend the UloadAction class instead of this.  
+ * 
+ * <p><b>Example of web.xml</b></p>
+ * <pre>
+  &lt;context-param>
+    &lt;!-- max size of the upload request -->
+    &lt;param-name>maxSize&lt;/param-name>
+    &lt;param-value>3145728&lt;/param-value>
+  &lt;/context-param>
+  
+  &lt;context-param>
+    &lt;!-- useful in development mode to see the upload progress bar in fast networks -->
+    &lt;param-name>slowUploads&lt;/param-name>
+    &lt;param-value>true&lt;/param-value>
+  &lt;/context-param>
+
+  &lt;servlet>
+    &lt;servlet-name>uploadServlet&lt;/servlet-name>
+    &lt;servlet-class>gwtupload.server.UploadServlet&lt;/servlet-class>
+  &lt;/servlet>
+  
+  &lt;servlet-mapping>
+    &lt;servlet-name>uploadServlet&lt;/servlet-name>
+    &lt;url-pattern>*.gupld&lt;/url-pattern>
+  &lt;/servlet-mapping>
+  
+  
+ * </pre>  
  * @author Manolo Carrasco Moñino
  *
  */
 public class UploadServlet extends HttpServlet implements Servlet {
 
-	public static final String PARAM_FILENAME = "filename";
+	protected static final String PARAM_FILENAME = "filename";
 
-	private static String PARAM_SHOW = "show";
+	protected static String PARAM_SHOW = "show";
 
-	private static String PARAM_CONTENT = "content";
+	protected static String PARAM_CONTENT = "content";
 
-	private static final String TAG_FINISHED = "finished";
+	protected static final String TAG_FINISHED = "finished";
 
-	private static final String TAG_ERROR = "error";
+	protected static final String TAG_ERROR = "error";
 
-	public static final String ATTR_FILES = "FILES";
+	protected static final String ATTR_FILES = "FILES";
 
 	private static final String ATTR_LISTENER = "LISTENER";
 
@@ -50,14 +78,17 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	private static final long serialVersionUID = 2740693677625051632L;
 
-	protected long maxSize = (5 * 1024 * 1024);
+	private long maxSize = (5 * 1024 * 1024);
 
-	protected static Logger logger = Logger.getLogger(UploadServlet.class);
+	private static Logger logger = Logger.getLogger(UploadServlet.class);
 
-	protected static String XML_TPL = "" + "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<response>\n" + "%%MESSAGE%%" + "</response>\n";
+	private static String XML_TPL = "" + "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<response>\n" + "%%MESSAGE%%" + "</response>\n";
 
 	/**
 	 * Read configurable parameters during the initialization.
+	 *
+	 * 
+	 * 
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
@@ -75,9 +106,9 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	/**
 	 *  The get method is used to monitor the uploading process 
-	 *  and for getting the content of the uploaded files
+	 *  or to get the content of the uploaded files
 	 */
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		if (request.getParameter(PARAM_SHOW) != null) {
 			getFileContent(request, response);
 		} else {
@@ -91,7 +122,12 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	/**
-	 *  The post method is used to receive the file and save it into filesystem
+	 *  The post method is used to receive the file and save it in the user session.
+	 *  It returns a very XML page that the client receives in an iframe.
+	 *  
+	 *  The content of this xml document has a tag error in the case of error in the upload process or the 
+	 *  string OK in the case of success.
+	 *  
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String error;
@@ -103,6 +139,8 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		writeResponse(request, response, error != null ? "<error>" + error + "</error>" : "OK");
 	}
 
+	// TODO: this code seems to work in google app-engine
+	//
 	//    public void doMPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 	//        try {
 	//            HttpSession session = req.getSession();
@@ -155,6 +193,11 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	//            throw new ServletException(ex);
 	//        }
 	//    }
+	
+	/**
+	 * This method parses the submit action, put in session a listener where the progress status is updated, and 
+	 * eventually stores the received data in the user session. 
+	 */
 	protected String parsePostRequest(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		HttpSession session = request.getSession();
     session.removeAttribute(ATTR_ERROR);
@@ -239,14 +282,14 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	/**
-	 * Send the XML response to the client
+	 * Writes a XML response to the client
 	 * 
 	 * @param request
 	 * @param response
 	 * @param message 
 	 * @throws IOException
 	 */
-	public static void writeResponse(HttpServletRequest request, HttpServletResponse response, String message) throws IOException {
+	protected static void writeResponse(HttpServletRequest request, HttpServletResponse response, String message) throws IOException {
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
 		String xml = XML_TPL.replaceAll("%%MESSAGE%%", message);
@@ -255,13 +298,13 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		out.close();
 	}
 
-	protected static Map<String, String> getUploadStatus(HttpServletRequest request) {
+	private static Map<String, String> getUploadStatus(HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		String filename = request.getParameter(PARAM_FILENAME);
 		return getUploadStatus(session, filename);
 	}
 
-	protected static Map<String, String> getUploadStatus(HttpSession session, String filename) {
+	private static Map<String, String> getUploadStatus(HttpSession session, String filename) {
 	  
 		Map<String, String> ret = new HashMap<String, String>();
 		Long currentBytes = null;
@@ -310,7 +353,16 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		return ret;
 	}
 
-	public static boolean getFileContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	/**
+	 * 
+	 * Write the response server with the content of an uploaded file. Setting the appropriate content-type
+	 * 
+	 * @param request
+	 * @param response
+	 * @return true in the case of success
+	 * @throws IOException
+	 */
+	private static boolean getFileContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String parameter = request.getParameter(PARAM_SHOW);
 		String contentRegexp = request.getParameter(PARAM_CONTENT);
     logger.debug(request.getSession().getId() + " UPLOAD, getFileContent: " + parameter + " " + contentRegexp);
@@ -326,7 +378,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 					if (contentRegexp != null && contentRegexp.length() > 0 && !i.getContentType().matches(contentRegexp))
 						return false;
 					response.setContentType(i.getContentType());
-					writeItemContent(i, response.getOutputStream());
+					copyFromInputToOutput(i, response.getOutputStream());
 					return true;
 				}
 			}
@@ -334,7 +386,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		return false;
 	}
 
-	private static void writeItemContent(FileItem item, OutputStream out) throws IOException {
+	private static void copyFromInputToOutput(FileItem item, OutputStream out) throws IOException {
 		InputStream in = item.getInputStream();
 		byte[] a = new byte[2048];
 		while (in.read(a) != -1) {
@@ -345,16 +397,31 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		out.close();
 	}
 
-	public static FileItem findItemByFieldName(Vector<FileItem> sessionFiles, String attribute) {
+	/**
+	 * Utility method to get a fileItem from a vector using the attribute name
+	 * 
+	 * @param sessionFiles
+	 * @param attrName
+	 * @return fileItem found or null
+	 */
+	public static FileItem findItemByFieldName(Vector<FileItem> sessionFiles, String attrName) {
 		if (sessionFiles != null) {
 			for (FileItem fileItem : sessionFiles) {
-				if (fileItem.getFieldName().equalsIgnoreCase(attribute))
+				if (fileItem.getFieldName().equalsIgnoreCase(attrName))
 					return fileItem;
 			}
 		}
 		return null;
 	}
 
+	/**
+	 * Utility method to get a fileItem from a vector using the file name
+	 * It only returns fileItems that are uploaded files.
+	 *
+	 * @param sessionFiles
+	 * @param fileName
+	 * @return fileItem of the file found or null
+	 */
 	public static FileItem findItemByFileName(Vector<FileItem> sessionFiles, String fileName) {
 		if (sessionFiles != null) {
 			for (FileItem fileItem : sessionFiles) {
@@ -365,6 +432,12 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		return null;
 	}
 
+	/**
+	 * Simple method to get a string from the exception stack 
+	 *
+	 * @param e
+	 * @return string
+	 */
 	protected static String stackTraceToString(Exception e) {
 		StringWriter writer = new StringWriter();
 		e.printStackTrace(new PrintWriter(writer));

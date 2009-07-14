@@ -475,7 +475,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 
 	/**
 	 * Return the name of the file input
-	 * @return
 	 */
 	public String getFilename() {
 		return fileInput.getName();
@@ -483,8 +482,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 
 	/**
 	 * Get the status progress used
-	 * 
-	 * @return
 	 */
 	public IUploadStatus getStatusWidget() {
 		return statusWidget;

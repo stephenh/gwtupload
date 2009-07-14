@@ -1,33 +1,45 @@
 #!/usr/bin/perl -w
-##
-## Copyright 2002 Manolo Carrasco Moñino. (manuel_carrasco at users.sourceforge.net)
-## http://code.google.com/p/gwtupload
-##
-## Licensed under the Apache License, Version 2.0 (the "License"); you may not
-## use this file except in compliance with the License. You may obtain a copy of
-## the License at
-##
-## http://www.apache.org/licenses/LICENSE-2.0
-##
-## Unless required by applicable law or agreed to in writing, software
-## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-## License for the specific language governing permissions and limitations under
-## the License.
-##
+#
+# Copyright 2009 Manolo Carrasco Moñino. (manuel_carrasco at users.sourceforge.net)
+# http://code.google.com/p/gwtupload
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+#
 
 ############################################################################################
 ## Server script written in perl for the GWTUpload library.
 ##
 ## You have to put this file in a cgi-bin enabled folder of your web server.
 ##
-## Thi script requires perl, CGI and Digest::MD5, which are installed by default in
+## This script requires perl, CGI and Digest::MD5, which are installed by default in
 ## most linux/unix distributions.
 ##
-## It receives a POST web request, updates a status file with the progress, and stores
-## all received form elements in a temporary folder for the user session.
+## When it receives a POST request, it updates periodically a status file with the progress, 
+## and stores all received form elements in a temporary folder for the user session.
 ##
 ## When it receives GET requests, returns a xml response with the progess information.
+##
+## When the GET request, has the parameter show=xxxx, it return the content of the form
+## element whose name is xxxx. If the element is a file it sends a response with the adequate
+## content-type, otherwise it returns a xml response with the element's value.
+##
+## The files are stored in the folder /tmp/uploader/xxxx whre xxxx is the session id (cookie CGISESSID)
+## For each form element received, it stores a file /tmp/uploader/xxxx/yyyy.info where yyyy is 
+## the name of the element. In the case of file elements, it puts the content of the file in
+## /tmp/uploader/xxxx/yyyy.bin. 
+##
+## This script doesn't clean /tmp/uploader files. So the application responsible of handling
+## this files has to clean them.
 ############################################################################################
 
 use CGI;

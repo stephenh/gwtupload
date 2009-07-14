@@ -6,8 +6,10 @@ _The library has been developed using java and exported to javascript using gwt-
 
 = Goals =
 
-Usage of the library without the need of knowing anything about gwt and java.
-The generated javascript code is minimized, optimized and obfuscated and works fine in all Gwt supported browsers. 
+ * The library can be used directly, without the need of knowing anything about gwt and java.
+ * The generated javascript code is minimized, optimized, obfuscated, and doesn't depend on any other library.
+ * The library works fine in all browsers supported by gwt.
+ * The library provides a simple cgi-bin written in perl that can be used in most web servers.  
 
 = Setup instructions =
 

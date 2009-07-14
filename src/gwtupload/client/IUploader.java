@@ -88,7 +88,7 @@ public interface IUploader extends HasJsData, HasWidgets {
 	 * In multiuploader panels, this method has to return the link to the most recent
 	 * uploaded file
 	 * 
-	 * @return
+	 * @return string 	
 	 */
 	public String fileUrl();
 	
