@@ -53,3 +53,10 @@
   margin: 0px;
   color: grey;
 }
+
+.gwt-PopupPanel {
+  -moz-border-radius-bottomleft: 6px;
+  -moz-border-radius-bottomright: 6px;
+  -moz-border-radius-topleft: 6px;
+  -moz-border-radius-topright: 6px; 
+}

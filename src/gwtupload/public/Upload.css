@@ -35,3 +35,8 @@
   /* It doesn't work in IE */
   text-decoration: blink;
 }
+
+.gwt-PopupPanel {
+    border: 2px groove #F6A828;
+    padding: 10px;
+}

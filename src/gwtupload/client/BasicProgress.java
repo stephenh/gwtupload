@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
  * @author Manolo Carrasco Moñino
  * 
  * It has a simple progress label that can be overwritten to
- * create more comples widgets.  
+ * create more complex widgets.  
  * 
  */
 public class BasicProgress implements IUploadStatus {

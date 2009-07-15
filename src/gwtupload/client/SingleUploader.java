@@ -39,7 +39,7 @@ public class  SingleUploader extends Uploader implements HasText {
 	Button button = null;
 	
 	public SingleUploader() {
-		this(new BasicProgress());
+		this(new BasicModalProgress());
 	}
 	
 	/**

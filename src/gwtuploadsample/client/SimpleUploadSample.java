@@ -16,17 +16,15 @@
  */
 package gwtuploadsample.client;
 
-import gwtupload.client.BasicProgress;
 import gwtupload.client.IUploader;
-import gwtupload.client.MultiUploader;
 import gwtupload.client.PreloadedImage;
+import gwtupload.client.SingleUploader;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextArea;
 
 /**
  *  * <p>
@@ -42,10 +40,7 @@ public class SimpleUploadSample implements EntryPoint {
 	FlowPanel panelImages = new FlowPanel();
 
 	public void onModuleLoad() {
-		MultiUploader uploader = new MultiUploader(new BasicProgress());
-		TextArea a = new TextArea();
-		a.setName("textarea_");
-		uploader.add(a);
+		SingleUploader uploader = new SingleUploader();
 		uploader.setOnFinishHandler(onFinishHandler);
 		RootPanel.get().add(uploader);
 		RootPanel.get().add(panelImages);

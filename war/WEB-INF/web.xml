@@ -17,7 +17,7 @@
 
   <servlet>
     <servlet-name>uploadServlet</servlet-name>
-    <servlet-class>gwtuploadsample.SampleServlet</servlet-class>
+    <servlet-class>gwtupload.server.UploadServlet</servlet-class>
   </servlet>
   
   <servlet-mapping>
