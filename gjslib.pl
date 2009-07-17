@@ -2,6 +2,7 @@
 
 use Data::Dumper;
 use strict;
+use File::Basename;
 
 ###
 ###  This 'ugly' perl script creates the wiki page for JsUpload
@@ -17,6 +18,8 @@ my @classes = ('Upload', 'PreloadImage');
 my $constants = 'Const';
 # Html file with javascript sample code
 my $htmlsample = "src/jsupload/public/JsUpload.html";
+# Cgi-bin script
+my $cgifile = "src/jsupload/public/jsupload.cgi.pl";
 # Location of the sample aplication
 my $sample_location = "http://gwtupload.alcala.org/jsupload.JsUpload/JsUpload.html";
 # Wiki template with library description
@@ -26,10 +29,12 @@ my $wikitpl = "src/jsupload/public/JsUpload.wiki.txt";
 ######## MAIN
 my %const = processConst($constants);
 my $txt = docheader();
+$txt .= "= Library API =\n";
 $txt .= printConst("Const");
 foreach my $cl (@classes) {
    $txt .= printClass($cl, processFile($cl));
 }
+$txt .= doccgi();
 $txt .= docsample();
 $txt .= "*Author:* _" . $author. "_\n\n";
 my $date = `date`;
@@ -279,6 +284,18 @@ sub docsample {
    }
    close(F);
    $ret = "= Sample Code =\nYou can view this example  [$sample_location here]\n{{{\n$ret\n}}}\n";
+   return $ret;
+}
+
+sub doccgi {
+   my $ret = "";
+   open(F, $cgifile) || die $! . " $cgifile" ;
+   while(<F>) {
+   	  $ret .= "$1\n" if (/^## \*\s*(.*)$/);
+   }
+   close(F);
+   my $name = basename($cgifile);
+   $ret = "= Server script ($name) =\n$ret\n";
    return $ret;
 }
 exit;

@@ -17,29 +17,30 @@
 #
 
 ############################################################################################
-## Server script written in perl for the GWTUpload library.
-##
-## You have to put this file in a cgi-bin enabled folder of your web server.
-##
-## This script requires perl, CGI and Digest::MD5, which are installed by default in
-## most linux/unix distributions.
-##
-## When it receives a POST request, it updates periodically a status file with the progress, 
-## and stores all received form elements in a temporary folder for the user session.
-##
-## When it receives GET requests, returns a xml response with the progess information.
-##
-## When the GET request, has the parameter show=xxxx, it return the content of the form
-## element whose name is xxxx. If the element is a file it sends a response with the adequate
-## content-type, otherwise it returns a xml response with the element's value.
-##
-## The files are stored in the folder /tmp/uploader/xxxx whre xxxx is the session id (cookie CGISESSID)
-## For each form element received, it stores a file /tmp/uploader/xxxx/yyyy.info where yyyy is 
-## the name of the element. In the case of file elements, it puts the content of the file in
-## /tmp/uploader/xxxx/yyyy.bin. 
-##
-## This script doesn't clean /tmp/uploader files. So the application responsible of handling
-## this files has to clean them.
+## * The provided server script has been written in perl for the GWTUpload/JSUpload library.
+## *
+## * This script requires perl, CGI and Digest::MD5, which are installed by default in
+## * most linux/unix distributions.
+## *
+## * You have to put this file in a script/cgi-bin enabled folder of your web server, and
+## * you have to set the rigth execution permissions.
+## *
+## * When it receives a POST request, it updates periodically a status file with the progress, 
+## * and stores all received form elements in a temporary folder for the user session.
+## *
+## * When it receives GET requests, returns a xml response with the progess information.
+## *
+## * When the GET request, has the parameter show=xxxx, it returns the content of the form
+## * element whose name is xxxx. If the element is a file it sends a response with the adequate
+## * content-type, otherwise it returns a xml response with the element's value.
+## *
+## * The files are stored in the folder /tmp/uploader/xxxx where xxxx is the session id (cookie CGISESSID)
+## * For each form element received, it stores a file /tmp/uploader/xxxx/yyyy.info where yyyy is 
+## * the name of the element. In the case of file elements, it puts the content of the file in
+## * /tmp/uploader/xxxx/yyyy.bin. 
+## *
+## * This script doesn't clean /tmp/uploader files. So the application responsible of handling
+## * this files has to clean them.
 ############################################################################################
 
 use CGI;

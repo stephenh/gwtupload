@@ -45,4 +45,4 @@ _The library has been developed using java and exported to javascript using gwt-
      </script>
  }}}
 
-= Library API =
+
