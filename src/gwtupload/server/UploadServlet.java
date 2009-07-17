@@ -139,61 +139,6 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		writeResponse(request, response, error != null ? "<error>" + error + "</error>" : "OK");
 	}
 
-	// TODO: this code seems to work in google app-engine
-	//
-	//    public void doMPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-	//        try {
-	//            HttpSession session = req.getSession();
-	//
-	//            ServletFileUpload upload = new ServletFileUpload();
-	//            upload.setSizeMax(50000);
-	//            res.setContentType("text/plain");
-	//            PrintWriter out = res.getWriter();
-	//
-	//            GWTCUListener listener = new GWTCUListener();
-	//            logger.debug(session.getId() + " UPLOAD servlet putting listener in session");
-	//            session.setAttribute(ATTR_LISTENER, listener);
-	//            upload.setProgressListener(listener);
-	//
-	//            try {
-	//                FileItemIterator iterator = upload.getItemIterator(req);
-	//                while (iterator.hasNext()) {
-	//                    FileItemStream item = iterator.next();
-	//                    InputStream in = item.openStream();
-	//
-	//
-	//                    if (item.isFormField()) {
-	//                        out.println("Got a form field: " + item.getFieldName());
-	//                    } else {
-	//                        String fieldName = item.getFieldName();
-	//                        String fileName = item.getName();
-	//                        String contentType = item.getContentType();
-	//
-	//                        out.println("--------------");
-	//                        out.println("fileName = " + fileName);
-	//                        out.println("field name = " + fieldName);
-	//                        out.println("contentType = " + contentType);
-	//
-	//                        String fileContents = null;
-	//                        try {
-	//                            fileContents = IOUtils.toString(in);
-	//                            out.println("lenght: " + fileContents.length());
-	//                            out.println(fileContents);
-	//                        } finally {
-	//                            IOUtils.closeQuietly(in);
-	//                        }
-	//
-	//                    }
-	//                }
-	//            } catch (SizeLimitExceededException e) {
-	//                out.println("You exceeded the maximu size (" + e.getPermittedSize() + ") of the file (" + e.getActualSize() + ")");
-	//            }
-	//        } catch (Exception ex) {
-	//
-	//            throw new ServletException(ex);
-	//        }
-	//    }
-	
 	/**
 	 * This method parses the submit action, put in session a listener where the progress status is updated, and 
 	 * eventually stores the received data in the user session. 
