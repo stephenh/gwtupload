@@ -17,6 +17,8 @@ find $C/javadoc -name "*.html" -exec rm '{}' ';'
 cmd="cp -r gwtupload-$V/doc/*   $C/javadoc/"
 echo "Executing: $cmd" && $cmd
 
+find $C -name "*html" | xargs svn propset svn:mime-type text/html
+
 mkdir -p $C/mavenrepo/gwtupload/gwtupload/$V
 cp gwtupload-$V.jar $C/mavenrepo/gwtupload/gwtupload/$V
 md5sum gwtupload-$V.jar | awk '{print $1}' > $C/mavenrepo/gwtupload/gwtupload/$V/gwtupload-$V.jar.md5
