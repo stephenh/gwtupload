@@ -30,7 +30,6 @@ public class PreloadedImage extends Image implements HasJsData {
 	
 	ErrorHandler imgErrorListener = new ErrorHandler() {
 		public void onError(ErrorEvent event) {
-			System.out.println("onError en preloaded ");
 			loadHandler.removeHandler();
 			errHandler.removeHandler();
 			Image img = (Image) event.getSource();
@@ -45,7 +44,6 @@ public class PreloadedImage extends Image implements HasJsData {
 
 	LoadHandler imgLoadListener = new LoadHandler() {
 		public void onLoad(LoadEvent event) {
-			System.out.println("onLoad en preloaded ");
 			loadHandler.removeHandler();
 			errHandler.removeHandler();
 			Image img = (Image) event.getSource();

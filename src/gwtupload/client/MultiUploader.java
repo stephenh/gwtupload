@@ -159,7 +159,6 @@ public class MultiUploader extends Composite implements IUploader {
 	 * @see gwtupload.client.IUploader#fileUrl()
 	 */
 	public String fileUrl() {
-	  System.out.println("fileUrl");
     return lastUploader != null ? lastUploader.fileUrl() : "";
 	}
 
