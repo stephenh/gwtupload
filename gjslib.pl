@@ -21,7 +21,7 @@ my $htmlsample = "src/jsupload/public/JsUpload.html";
 # Cgi-bin script
 my $cgifile = "src/jsupload/public/jsupload.cgi.pl";
 # Location of the sample aplication
-my $sample_location = "http://gwtupload.alcala.org/jsupload.JsUpload/JsUpload.html";
+my $sample_location = "http://gwtupload.alcala.org/gupld/jsupload.JsUpload/JsUpload.html";
 # Wiki template with library description
 my $wikitpl = "src/jsupload/public/JsUpload.wiki.txt";
 

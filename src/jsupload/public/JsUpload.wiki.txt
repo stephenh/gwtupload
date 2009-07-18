@@ -32,9 +32,9 @@ _The library has been developed using java and exported to javascript using gwt-
       } 
    });
    }}}
- # Include either the obfuscated or readable version of the javascript library in your html file.  You can use relative paths or full qualified ones because the library has been compiled using cross-site linker. The library takes care loading dynamically the needed images and css.
+ # Include javascript library in your html file.  You can use relative paths or full qualified ones because the library has been compiled using cross-site linker. The library takes care loading dynamically the needed images and css.
  {{{
-     <script language="javascript" src="jsupload.JsUpload.nocache.js"></script>
+     <script language="javascript" src="[...]/jsupload.JsUpload.nocache.js"></script>
  }}}
  # In your html code, define the jsuOnLoad() function wich will be called once the library is loaded.
  {{{

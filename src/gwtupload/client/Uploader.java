@@ -93,7 +93,6 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	public final static String PARAMETER_FILENAME = "filename";
 	public final static String PARAMETER_SHOW = "show";
 
-	public static final String servletBase = ""; //GWT.isScript() ? getSrvltContext() : GWT.getModuleBaseURL();
 	static String STYLE_BUTTON = "upld-button";
 	static String STYLE_INPUT = "upld-input";
 
@@ -333,7 +332,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	private UpdateTimer repeater = new UpdateTimer(this, prgBarInterval);
 	private int reqCounter = 0;
 
-	public String servletPath = servletBase + "servlet.gupld";
+	public String servletPath = "servlet.gupld";
 
 	boolean session = false;
 

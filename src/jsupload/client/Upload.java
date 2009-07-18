@@ -84,8 +84,10 @@ public class Upload implements Exportable {
 
 		ValueChangeHandler<IUploader> onStart = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_START));
 		ValueChangeHandler<IUploader> onFinish = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_FINISH));
+		ValueChangeHandler<IUploader> onChange = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_CHANGE));
 		uploader.setOnStartHandler(onStart);
 		uploader.setOnFinishHandler(onFinish);
+		uploader.setOnChangeHandler(onChange);
 
 		
 		Panel panel = RootPanel.get(jsProp.get(Const.CONT_ID, "NoId"));
