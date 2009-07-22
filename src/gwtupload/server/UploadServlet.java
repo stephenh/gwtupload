@@ -36,43 +36,51 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.log4j.Logger;
 
 /**
- * <p>Upload servlet for the GwtUpload library.</p>
+ * <p>
+ * Upload servlet for the GwtUpload library.
+ * </p>
  * 
- * For customizable application actions, it's better to extend the UloadAction class instead of this.  
+ * For customizable application actions, it's better to extend the UloadAction
+ * class instead of this.
  * 
- * <p><b>Example of web.xml</b></p>
+ * <p>
+ * <b>Example of web.xml</b>
+ * </p>
+ * 
  * <pre>
-  &lt;context-param>
-    &lt;!-- max size of the upload request -->
-    &lt;param-name>maxSize&lt;/param-name>
-    &lt;param-value>3145728&lt;/param-value>
-  &lt;/context-param>
-  
-  &lt;context-param>
-    &lt;!-- useful in development mode to see the upload progress bar in fast networks -->
-    &lt;param-name>slowUploads&lt;/param-name>
-    &lt;param-value>true&lt;/param-value>
-  &lt;/context-param>
-
-  &lt;servlet>
-    &lt;servlet-name>uploadServlet&lt;/servlet-name>
-    &lt;servlet-class>gwtupload.server.UploadServlet&lt;/servlet-class>
-  &lt;/servlet>
-  
-  &lt;servlet-mapping>
-    &lt;servlet-name>uploadServlet&lt;/servlet-name>
-    &lt;url-pattern>*.gupld&lt;/url-pattern>
-  &lt;/servlet-mapping>
-  
-  
- * </pre>  
+ * &lt;context-param&gt;
+ *     &lt;!-- max size of the upload request --&gt;
+ *     &lt;param-name&gt;maxSize&lt;/param-name&gt;
+ *     &lt;param-value&gt;3145728&lt;/param-value&gt;
+ *   &lt;/context-param&gt;
+ *   
+ *   &lt;context-param&gt;
+ *     &lt;!-- useful in development mode to see the upload progress bar in fast networks --&gt;
+ *     &lt;param-name&gt;slowUploads&lt;/param-name&gt;
+ *     &lt;param-value&gt;true&lt;/param-value&gt;
+ *   &lt;/context-param&gt;
+ * 
+ *   &lt;servlet&gt;
+ *     &lt;servlet-name&gt;uploadServlet&lt;/servlet-name&gt;
+ *     &lt;servlet-class&gt;gwtupload.server.UploadServlet&lt;/servlet-class&gt;
+ *   &lt;/servlet&gt;
+ *   
+ *   &lt;servlet-mapping&gt;
+ *     &lt;servlet-name&gt;uploadServlet&lt;/servlet-name&gt;
+ *     &lt;url-pattern&gt;*.gupld&lt;/url-pattern&gt;
+ *   &lt;/servlet-mapping&gt;
+ * 
+ * 
+ * </pre>
+ * 
  * @author Manolo Carrasco Moñino
- *
+ * 
  */
 public class UploadServlet extends HttpServlet implements Servlet {
 
@@ -101,10 +109,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	private static String XML_TPL = "" + "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<response>\n" + "%%MESSAGE%%" + "</response>\n";
 
 	/**
-	 * Read configurable parameters during the initialization.
-	 *
-	 * 
-	 * 
+	 * Read configurable parameters during the servlet initialization.
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
@@ -121,12 +126,12 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	/**
-	 *  The get method is used to monitor the uploading process 
-	 *  or to get the content of the uploaded files
+	 * The get method is used to monitor the uploading process or to get the
+	 * content of the uploaded files
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		if (request.getParameter(PARAM_SHOW) != null) {
-			getFileContent(request, response);
+			writeUploadedContent(request, response);
 		} else {
 			String message = "";
 			Map<String, String> status = getUploadStatus(request);
@@ -138,12 +143,13 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	/**
-	 *  The post method is used to receive the file and save it in the user session.
-	 *  It returns a very XML page that the client receives in an iframe.
-	 *  
-	 *  The content of this xml document has a tag error in the case of error in the upload process or the 
-	 *  string OK in the case of success.
-	 *  
+	 * The post method is used to receive the file and save it in the user
+	 * session. It returns a very XML page that the client receives in an
+	 * iframe.
+	 * 
+	 * The content of this xml document has a tag error in the case of error in
+	 * the upload process or the string OK in the case of success.
+	 * 
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String error;
@@ -156,8 +162,9 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	/**
-	 * This method parses the submit action, put in session a listener where the progress status is updated, and 
-	 * eventually stores the received data in the user session. 
+	 * This method parses the submit action, put in session a listener where the
+	 * progress status is updated, and eventually stores the received data in
+	 * the user session.
 	 */
 	protected String parsePostRequest(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		HttpSession session = request.getSession();
@@ -172,58 +179,55 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			return error;
 		}
 
-		if (session.getAttribute(ATTR_LISTENER) != null) {
-			logger.debug(" UPLOAD removing old listener from session");
-			session.removeAttribute(ATTR_LISTENER);
-		}
-
 		@SuppressWarnings("unchecked")
 		Vector<FileItem> sessionFiles = (Vector<FileItem>) session.getAttribute(ATTR_FILES);
 
 		logger.debug(session.getId() + " UPLOAD servlet procesing request " + request.getContentLength() + " < " + maxSize);
 		try {
-			// create file upload factory, and the listener
-			DiskFileItemFactory factory = new DiskFileItemFactory();
-			// This factory will create a file in disk if the size of the file is greater than the threshold
-			factory.setSizeThreshold(8192000);
+
+			// Create the factory used for uploading files,
+			// set file upload progress listener, and put it into user session,
+			// so the browser can use ajax to query status of the upload process
+			FileItemFactory factory = getFileItemFactory();
 			ServletFileUpload uploader = new ServletFileUpload(factory);
 			UploadListener listener = new UploadListener();
-
-			// set file upload progress listener and put it into user session, 
-			// so the browser can use ajax to query status of the upload process
+			uploader.setProgressListener(listener);
 			logger.debug(session.getId() + " UPLOAD servlet putting listener in session");
 			session.setAttribute(ATTR_LISTENER, listener);
-			uploader.setProgressListener(listener);
 
 			// uploader.setFileSizeMax(maxSize);
 			uploader.setSizeMax(maxSize);
 
 			// Receive the files
-			logger.debug(session.getId() + " UPLOAD servlet procesing request");
+			logger.debug(session.getId() + " UPLOAD servlet parsing HTTP request ");
 			@SuppressWarnings("unchecked")
 			List<FileItem> uploadedItems = uploader.parseRequest(request);
 			logger.debug(session.getId() + " UPLOAD servlet servlet received items: " + uploadedItems.size());
 
+			// We can do this before parsing the request, but normally sending an exception doesn't close the socket 
+			// and the client continues sending files until the form is completely submitted.
+			// So doing this the user sees the upload progress.
 			if (request.getContentLength() > maxSize) {
 				error = "\nThe request was rejected because the size of the request (" + request.getContentLength() / 1024 + " kB.)"
-				    + "\nexceeds the limit allowed by the server (" + maxSize / 1024 + " kB.)";
+				      + "\nexceeds the limit allowed by the server (" + maxSize / 1024 + " kB.)";
 				logger.error(session.getId() + " UPLOAD " + error);
 				return error;
 			}
 
 			// Put received files in session
+			if (sessionFiles == null && uploadedItems.size() > 0) {
+				sessionFiles = new Vector<FileItem>();
+			}
 			for (FileItem fileItem : uploadedItems) {
-				if (sessionFiles == null) {
-					sessionFiles = new Vector<FileItem>();
-				}
 				if (fileItem.isFormField() || fileItem.getSize() > 0) {
 					sessionFiles.add(fileItem);
 				} else {
 					logger.error(session.getId() + " UPLOAD servlet error File empty: " + fileItem);
 					error += "\nError, the reception of the file " + fileItem.getName()
-					    + " was unsuccesful.\nPlease verify that the file exists and its size doesn't exceed " + (maxSize / 1024 / 1024) + " KB";
+					      + " was unsuccesful.\nPlease verify that the file exists and you have enough permissions to read it";
 				}
 			}
+			
 			if (sessionFiles != null && sessionFiles.size() > 0) {
 				logger.debug(session.getId() + " UPLOAD servlet puting FILES in SESSION " + sessionFiles.elementAt(0));
 				session.setAttribute(ATTR_FILES, sessionFiles);
@@ -231,7 +235,6 @@ public class UploadServlet extends HttpServlet implements Servlet {
 				logger.error(session.getId() + " UPLOAD servlet error NO DATA received ");
 				error += "\nError, your browser has not sent any information.\nPlease try again or try it using another browser\n";
 			}
-
 		} catch (Exception e) {
 			logger.error(session.getId() + " UPLOAD servlet Exception: " + e.getMessage() + "\n" + stackTraceToString(e));
 			error += "\nUnexpected exception receiving the file: \n" + e.getMessage();
@@ -246,7 +249,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 * 
 	 * @param request
 	 * @param response
-	 * @param message 
+	 * @param message
 	 * @throws IOException
 	 */
 	protected static void writeResponse(HttpServletRequest request, HttpServletResponse response, String message) throws IOException {
@@ -315,14 +318,15 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	/**
 	 * 
-	 * Write the response server with the content of an uploaded file. Setting the appropriate content-type
+	 * Write the response server with the content of an uploaded file. Setting
+	 * the appropriate content-type
 	 * 
 	 * @param request
 	 * @param response
 	 * @return true in the case of success
 	 * @throws IOException
 	 */
-	private static boolean getFileContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private static boolean writeUploadedContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String parameter = request.getParameter(PARAM_SHOW);
 		String contentRegexp = request.getParameter(PARAM_CONTENT);
 		logger.debug(request.getSession().getId() + " UPLOAD, getFileContent: " + parameter + " " + contentRegexp);
@@ -375,33 +379,47 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	/**
-	 * Utility method to get a fileItem from a vector using the file name
-	 * It only returns fileItems that are uploaded files.
-	 *
+	 * Utility method to get a fileItem from a vector using the file name It
+	 * only returns fileItems that are uploaded files.
+	 * 
 	 * @param sessionFiles
-   * @param fileName
-   * @return fileItem of the file found or null
-   */
-  public static FileItem findItemByFileName(Vector<FileItem> sessionFiles, String fileName) {
-    if (sessionFiles != null) {
-      for (FileItem fileItem : sessionFiles) {
-        if (fileItem.isFormField() == false && fileItem.getName().equalsIgnoreCase(fileName))
-          return fileItem;
-      }
-    }
-    return null;
-  }
+	 * @param fileName
+	 * @return fileItem of the file found or null
+	 */
+	public static FileItem findItemByFileName(Vector<FileItem> sessionFiles, String fileName) {
+		if (sessionFiles != null) {
+			for (FileItem fileItem : sessionFiles) {
+				if (fileItem.isFormField() == false && fileItem.getName().equalsIgnoreCase(fileName))
+					return fileItem;
+			}
+		}
+		return null;
+	}
 
-  /**
-   * Simple method to get a string from the exception stack 
-   *
-   * @param e
-   * @return string
-   */
-  protected static String stackTraceToString(Exception e) {
-    StringWriter writer = new StringWriter();
-    e.printStackTrace(new PrintWriter(writer));
-    return writer.getBuffer().toString();
-  }
+	/**
+	 * Simple method to get a string from the exception stack
+	 * 
+	 * @param e
+	 * @return string
+	 */
+	protected static String stackTraceToString(Exception e) {
+		StringWriter writer = new StringWriter();
+		e.printStackTrace(new PrintWriter(writer));
+		return writer.getBuffer().toString();
+	}
 
+
+	/**
+	 * Override this method if you want to implement a different ItemFactory
+	 * DiskFileItemFactory doesn't work in app-engine
+	 *  
+	 * @return
+	 */
+	protected FileItemFactory getFileItemFactory() {
+		// This factory will create a files in disk if the size of the file
+		// is greater than the threshold
+		return new 	DiskFileItemFactory(){{
+			setSizeThreshold(8192000);
+		}};
+	}
 }
