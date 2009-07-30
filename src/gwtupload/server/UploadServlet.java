@@ -84,6 +84,8 @@ import org.apache.log4j.Logger;
  */
 public class UploadServlet extends HttpServlet implements Servlet {
 
+	private static final long serialVersionUID = 2740693677625051632L;
+
 	protected static final String PARAM_FILENAME = "filename";
 
 	protected static String PARAM_SHOW = "show";
@@ -100,13 +102,12 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	private static final String ATTR_ERROR = "ERROR";
 
-	private static final long serialVersionUID = 2740693677625051632L;
+	private static Logger logger = Logger.getLogger(UploadServlet.class);
+
+	private static String XML_TPL = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<response>%%MESSAGE%%</response>\n";
 
 	private long maxSize = (5 * 1024 * 1024);
 
-	private static Logger logger = Logger.getLogger(UploadServlet.class);
-
-	private static String XML_TPL = "" + "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<response>\n" + "%%MESSAGE%%" + "</response>\n";
 
 	/**
 	 * Read configurable parameters during the servlet initialization.

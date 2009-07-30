@@ -77,11 +77,17 @@ import com.google.gwt.xml.client.XMLParser;
  *         </ul>
  */
 public class Uploader extends Composite implements IUpdateable, IUploader, HasJsData {
-
-	static boolean avoidRepeat = false;
+	
 	static HashSet<String> fileDone = new HashSet<String>();
-	public static int fileInputSize = 40;
 	static Vector<String> fileQueue = new Vector<String>();
+	
+	private static final int DEFAULT_FILEINPUT_SIZE = 40;
+	private static final int DEFAULT_AUTOUPLOAD_DELAY = 600;
+	private static final int DEFAULT_TIMEOUT = 6000;
+	private static final int MAX_TIME_WITHOUT_RESPONSE = 10000;
+	private static final String DEFAULT_SERVLET = "servlet.gupld";
+	private static final int UPDATE_INTERVAL = 1500;
+	
 	private static final String MSG_ACTIVE_UPLOAD = "There is already an active upload, try later.";
 	private static final String MSG_FILE_DONE = "This file was already uploaded";
 
@@ -93,44 +99,89 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	public final static String PARAMETER_FILENAME = "filename";
 	public final static String PARAMETER_SHOW = "show";
 
-	static String STYLE_BUTTON = "upld-button";
-	static String STYLE_INPUT = "upld-input";
 
-	static String STYLE_MAIN = "GWTUpld";
-	static String STYLE_STATUS = "upld-status";
+	protected static final String STYLE_BUTTON = "upld-button";
+	protected static final String STYLE_INPUT = "upld-input";
+	protected static final String STYLE_MAIN = "GWTUpld";
+	protected static final String STYLE_STATUS = "upld-status";
 
-	private static String basename(String name) {
-		return name.replaceAll("^.*[/\\\\]", "");
-	}
+	private boolean autoSubmit = false;
+	protected boolean finished = false;
+	protected boolean waiting = false;
+	private int requestsCounter = 0;
+	protected boolean successful = false;
+	private boolean hasSession = false;
+	private boolean avoidRepeatedFiles = false;
+	private int numOfTries = 0;
+	private String fileName = "";
+	private String[] validExtensions = null;
+	private String validExtensionsMsg = "";
 
-	private static String getXmlNodeValue(Document doc, String tag) {
-		NodeList list = doc.getElementsByTagName(tag);
-		if (list.getLength() == 0)
-			return null;
-
-		Node node = list.item(0);
-		if (node.getNodeType() != Node.ELEMENT_NODE)
-			return null;
-
-		String ret = "";
-		NodeList textNodes = node.getChildNodes();
-		for (int i = 0; i < textNodes.getLength(); i++) {
-			Node n = textNodes.item(i);
-			if (n.getNodeType() == Node.TEXT_NODE && n.getNodeValue().replaceAll("[ \\n\\t\\r]", "").length() > 0)
-				ret += n.getNodeValue();
+	private ValueChangeHandler<IUploader> onChange;
+	private ValueChangeHandler<IUploader> onFinish;
+	private ValueChangeHandler<IUploader> onStart;
+	
+	// Create and configure Widgets
+	private IUploadStatus statusWidget = new BasicProgress();
+	private final FileUpload fileInput = new FileUpload() {
+		{
+			addDomHandler(new ChangeHandler() {
+				public void onChange(ChangeEvent event) {
+					onFileInputChanged.onChange(null);
+				}
+			}, ChangeEvent.getType());
 		}
-		return ret.length() == 0 ? null : ret;
+	};
+	private final FormPanel uploadForm = new FormPanel() {
+		FlowPanel formElements = new FlowPanel();
+		public void add(Widget w) {
+			formElements.add(w);
+		}
+		{
+			super.add(formElements);
+			setEncoding(FormPanel.ENCODING_MULTIPART);
+			setMethod(FormPanel.METHOD_POST);
+			add(fileInput);
+			setAction(DEFAULT_SERVLET);
+			System.out.println(getAction());
+		}
+	};
+	protected final HorizontalPanel uploaderPanel = new HorizontalPanel(){
+		{
+			add(uploadForm);
+			setStyleName(STYLE_MAIN);
+		}
+	};
+
+	/**
+	 * Default constructor.
+	 * 
+	 * Initialize widget components and layout elements
+	 */
+	public Uploader() {
+		assignNewNameToFileInput();
+		setFileInputSize(DEFAULT_FILEINPUT_SIZE);
+		setStatusWidget(statusWidget);
+		uploadForm.addSubmitHandler(onSubmitFormHandler);
+		uploadForm.addSubmitCompleteHandler(onSubmitFormCompleteCallback);
+		super.initWidget(uploaderPanel);
 	}
 
-	private Timer automaticUploadTimer = new Timer() {
+	public Uploader(boolean automaticUpload) {
+		this();
+		setAutoSubmit(automaticUpload);
+	}
 
+	private final UpdateTimer repeater = new UpdateTimer(this, UPDATE_INTERVAL);
+	
+	private final Timer automaticUploadTimer = new Timer() {
 		boolean firstTime = true;
-
 		public void run() {
 			if (isTheFirstInQueue()) {
 				this.cancel();
-				// Most browsers don't submit files if fileInput is hidden or has a 0 size because of security reasons, 
+				// Most browsers don't submit files if fileInput is hidden or has a 0 chars size because of security, 
 				// so before sending the form, it is necessary to show the fileInput elements.
+				// onSubmit handler will hide fileInput again
 				setFileInputSize(1);
 				fileInput.setHeight("1px");
 				fileInput.setWidth("2px");
@@ -146,47 +197,38 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 		}
 	};
 
-	protected boolean autoSubmit = false;
-
-	private int autoUploadDelay = 600;
-	public FileUpload fileInput;
-	private String fileName = "";
-
-	protected boolean finished = false;
-	private int maxTimeWithoutResponse = 10000;
-
-	private int numOfTries = 0;
-	private ValueChangeHandler<IUploader> onChange;
-	private ValueChangeHandler<IUploader> onFinish;
-	
-	private ChangeHandler onInputChanged = new ChangeHandler() {
+	private final ChangeHandler onFileInputChanged = new ChangeHandler() {
 		public void onChange(ChangeEvent event) {
 			if (autoSubmit && validateExtension(fileInput.getFilename())) {
 				fileName = fileInput.getFilename();
 				if (fileName.length() > 0) {
 					statusWidget.setFileName(basename(fileName));
-					automaticUploadTimer.scheduleRepeating(autoUploadDelay);
+					automaticUploadTimer.scheduleRepeating(DEFAULT_AUTOUPLOAD_DELAY);
 				}
 			}
 			onChangeInput();
 		}
 	};
 	
-	RequestCallback onSessionReceivedCallback = new RequestCallback() {
+	private final RequestCallback onSessionReceivedCallback = new RequestCallback() {
 		public void onError(Request request, Throwable exception) {
 			String message = removeHtmlTags(exception.getMessage());
-			cancelUpload(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
+			cancelUpload(MSG_SERVER_UNAVAILABLE + getServletPath() + "\n\n" + message);
 		}
 
 		public void onResponseReceived(Request request, Response response) {
-			session = true;
+			hasSession = true;
 			uploadForm.submit();
 		}
 	};
 	
-	private ValueChangeHandler<IUploader> onStart;
-
-	RequestCallback onStatusReceivedCallback = new RequestCallback() {
+	/**
+	 * Handler called when the status request response comes back.
+	 * 
+	 * In case of success it parses the xml document received and updates the progress widget
+	 * In case of a non timeout error, it stops the status repeater and notifies the user with the exception.
+	 */
+	private final RequestCallback onStatusReceivedCallback = new RequestCallback() {
 		public void onError(Request request, Throwable exception) {
 			waiting = false;
 			if (!(exception instanceof RequestTimeoutException)) {
@@ -194,7 +236,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 				String message = removeHtmlTags(exception.getMessage());
 				message += "\n" + exception.getClass().getName();
 				message += "\n" + exception.toString();
-				statusWidget.setError(MSG_SERVER_UNAVAILABLE + servletPath + "\n\n" + message);
+				statusWidget.setError(MSG_SERVER_UNAVAILABLE + getServletPath() + "\n\n" + message);
 			}
 		}
 
@@ -217,7 +259,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 				int transferredKB = Integer.valueOf(getXmlNodeValue(doc, "currentBytes")) / 1024;
 				int totalKB = Integer.valueOf(getXmlNodeValue(doc, "totalBytes")) / 1024;
 				statusWidget.setProgress(transferredKB, totalKB);
-			} else if ((numOfTries * prgBarInterval) > maxTimeWithoutResponse) {
+			} else if ((numOfTries * UPDATE_INTERVAL) > MAX_TIME_WITHOUT_RESPONSE) {
 				successful = false;
 				cancelUpload(MSG_SEND_TIMEOUT);
 			} else {
@@ -230,7 +272,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	/**
 	 * Handler called when the form has been sent to the server
 	 */
-	private SubmitCompleteHandler onSubmitCompleteFormHandler = new SubmitCompleteHandler() {
+	private final SubmitCompleteHandler onSubmitFormCompleteCallback = new SubmitCompleteHandler() {
 		public void onSubmitComplete(SubmitCompleteEvent event) {
 			if (finished == true)
 				return;
@@ -246,7 +288,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 				String error = null;
 				if (serverXmlResponse.toLowerCase().matches("not[ _]+found") || serverXmlResponse.toLowerCase().matches("server[ _]+error")
 				    || serverXmlResponse.toLowerCase().matches("exception")) {
-					error = MSG_SERVER_ERROR + "\nAction: " + servletPath + serverMessage;
+					error = MSG_SERVER_ERROR + "\nAction: " + getServletPath() + serverMessage;
 				} else {
 					serverXmlResponse = serverXmlResponse.replaceAll("</*pre>", "").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
 					try {
@@ -254,7 +296,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 						error = getXmlNodeValue(doc, "error");
 					} catch (Exception e) {
 						if (serverXmlResponse.toLowerCase().matches("error"))
-							error = MSG_SERVER_ERROR + "\nAction: " + servletPath + "\nException: " + e.getMessage() + serverMessage;
+							error = MSG_SERVER_ERROR + "\nAction: " + getServletPath() + "\nException: " + e.getMessage() + serverMessage;
 					}
 				}
 
@@ -301,7 +343,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 				return;
 			}
 
-			if (!session) {
+			if (!hasSession) {
 				event.cancel();
 				try {
 					validateSessionAndSubmitUsingAjaxRequest();
@@ -328,76 +370,43 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 			repeater.start();
 		}
 	};
-	private int prgBarInterval = 1500;
-	private UpdateTimer repeater = new UpdateTimer(this, prgBarInterval);
-	private int reqCounter = 0;
-
-	public String servletPath = "servlet.gupld";
-
-	boolean session = false;
-
-	private IUploadStatus statusWidget = new BasicProgress();
-
-	protected boolean successful = false;
-
-	protected HorizontalPanel uploaderPanel = new HorizontalPanel();
-
-	private final FormPanel uploadForm = new FormPanel() {
-		FlowPanel formElements = new FlowPanel();
-		{
-			super.add(formElements);
-		}
-
-		@Override
-		public void add(Widget w) {
-			formElements.add(w);
-		}
-	};
-
-	private String[] validExtensions = null;
-
-	private String validExtensionsMsg = "";
-
-	boolean waiting = false;
+	
 
 	/**
-	 * Default constructor.
-	 * 
-	 * Initialize widget components and layout elements
+	 * Called when the uploader detects that the upload process has finished:
+	 * - in the case of submit complete.
+	 * - in the case of error talking with the server.
 	 */
-	public Uploader() {
-		fileInput = new FileUpload() {
-			{
-				addDomHandler(new ChangeHandler() {
-					public void onChange(ChangeEvent event) {
-						onInputChanged.onChange(null);
+	private void uploadFinished() {
+		removeFromQueue();
+		finished = true;
+		repeater.finish();
+
+		if (successful) {
+			if (avoidRepeatedFiles) {
+				if (fileDone.contains(fileName)) {
+					if (autoSubmit) {
+						statusWidget.setVisible(false);
+					} else {
+						successful = false;
+						statusWidget.setError(MSG_FILE_DONE);
 					}
-				}, ChangeEvent.getType());
+				} else {
+					fileDone.add(fileName);
+				}
 			}
-		};
-
-		changeInputName();
-		setFileInputSize(fileInputSize);
-		setServletPath(servletPath);
-
-		uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
-		uploadForm.setMethod(FormPanel.METHOD_POST);
-		uploadForm.addSubmitHandler(onSubmitFormHandler);
-		uploadForm.addSubmitCompleteHandler(onSubmitCompleteFormHandler);
-		uploadForm.add(fileInput);
-
-		uploaderPanel.add(uploadForm);
-		uploaderPanel.setStyleName(STYLE_MAIN);
-
-		setStatusWidget(statusWidget);
-
-		super.initWidget(uploaderPanel);
+			statusWidget.setStatus(IUploadStatus.FINISHED);
+		} else {
+			statusWidget.setStatus(IUploadStatus.ERROR);
+		}
+		if (!autoSubmit) {
+			statusWidget.setVisible(false);
+		} else {
+			uploaderPanel.remove(uploadForm);
+		}
+		onFinishUpload();
 	}
 
-	public Uploader(boolean automaticUpload) {
-		this();
-		setAutoSubmit(automaticUpload);
-	}
 
 	/**
 	 * Adds a widget to formPanel
@@ -422,7 +431,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	 * Don't send files that have already been uploaded 
 	 */
 	public void avoidRepeatFiles(boolean avoidRepeat) {
-		Uploader.avoidRepeat = avoidRepeat;
+		this.avoidRepeatedFiles = avoidRepeat;
 	}
 
 	/**
@@ -437,7 +446,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	/**
 	 * Change the fileInput name, because the server uses it as an uniq identifier
 	 */
-	private void changeInputName() {
+	private void assignNewNameToFileInput() {
 		String fileInputName = ("GWTCU_" + Math.random()).replaceAll("\\.", "");
 		fileInput.setName(fileInputName);
 	}
@@ -454,7 +463,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	 * It's useful to display uploaded images or generate links to uploaded files
 	 */
 	public String fileUrl() {
-		return servletPath + "?" + PARAMETER_SHOW + "=" + getFilename();
+		return getServletPath() + "?" + PARAMETER_SHOW + "=" + getFilename();
 	}
 
 	/**
@@ -518,7 +527,7 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 		if (onFinish != null)
 			onFinish.onValueChange(new ValueChangeEvent<IUploader>(this) {});
 		if (autoSubmit == false)
-			changeInputName();
+			assignNewNameToFileInput();
 	}
 
 	/**
@@ -591,9 +600,22 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	 */
 	public void setServletPath(String path) {
 		if (path != null) {
-			this.servletPath = path;
 			uploadForm.setAction(path);
 		}
+	}
+
+	/**
+	 * return the configured server service in the form-panel
+	 */
+	public String getServletPath() {
+		return uploadForm.getAction();
+	}
+
+	/**
+	 * return the html name attribute of the fileInput tag.  
+	 */
+	public String getFileInputName() {
+		return fileInput.getName();
 	}
 
 	/**
@@ -655,42 +677,12 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 			waiting = true;
 			// Using a reusable builder makes IE fail, because it catches the response
 			// So it's better to change the request path using a counter
-			RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?filename=" + fileInput.getName() + "&c=" + reqCounter++);
-			reqBuilder.setTimeoutMillis(prgBarInterval - 100);
+			RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, getServletPath() + "?filename=" + fileInput.getName() + "&c=" + requestsCounter++);
+			reqBuilder.setTimeoutMillis(DEFAULT_TIMEOUT);
 			reqBuilder.sendRequest("random=" + Math.random(), onStatusReceivedCallback);
 		} catch (RequestException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private void uploadFinished() {
-		removeFromQueue();
-		finished = true;
-		repeater.finish();
-
-		if (successful) {
-			if (avoidRepeat) {
-				if (fileDone.contains(fileName)) {
-					if (autoSubmit) {
-						statusWidget.setVisible(false);
-					} else {
-						successful = false;
-						statusWidget.setError(MSG_FILE_DONE);
-					}
-				} else {
-					fileDone.add(fileName);
-				}
-			}
-			statusWidget.setStatus(IUploadStatus.FINISHED);
-		} else {
-			statusWidget.setStatus(IUploadStatus.ERROR);
-		}
-		if (!autoSubmit) {
-			statusWidget.setVisible(false);
-		} else {
-			uploaderPanel.remove(uploadForm);
-		}
-		onFinishUpload();
 	}
 
 	private boolean validateExtension(String fileName) {
@@ -721,9 +713,38 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 	 */
 	private void validateSessionAndSubmitUsingAjaxRequest() throws RequestException {
 		// Using a reusable builder makes IE fail
-		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, servletPath + "?new_session=true");
-		reqBuilder.setTimeoutMillis(2000);
+		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, getServletPath() + "?new_session=true");
+		reqBuilder.setTimeoutMillis(DEFAULT_TIMEOUT);
 		reqBuilder.sendRequest("create_session", onSessionReceivedCallback);
+	}
+
+	/**
+	 * return the name of a file without path 
+	 */
+	private static String basename(String name) {
+		return name.replaceAll("^.*[/\\\\]", "");
+	}
+
+	/**
+	 * return the content text of a tag in a xml document. 
+	 */
+	private static String getXmlNodeValue(Document doc, String tag) {
+		NodeList list = doc.getElementsByTagName(tag);
+		if (list.getLength() == 0)
+			return null;
+
+		Node node = list.item(0);
+		if (node.getNodeType() != Node.ELEMENT_NODE)
+			return null;
+
+		String ret = "";
+		NodeList textNodes = node.getChildNodes();
+		for (int i = 0; i < textNodes.getLength(); i++) {
+			Node n = textNodes.item(i);
+			if (n.getNodeType() == Node.TEXT_NODE && n.getNodeValue().replaceAll("[ \\n\\t\\r]", "").length() > 0)
+				ret += n.getNodeValue();
+		}
+		return ret.length() == 0 ? null : ret;
 	}
 
 }

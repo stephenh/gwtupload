@@ -9,7 +9,9 @@
 	<classpathentry kind="lib" path="lib/log4j.jar"/>
 	<classpathentry kind="lib" path="lib/gwtexporter-2.04.jar"/>
 	<classpathentry kind="lib" path="/mirai/SOFT/eclipse/sts-2.0.2.RELEASE/plugins/com.google.appengine.eclipse.sdkbundle_1.2.2.v200907131030/appengine-java-sdk-1.2.2/lib/shared/geronimo-servlet_2.5_spec-1.2.jar">
+	
 		<attributes>
+		
 			<attribute name="javadoc_location" value="file:/mirai/SOFT/eclipse/sts-2.0.2.RELEASE/plugins/com.google.appengine.eclipse.sdkbundle_1.2.2.v200907131030/appengine-java-sdk-1.2.2/docs/javadoc/"/>
 		</attributes>
 	</classpathentry>

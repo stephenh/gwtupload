@@ -16,23 +16,14 @@
  */
 package gwtupload.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-
-import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 
 /**
  * <p>
  * Upload servlet for the GwtUpload library deployed in Google App-engine.
  * </p>
  * 
- * App-engine doesn't support write to the file-system, so this servlet stores files in memory.
+ * Due that App-engine doesn't support writing to file-system this servlet stores fileitems in memory.
  * 
  * @author Manolo Carrasco Moñino
  * 
@@ -43,88 +34,6 @@ public class AppEngineUploadServlet extends UploadServlet {
 
 	@Override
 	protected FileItemFactory getFileItemFactory() {
-		return new FileItemFactory() {
-			public FileItem createItem(final String fieldName, final String contentType, final boolean isFormField, final String fileName) {
-				return new FileItem() {
-					
-					String fname;
-					String ctype;
-					boolean formfield;
-					String name;
-
-					ByteArrayOutputStream data = new ByteArrayOutputStream();
-					
-					private static final long serialVersionUID = 1L;
-					{
-						ctype = contentType;
-						fname = fieldName;
-						name = fileName;
-						formfield = isFormField;
-					};
-
-					public void delete() {
-						data.reset();
-					}
-
-					public byte[] get() {
-						return data.toByteArray();
-					}
-
-					public InputStream getInputStream() throws IOException {
-						return new ByteArrayInputStream(get());
-					}
-
-					public OutputStream getOutputStream() throws IOException {
-						return data;
-					}
-
-					public String getContentType() {
-						return ctype;
-					}
-
-					public String getFieldName() {
-						return fname;
-					}
-
-					public String getName() {
-						return name;
-					}
-
-					public long getSize() {
-						return data.size();
-					}
-
-					public String getString() {
-						return data.toString();
-					}
-
-					public String getString(String arg0) throws UnsupportedEncodingException {
-						return data.toString(arg0);
-					}
-
-					public boolean isFormField() {
-						return formfield;
-					}
-
-					public boolean isInMemory() {
-						return true;
-					}
-
-					public void setFieldName(String arg0) {
-						fname = arg0;
-					}
-
-					public void setFormField(boolean arg0) {
-						formfield = arg0;
-					}
-
-					public void write(File arg0) throws Exception {
-						throw new UnsupportedOperationException("App-engine doesn't support write files");
-					}
-
-				};
-			}
-		};
-
+		return new MemoryFileItemFactory();
 	}
 }
