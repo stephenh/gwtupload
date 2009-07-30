@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -146,12 +147,11 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 			System.out.println(getAction());
 		}
 	};
-	protected final HorizontalPanel uploaderPanel = new HorizontalPanel(){
-		{
+	
+	protected final HorizontalPanel uploaderPanel = new HorizontalPanel(){{
 			add(uploadForm);
 			setStyleName(STYLE_MAIN);
-		}
-	};
+	}};
 
 	/**
 	 * Default constructor.
@@ -347,7 +347,9 @@ public class Uploader extends Composite implements IUpdateable, IUploader, HasJs
 				event.cancel();
 				try {
 					validateSessionAndSubmitUsingAjaxRequest();
-				} catch (Exception e) {}
+				} catch (Exception e) {
+				    GWT.log("Exception in validateSession", null);
+				}
 				return;
 			}
 

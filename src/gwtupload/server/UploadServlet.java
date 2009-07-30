@@ -121,9 +121,9 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 		String slow = config.getServletContext().getInitParameter("slowUploads");
 		if (slow != null && "true".equalsIgnoreCase(slow))
-			UploadListener.slowUploads = true;
+			UploadListener.setSlowUploads(true);
 
-		logger.debug("UPLOAD servlet init, maxSize=" + maxSize + ", slowUploads=" + UploadListener.slowUploads);
+		logger.debug("UPLOAD servlet init, maxSize=" + maxSize + ", slowUploads=" + slow);
 	}
 
 	/**

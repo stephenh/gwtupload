@@ -156,7 +156,7 @@ public class JsProperties {
       return ret;
     }
 
-    private class JSChangeClosureImpl implements JsChangeClosure {
+    static private class JSChangeClosureImpl implements JsChangeClosure {
         JavaScriptObject jsobject;
 
         JSChangeClosureImpl(JavaScriptObject o) {

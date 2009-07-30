@@ -27,15 +27,19 @@ import org.apache.commons.fileupload.ProgressListener;
  */
 class UploadListener implements ProgressListener {
 
-	private volatile long bytesRead = 0L, contentLength = 0L, item = 0L;
+  private volatile long bytesRead = 0L, contentLength = 0L, item = 0L;
+
+  private static boolean slowUploads =  false;
 
   /**
    * Setting this parameter to true allows us to see the progress bar
    * when we are using a local network. It is useful for developing or demos
    */
-  protected static boolean slowUploads =  false;
+  protected static void setSlowUploads(boolean slowUploads) {
+    UploadListener.slowUploads = slowUploads;
+  }
 
-  /**
+/**
    * This method is called each time the server receives a block of bytes.
    */
   public void update(long done, long total, int item) {
