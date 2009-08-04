@@ -246,7 +246,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 
 	/**
-	 * Writes a XML response to the client
+	 * Writes a XML response to the client, if the message is null it writes an OK response
 	 * 
 	 * @param request
 	 * @param response
@@ -256,7 +256,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	protected static void writeResponse(HttpServletRequest request, HttpServletResponse response, String message) throws IOException {
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
-		String xml = XML_TPL.replaceAll("%%MESSAGE%%", message);
+		String xml = XML_TPL.replaceAll("%%MESSAGE%%", message == null ? "OK": message);
 		out.print(xml);
 		out.flush();
 		out.close();
