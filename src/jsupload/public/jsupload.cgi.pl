@@ -45,6 +45,7 @@
 
 use CGI;
 use Digest::MD5;
+use File::Path;
 use strict;
 use warnings;
 
@@ -89,7 +90,7 @@ sub doPost {
 
     ## Validate permissions
     if ( !-d "$user_dir" ) {
-        mkdir( "$user_dir", 0777 )
+        mkpath( "$user_dir", 0, 0777 )
           || writeResponse("<error>Unable to create: $user_dir $!</error>");
         chmod( 0777, "$user_dir" );
     }
@@ -157,6 +158,8 @@ sub saveFile {
 sub writeResponse {
     my $msg = shift;
     close(STDIN);
+
+    $cgi = new CGI() unless($cgi);
     if ( $cgi->cookie($idname) ) {
         print $cgi->header( -type => 'text/plain' );
     } else {
