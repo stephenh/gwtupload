@@ -2,7 +2,7 @@
 <project name="GWTUpload" default="build" basedir=".">
 	<property name="project" value="gwtupload" />
 	<property name="jsproject" value="jsupload" />
-	<property name="version" value="0.3.1" />
+	<property name="version" value="0.5" />
 
 	<property name="tmp.dir" value="${project}-${version}" />
 	<property name="jar.file" value="${project}-${version}.jar" />
@@ -12,7 +12,7 @@
 	<property name="lib.dir" value="${tmp.dir}/lib" />
 	<property name="src.dir" value="${tmp.dir}/src" />
 
-	<property name="gwt.sdk" location="/mirai/SOFT/j2ee/gwt/gwt-linux-1.6.4" />
+	<property name="gwt.sdk" location="/mirai/SOFT/j2ee/gwt/gwt-linux-1.7.0" />
 
 	<path id="project.class.path">
 		<pathelement location="war/WEB-INF/classes" />
@@ -45,11 +45,11 @@
 	<target name="gwtc" depends="javac" description="GWT compile to JavaScript">
 		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
-			<arg value="gwtuploadsample.SimpleUploadSample" />
+			<arg value="gwtuploadsample.SingleUploadSample" />
 		</java>
 		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
-			<arg value="gwtuploadsample.IncubatorUploadSample" />
+			<arg value="gwtuploadsample.MultipleUploadSample" />
 		</java>
 		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
@@ -163,7 +163,7 @@
 		<delete dir="war/WEB-INF/classes" failonerror="false" />
 		<delete dir="war/gwtuploadsample.IncubatorUploadSample" failonerror="false" />
 		<delete dir="war/gwtuploadsample.ChismesUploadSample" failonerror="false" />
-		<delete dir="war/gwtuploadsample.SimpleUploadSample" failonerror="false" />
+		<delete dir="war/gwtuploadsample.SingleUploadSample" failonerror="false" />
 		<delete dir="war/jsupload.JsUpload" failonerror="false" />
 		<delete dir="war/WEB-INF/lib" failonerror="false" />
 	</target>

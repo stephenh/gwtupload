@@ -16,15 +16,14 @@
  */
 package jsupload.client;
 
-import gwtupload.client.PreloadedImage;
 import gwtupload.client.HasJsData;
+import gwtupload.client.PreloadedImage;
 
 import org.timepedia.exporter.client.Export;
 import org.timepedia.exporter.client.ExportPackage;
 import org.timepedia.exporter.client.Exportable;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -47,8 +46,7 @@ public class PreloadImage extends PreloadedImage implements Exportable, HasJsDat
     this.jsProp = new JsProperties(prop);
     super.setUrl(jsProp.get(Const.URL));
     super.setContainerId(jsProp.get(Const.CONT_ID));
-    ValueChangeHandler<PreloadedImage> handler = JsUtils.getClosureHandler((PreloadedImage)this, this.jsProp.getClosure(Const.ON_LOAD));
-    super.setOnloadHandler(handler);
+    super.setOnloadHandler(JsUtils.getOnLoadPreloadedImageHandler(this.jsProp.getClosure(Const.ON_LOAD)));
   }
 
   /**

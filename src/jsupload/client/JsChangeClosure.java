@@ -17,6 +17,12 @@
 package jsupload.client;
 
 import gwtupload.client.HasJsData;
+import gwtupload.client.IUploader;
+import gwtupload.client.PreloadedImage;
+import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
+import gwtupload.client.Uploader.OnChangeUploaderHandler;
+import gwtupload.client.Uploader.OnFinishUploaderHandler;
+import gwtupload.client.Uploader.OnStartUploaderHandler;
 
 import org.timepedia.exporter.client.Export;
 import org.timepedia.exporter.client.ExportClosure;
@@ -26,6 +32,12 @@ import org.timepedia.exporter.client.Exportable;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
+/**
+ * @author Manolo Carrasco Moñino
+ * 
+ * An exportable closure
+ *
+ */
 @Export
 @ExportPackage("jsu")
 @ExportClosure
@@ -63,4 +75,54 @@ class JsUtils {
 			}
 		};
 	}
+	
+  public final static ValueChangeHandler<HasJsData> getDataHandler(final JsChangeClosure jsChange) {
+    return new ValueChangeHandler<HasJsData>() {
+      public void onValueChange(ValueChangeEvent<HasJsData> event) {
+        Object data = null;
+        if (jsChange != null) {
+          if (event != null && event.getValue() != null)
+            data = event.getValue().getData();
+          jsChange.onChange(data);
+        }
+      }
+    };
+  }
+  
+  public final static OnStartUploaderHandler getOnStartUploaderHandler(final JsChangeClosure jsChange) {
+    return new OnStartUploaderHandler(){
+      public void onStart(IUploader u) {
+        if (jsChange != null);
+          jsChange.onChange(u.getData());
+      }
+    };
+  }
+  
+  public final static OnChangeUploaderHandler getOnChangeUploaderHandler(final JsChangeClosure jsChange) {
+    return new OnChangeUploaderHandler(){
+      public void onChange(IUploader u) {
+        if (jsChange != null);
+          jsChange.onChange(u.getData());
+      }
+    };
+  }
+  
+  public final static OnFinishUploaderHandler getOnFinishUploaderHandler(final JsChangeClosure jsChange) {
+    return new OnFinishUploaderHandler(){
+      public void onFinish(IUploader u) {
+        if (jsChange != null);
+          jsChange.onChange(u.getData());
+      }
+    };
+  }
+  
+  public final static OnLoadPreloadedImageHandler getOnLoadPreloadedImageHandler(final JsChangeClosure jsChange) {
+    return new OnLoadPreloadedImageHandler(){
+      public void onLoad(PreloadedImage image) {
+        if (jsChange != null);
+            jsChange.onChange(image.getData());
+      }
+    };
+    
+  }
 }

@@ -16,7 +16,7 @@
  */
 package gwtuploadsample.client;
 
-import gwtupload.client.BasicProgress;
+import gwtupload.client.BaseUploadStatus;
 import gwtupload.client.IUploadStatus;
 
 import com.google.code.p.gwtchismes.client.GWTCAlert;
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
  * @author Manolo Carrasco Moñino
  *
  */
-public class ChismesUploadProgress extends BasicProgress {
+public class ChismesUploadProgress extends BaseUploadStatus {
 
 	public int prgBarElements = 40;
 	public int prgBarOption = GWTCProgress.SHOW_NUMBERS | GWTCProgress.SHOW_TEXT;
@@ -65,7 +65,7 @@ public class ChismesUploadProgress extends BasicProgress {
 
 	@Override
 	public void setError(String error) {
-		setStatus(ERROR);
+		setStatus(STATUS.ERROR);
 		if (error != null && error.length() > 0)
 			alert.alert(error);
 	}

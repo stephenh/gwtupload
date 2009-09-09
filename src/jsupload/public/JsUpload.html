@@ -23,6 +23,14 @@
    <script language='javascript'>
       // Method called after the JsUpload library has been loaded
       function jsuOnLoad() {
+        
+        new jsu.Upload({
+          containerId: "uploader0",
+          multiple: true, 
+          auto: true,
+          type: "basic",
+          onFinish: loadImage
+        });
       
         new jsu.Upload({
           containerId: "uploader1",
@@ -46,6 +54,13 @@
           containerId: "uploader3",
           onFinish: loadImage,
           sendMsg: "Upload image",	
+          type: "basic"
+        });
+
+        new jsu.Upload({
+          containerId: "uploader4",
+          onFinish: loadImage,
+          sendMsg: "Upload image",  
           validExtensions: ".jpg, .gif, .png"
         });
         
@@ -57,7 +72,7 @@
          if (upl_data && upl_data.url) {
             var image = new jsu.PreloadImage({
               url: upl_data.url,
-              containerId: "photos", 
+              containerId: "photos",    
               onLoad: function(img_data) {
                 image.setSize(100, -1);
               }
@@ -66,9 +81,11 @@
       }
    </script>
    <h1>Examples using the <i>JsUpload</i> library</h1>
+   <div id="uploader0" class="jsubox">jsu.Upload: auto=true, multiple=true, type=basic<br><br></div>
    <div id="uploader1" class="jsubox">jsu.Upload: auto=true, multiple=true, type=incubator<br><br></div>
    <div id="uploader2" class="jsubox">jsu.Upload: auto=true, multiple=true, type=chismes<br><br></div>
-   <div id="uploader3" class="jsubox">jsu.Upload: auto=false, multiple=false, dialog=true, validExtensions=".jpg, .gif, .png"<br><br></div>
+   <div id="uploader3" class="jsubox">jsu.Upload: auto=false, multiple=false, dialog=true, type=basic<br><br></div>
+   <div id="uploader4" class="jsubox">jsu.Upload: auto=false, multiple=false, dialog=true, type=chismes, validExtensions=".jpg, .gif, .png"<br><br></div>
    <div id="photos" class="jsubox"> <br></div>
  </body>
 </html>

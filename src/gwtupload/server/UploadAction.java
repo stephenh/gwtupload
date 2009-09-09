@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,12 +47,10 @@ public abstract class UploadAction extends UploadServlet {
      * 
      * @param sessionFiles
      * @return a message that is sent to the client.
-     * @throws IOException
      */
     abstract public String doAction(Vector<FileItem> sessionFiles) throws IOException;
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String error = super.parsePostRequest(request, response);
 
         String message = null;

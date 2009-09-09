@@ -16,7 +16,7 @@
  */
 package gwtuploadsample.client;
 
-import gwtupload.client.BasicProgress;
+import gwtupload.client.BaseUploadStatus;
 import gwtupload.client.IUploadStatus;
 
 import com.google.gwt.widgetideas.client.ProgressBar;
@@ -29,7 +29,7 @@ import com.google.gwt.widgetideas.client.ProgressBar.TextFormatter;
  *  
  * @author Manolo Carrasco Moñino
  */
-public class IncubatorUploadProgress extends BasicProgress {
+public class IncubatorUploadProgress extends BaseUploadStatus {
 
 	ProgressBar prg = new ProgressBar();
 	TextFormatter formater = new TextFormatter() {

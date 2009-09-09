@@ -25,7 +25,7 @@ package gwtupload.client;
  * @author Manolo Carrasco Moñino
  * 
  */
-interface IUpdateable {
+public interface IsUpdateable {
 
   /**
    *  Updates the status of the class.

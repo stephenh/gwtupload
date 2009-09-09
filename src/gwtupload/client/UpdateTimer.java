@@ -26,14 +26,14 @@ import com.google.gwt.user.client.Timer;
  * @author Manolo Carrasco Moñino
  * 
  */
-class UpdateTimer extends Timer {
-    private IUpdateable updateable;
+public class UpdateTimer extends Timer {
+    private IsUpdateable updateable;
 
     private int interval = 1500;
 
     private boolean isRunning = true;
 
-    UpdateTimer(IUpdateable updateable, int interval) {
+    UpdateTimer(IsUpdateable updateable, int interval) {
         this.updateable = updateable;
         this.interval = interval;
     }

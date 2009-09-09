@@ -1,3 +1,18 @@
+
+body {
+    font-family:verdana,arial,helvetica,clean,sans-serif;
+    font-size: 14px;
+}
+h2, p, ul {
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 600px; 
+}       
+
+/*
+ * Thumbnails
+ */
 .tumbnailBox .middleCenter {
   padding: 0px 0px;
 }
@@ -54,9 +69,27 @@
   color: grey;
 }
 
+/*
+ * GWT Popup panels
+ */
 .gwt-PopupPanel {
+  background-color: beige; 
+}
+.thumbsContainer, .thumbsContainer img {
+  border: 1px solid #DDDDDD;
+}
+.thumbsContainer img {
+  margin: 3px;
+}
+
+.gwt-PopupPanel, .thumbsContainer,  .thumbsContainer img  {
   -moz-border-radius-bottomleft: 6px;
   -moz-border-radius-bottomright: 6px;
   -moz-border-radius-topleft: 6px;
-  -moz-border-radius-topright: 6px; 
+  -moz-border-radius-topright: 6px;
+}
+
+.upldContainer {
+  margin-top: 6px; 
+  margin-bottom: 10px; 
 }

@@ -16,6 +16,7 @@
  */
 package gwtupload.client;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -26,13 +27,37 @@ import com.google.gwt.user.client.ui.Widget;
  * @author Manolo Carrasco Moñino
  * 
  */
-public interface IUploadStatus {
-  static int UNINITIALIZED = 0;
-  static int QUEUED = 1;
-  static int INPROGRESS = 2;
-  static int FINISHED = 3;
-  static int ERROR = 4;
+public interface IUploadStatus extends HasProgress {
+  final public static class STATUS {
+    final public static int UNINITIALIZED = 0;
+    final public static int QUEUED = 1;
+    final public static int INPROGRESS = 2;
+    final public static int FINISHED = 3;
+    final public static int ERROR = 4;
+    final public static int CANCELLING = 5;
+    final public static int CANCELLED = 6;
+    final public static int SUBMITTING = 7;
+  }
   
+  final public static class CANCEL  {
+    final static int DISABLED = 1;
+    final static int REMOVE_REMOTE = 2;
+    final static int REMOVE_FROM_LIST = 4;
+    final static int STOP_CURRENT = 8;
+    final static int DEFAULT = REMOVE_REMOTE | STOP_CURRENT;
+    final static int LIKE_GMAIL = REMOVE_FROM_LIST | REMOVE_REMOTE | STOP_CURRENT;
+  }
+  
+  /**
+   * Handler for {@link Uploader.UploadCancelEvent} events.
+   */
+  public interface UploadCancelHandler extends EventHandler {
+    /**
+     * Fired when a Upload process has been canceled
+     */
+    void onCancel();
+  }
+
   /**
    * Creates a new instance of the current object type
    * 
@@ -59,13 +84,6 @@ public interface IUploadStatus {
   public void setFileName(String name);
 
   /**
-   * Called whenever the uploader gets new progress information from server
-   * @param done bytes uploaded
-   * @param total size of the request
-   */
-  public void setProgress(int done, int total);
-
-  /**
    * Set the process status
    * @param status possible values are:
    *     UNINITIALIZED = 0;
@@ -73,12 +91,30 @@ public interface IUploadStatus {
    *     INPROGRESS = 2;
    *     FINISHED = 3;
    *     ERROR = 4;
+   *     CANCELLING = 5;
+   *     CANCELLED = 6;
    */
   public void setStatus(int status);
 
   /**
-   * show/hidde the widget
+   * show/hide the widget
    * @param b
    */
   public void setVisible(boolean b);
+  
+  /**
+   * Set the handler which will be fired when the user clicks on the cancel button
+   * @param handler
+   */
+  public void addCancelHandler(UploadCancelHandler handler);
+  
+  /**
+   * Set the configuration for the cancel action.
+   * 
+   * @param config
+   *     Configuration can be passed joining these values using the or bit wise operator:
+   * 
+   */
+  public void setCancelConfiguration(int config);
+  
 }

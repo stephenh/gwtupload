@@ -16,11 +16,13 @@
  */
 package gwtupload.client;
 
+import gwtupload.client.Uploader.OnChangeUploaderHandler;
+import gwtupload.client.Uploader.OnFinishUploaderHandler;
+import gwtupload.client.Uploader.OnStartUploaderHandler;
+
 import java.util.Iterator;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -40,88 +42,70 @@ import com.google.gwt.user.client.ui.Widget;
 public class MultiUploader extends Composite implements IUploader {
 
 	private FlowPanel multiUploaderPanel = new FlowPanel();
-	private ValueChangeHandler<IUploader> onStart = null;
-	private ValueChangeHandler<IUploader> onChange = null;
-	private ValueChangeHandler<IUploader> onFinish = null;
 	boolean avoidRepeat = true;
 	private String[] validExtensions = null;
 	private String servletPath = null;
 	
+  private OnStartUploaderHandler onStartHandler = null;
+  private OnChangeUploaderHandler onChangeHandler = null;
+  private OnFinishUploaderHandler onFinishHandler = null;
+
 	private Uploader currentUploader = null;
 	private Uploader lastUploader = null;
-	
 	private IUploadStatus statusWidget = null;
 
-	private ValueChangeHandler<IUploader> onStartHandler = new ValueChangeHandler<IUploader>() {
-		public void onValueChange(ValueChangeEvent<IUploader> event) {
-
-			if (currentUploader != null) {
-	      // Save the last uploader, create a new statusWidget and fire onChange event
-			  lastUploader = currentUploader;
-				statusWidget = lastUploader.getStatusWidget().newInstance();
-        if (onStart != null) 
-          onStart.onValueChange(new ValueChangeEvent<IUploader>(lastUploader) {});
-			}
-
-			// Create a new uploader
-			currentUploader = new Uploader(true);
-			currentUploader.setStatusWidget(statusWidget);
-			currentUploader.setOnStartHandler(onStartHandler);
-			currentUploader.setOnChangeHandler(onChange);
-			currentUploader.setOnFinishHandler(onFinish);
-			currentUploader.setValidExtensions(validExtensions);
-			currentUploader.setServletPath(servletPath);
-			currentUploader.avoidRepeatFiles(avoidRepeat);
-			multiUploaderPanel.add(currentUploader);
-
-		}
-	};
-
 	/**
-	 * If no status gadget is provided, it uses a basic one.
-	 */
-	public MultiUploader() {
-		this(new BasicProgress());
-	}
+   * If no status gadget is provided, it uses a basic one.
+   */
+  public MultiUploader() {
+    this(new BaseUploadStatus());
+  }
 
-	/**
-	 * This is the constructor for customized multiuploaders.
-	 * 
-	 * @param status
-	 *        Customized status widget to use
-	 */
-	public MultiUploader(IUploadStatus status) {
-		statusWidget = status;
-		onStartHandler.onValueChange(null);
-		initWidget(multiUploaderPanel);
-		setStyleName("upld-multiple");
-	}
+  /**
+   * This is the constructor for customized multiuploaders.
+   * 
+   * @param status
+   *        Customized status widget to use
+   */
+  public MultiUploader(IUploadStatus status) {
+    statusWidget = status;
+    initWidget(multiUploaderPanel);
+    setStyleName("upld-multiple");
+    newUploaderInstance();
+  }
+  
+  OnStartUploaderHandler startHandler = new OnStartUploaderHandler(){
+    public void onStart(IUploader uploader) {
+      newUploaderInstance();
+    }
+  };
+	
+  private void newUploaderInstance() {
+    if (currentUploader != null) {
+      // Save the last uploader, create a new statusWidget and fire onChange event
+      lastUploader = currentUploader;
+      statusWidget = lastUploader.getStatusWidget().newInstance();
+      if (onStartHandler != null)
+        onStartHandler.onStart(lastUploader);
+    }
+    // Create a new uploader
+    currentUploader = new Uploader(true);
+    currentUploader.setStatusWidget(statusWidget);
+    currentUploader.setValidExtensions(validExtensions);
+    currentUploader.setServletPath(servletPath);
+    currentUploader.avoidRepeatFiles(avoidRepeat);
+    // Set the handlers
+    currentUploader.addOnStartUploadHandler(startHandler);
+    if (onChangeHandler != null)
+      currentUploader.addOnChangeUploadHandler(onChangeHandler);
+    if (onFinishHandler != null)
+      currentUploader.addOnFinishUploadHandler(onFinishHandler);
+    multiUploaderPanel.add(currentUploader);
+  }
+
 
 	public void setStatusWidget(IUploadStatus status) {
 		currentUploader.setStatusWidget(status);
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#setOnChangeHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
-	 */
-	public void setOnChangeHandler(ValueChangeHandler<IUploader> handler) {
-		onChange = handler;
-		currentUploader.setOnChangeHandler(handler);
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#setOnStartHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
-	 */
-	public void setOnStartHandler(ValueChangeHandler<IUploader> handler) {
-		onStart = handler;
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#setOnFinishHandler(com.google.gwt.event.logical.shared.ValueChangeHandler)
-	 */
-	public void setOnFinishHandler(ValueChangeHandler<IUploader> handler) {
-		onFinish = handler;
-		currentUploader.setOnFinishHandler(onFinish);
 	}
 
 	/* (non-Javadoc)
@@ -196,6 +180,36 @@ public class MultiUploader extends Composite implements IUploader {
 	 */
   public boolean remove(Widget w) {
 		return currentUploader.remove(w);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#cancel()
+   */
+  public void cancel() {
+       currentUploader.cancel();
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#addOnChangeUploadHandler(gwtupload.client.Uploader.OnChangeUploaderHandler)
+   */
+  public void addOnChangeUploadHandler(OnChangeUploaderHandler handler) {
+    onChangeHandler = handler;
+    currentUploader.addOnChangeUploadHandler(handler);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#addOnFinishUploadHandler(gwtupload.client.Uploader.OnFinishUploaderHandler)
+   */
+  public void addOnFinishUploadHandler(OnFinishUploaderHandler handler) {
+    onFinishHandler = handler;
+    currentUploader.addOnFinishUploadHandler(handler);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#addOnStartUploadHandler(gwtupload.client.Uploader.OnStartUploaderHandler)
+   */
+  public void addOnStartUploadHandler(OnStartUploaderHandler handler) {
+    onStartHandler = handler;
   }
 	
 }

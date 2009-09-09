@@ -174,6 +174,9 @@ sub writeResponse {
 ## write the upload progress in the status file
 sub updateProgress {
     my ( $done, $total ) = @_;
+    if (-f "$user_dir/cancel") {
+        exit;
+    }
     open( F, ">$user_dir/progress" );
     print F "$done/$total";
     close(F);

@@ -16,7 +16,10 @@
  */
 package gwtupload.client;
 
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import gwtupload.client.Uploader.OnChangeUploaderHandler;
+import gwtupload.client.Uploader.OnFinishUploaderHandler;
+import gwtupload.client.Uploader.OnStartUploaderHandler;
+
 import com.google.gwt.user.client.ui.HasWidgets;
 
 /**
@@ -34,26 +37,6 @@ public interface IUploader extends HasJsData, HasWidgets {
 	 * @param status
 	 */
 	public void setStatusWidget(IUploadStatus status);
-
-	/**
-	 * Sets the handler that is called when the user selects a file
-	 * @param handler
-	 */
-	public void setOnChangeHandler(ValueChangeHandler<IUploader> handler);
-
-	/**
-	 * Sets the handler that is called the file is queued.
-	 * This happens when the form receives the submit event.
-	 * 
-	 * @param handler
-	 */
-	public void setOnStartHandler(ValueChangeHandler<IUploader> handler);
-
-	/**
-	 * Sets the handler that will be called when the upload process finishes. 
-	 * @param handler
-	 */
-	public void setOnFinishHandler(ValueChangeHandler<IUploader> handler);
 
 	/**
 	 * Sets an array with valid file extensions.
@@ -96,5 +79,33 @@ public interface IUploader extends HasJsData, HasWidgets {
 	 * Submit the form to the server
 	 */
 	public void submit();
+	
+	/**
+	 * Cancel the upload
+	 */
+	public void cancel();
+	
+	
+  /**
+   * Sets the handler that is called the sent process begin.
+   * This happens just in the moment that the form receives the submit event.
+   * 
+   * @param handler
+   */
+  public void addOnStartUploadHandler(OnStartUploaderHandler handler);
+  
+  /**
+   * Sets the handler that is called when the user selects a file
+   * @param handler
+   */
+  public void addOnChangeUploadHandler(OnChangeUploaderHandler handler);
+
+  /**
+   * Sets the handler that will be called when the upload process finishes.
+   * It is called even the process is canceled or finishes with error 
+   * @param handler
+   */
+  public void addOnFinishUploadHandler(OnFinishUploaderHandler handler);
+
 	
 }

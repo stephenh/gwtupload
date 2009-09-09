@@ -29,18 +29,20 @@ import com.google.gwt.user.client.ui.Widget;
  * 
  * 
  */
-public class BasicModalProgress extends BasicProgress {
-	PopupPanel box = new PopupPanel(false, true);
+public class ModalUploadStatus extends BaseUploadStatus {
+	protected PopupPanel box = new PopupPanel(false, true);
 	
-	public BasicModalProgress() {
+	public ModalUploadStatus() {
 		super();
+    super.getWidget().addStyleName("upld-status");
 		box.add(super.getWidget());
-		box.addStyleName("GWTupld");
-		box.addStyleName("upld-status");
+		box.addStyleName("GWTUpld");
   }
 	
 	/**
-	 * Returns an empty html widget
+	 * Returns an empty html widget, 
+	 * so, PopupPanel will never attached to the document by the user
+	 * and it will be attached when show() is called
 	 */
 	@Override public Widget getWidget() {
 		return new HTML();

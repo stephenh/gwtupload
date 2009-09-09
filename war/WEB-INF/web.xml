@@ -17,7 +17,8 @@
 
   <servlet>
     <servlet-name>uploadServlet</servlet-name>
-    <servlet-class>gwtupload.server.AppEngineUploadServlet</servlet-class>
+    <servlet-class>gwtupload.server.UploadServlet</servlet-class>
+<!--    <servlet-class>gwtupload.server.AppEngineUploadServlet</servlet-class>-->
   </servlet>
   
   <servlet-mapping>

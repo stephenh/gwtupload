@@ -19,45 +19,45 @@ package gwtuploadsample.client;
 import gwtupload.client.IUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.SingleUploader;
+import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
+import gwtupload.client.Uploader.OnFinishUploaderHandler;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  *  * <p>
- * An example of a MultiUploader panel using a very simple upload progress widget
+ * An example of a single uploader form, using a simple and modal upload progress widget
  * The example also uses PreloadedImage to display uploaded images.
  * </p>
  * 
  * @author Manolo Carrasco Moñino
  *
  */
-public class SimpleUploadSample implements EntryPoint {
+public class SingleUploadSample implements EntryPoint {
 
-	FlowPanel panelImages = new FlowPanel();
+  FlowPanel panelImages = new FlowPanel();
+  SingleUploader uploader = new SingleUploader();
 
-	public void onModuleLoad() {
-		SingleUploader uploader = new SingleUploader();
-		uploader.setOnFinishHandler(onFinishHandler);
-		RootPanel.get().add(uploader);
-		RootPanel.get().add(panelImages);
-	}
+  public void onModuleLoad() {
+          uploader.addOnFinishUploadHandler(onFinishUploaderHandler);
+          RootPanel.get("single").add(uploader);
+          RootPanel.get("thumbnails").add(panelImages);
+  }
 
-	ValueChangeHandler<IUploader> onFinishHandler = new ValueChangeHandler<IUploader>() {
-		public void onValueChange(ValueChangeEvent<IUploader> event) {
-			IUploader uploader = event.getValue();
-			new PreloadedImage(uploader.fileUrl(), showImage);
-		}
-	};
-
-	ValueChangeHandler<PreloadedImage> showImage = new ValueChangeHandler<PreloadedImage>() {
-		public void onValueChange(ValueChangeEvent<PreloadedImage> event) {
-			PreloadedImage img = event.getValue();
-			img.setWidth("75px");
-			panelImages.add(img);
-		}
-	};
+  private OnFinishUploaderHandler onFinishUploaderHandler = new OnFinishUploaderHandler(){
+    public void onFinish(IUploader uploader) {
+      new PreloadedImage(uploader.fileUrl(), showImage);
+    }
+  };
+  
+  OnLoadPreloadedImageHandler showImage = new OnLoadPreloadedImageHandler() {
+    public void onLoad(PreloadedImage img) {
+      img.setWidth("75px");
+      panelImages.add(img);
+    }
+  };
+  
 }
+

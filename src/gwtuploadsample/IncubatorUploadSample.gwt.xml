@@ -1,5 +1,0 @@
-<module>
-  <inherits name="gwtupload.GWTUpload"/>
-  <inherits name="com.google.gwt.widgetideas.WidgetBase" />
-  <entry-point class="gwtuploadsample.client.IncubatorUploadSample"/>
-</module>

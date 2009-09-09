@@ -20,6 +20,8 @@ import gwtupload.client.IUploader;
 import gwtupload.client.MultiUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.SingleUploader;
+import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
+import gwtupload.client.Uploader.OnFinishUploaderHandler;
 
 import com.google.code.p.gwtchismes.client.GWTCBox;
 import com.google.code.p.gwtchismes.client.GWTCModalBox;
@@ -28,8 +30,6 @@ import com.google.code.p.gwtchismes.client.GWTCTabPanel;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -74,7 +74,7 @@ public class ChismesUploadSample implements EntryPoint {
 	private FlowPanel thumbPanel = new FlowPanel();
 
 	private GWTCModalBox popupPanel = new GWTCModalBox(GWTCPopupBox.OPTION_ANIMATION | GWTCPopupBox.OPTION_ROUNDED_BLUE);;
-
+	
 	public void onModuleLoad() {
 
 		thumbnailsBox.addStyleName("thumbnailsBox");
@@ -99,14 +99,14 @@ public class ChismesUploadSample implements EntryPoint {
 
 		// FIXME: changing the order of these two lines makes onchange event fail.
 		MultiUploader uploader = new MultiUploader(new ChismesUploadProgress(false));
-		uploader.setOnFinishHandler(onFinishListener);
+		uploader.addOnFinishUploadHandler(onFinishHandler);
 		uploader.setValidExtensions(validExtensions);
 		multiUploadBox.add(uploader);
 		tabPanel.add(multiUploadBox, "Multiple Uploader");
 
 		// FIXME: GWTCButton here doesn't handle onClick
 		SingleUploader simpleUploader = new SingleUploader(new ChismesUploadProgress(true));
-		simpleUploader.setOnFinishHandler(onFinishListener);
+		simpleUploader.addOnFinishUploadHandler(onFinishHandler);
 		simpleUploader.setValidExtensions(validExtensions);
 
 		// FIXME: changing the order of these two lines makes onchange fail.
@@ -116,61 +116,57 @@ public class ChismesUploadSample implements EntryPoint {
 		tabPanel.selectTab(0);
 	}
 
-	ValueChangeHandler<IUploader> onFinishListener = new ValueChangeHandler<IUploader>() {
-		public void onValueChange(ValueChangeEvent<IUploader> event) {
-			IUploader uploader = event.getValue();
-			new PreloadedImage(uploader.fileUrl(), addToThumbPanel);
-		}
+	private OnFinishUploaderHandler onFinishHandler = new OnFinishUploaderHandler() {
+    public void onFinish(IUploader uploader) {
+      new PreloadedImage(uploader.fileUrl(), addToThumbPanelHandler);
+    }
 	};
-
-	ValueChangeHandler<PreloadedImage> addToThumbPanel = new ValueChangeHandler<PreloadedImage>() {
-		public void onValueChange(ValueChangeEvent<PreloadedImage> event) {
-			PreloadedImage img = event.getValue();
-			img.setWidth("75px");
-			GWTCBox imgbox = new GWTCBox(GWTCBox.STYLE_FLAT);
-			imgbox.addStyleName("tumbnailBox");
-			imgbox.add(img);
-			thumbPanel.add(imgbox);
-			img.addClickHandler(imgClickListener);
-			DOM.setStyleAttribute(img.getElement(), "cursor", "pointer");
-		}
+	
+	private OnLoadPreloadedImageHandler addToThumbPanelHandler = new OnLoadPreloadedImageHandler() {
+    public void onLoad(PreloadedImage image) {
+      image.setWidth("75px");
+      GWTCBox imgbox = new GWTCBox(GWTCBox.STYLE_FLAT);
+      imgbox.addStyleName("tumbnailBox");
+      imgbox.add(image);
+      thumbPanel.add(imgbox);
+      image.addClickHandler(imgClickListenerHandler);
+      DOM.setStyleAttribute(image.getElement(), "cursor", "pointer");
+    }
 	};
-
-	ClickHandler imgClickListener = new ClickHandler() {
+	
+	private ClickHandler imgClickListenerHandler = new ClickHandler() {
 		public void onClick(ClickEvent event) {
-			new PreloadedImage(((Image) event.getSource()).getUrl(), showLargeImage);
+			new PreloadedImage(((Image) event.getSource()).getUrl(), showLargeImageHandler);
 		}
 	};
 
-	ValueChangeHandler<PreloadedImage> showLargeImage = new ValueChangeHandler<PreloadedImage>() {
+	private Label panelCloseHandler = new Label("Close") {
+    {
+      addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          popupPanel.hide();
+        }
+      });
+      DOM.setStyleAttribute(getElement(), "cursor", "pointer");
+    }
+  };
+	
+  private OnLoadPreloadedImageHandler showLargeImageHandler = new OnLoadPreloadedImageHandler() {
+    public void onLoad(PreloadedImage image) {
+      int max = Math.min(Window.getClientWidth(), Window.getClientHeight()) - 40;
+      int w = image.getRealWidth();
+      int h = image.getRealHeight();
 
-		Label close = new Label("Close") {
-			{
-				addClickHandler(new ClickHandler() {
-					public void onClick(ClickEvent event) {
-						popupPanel.hide();
-					}
-				});
-				DOM.setStyleAttribute(getElement(), "cursor", "pointer");
-			}
-		};
-
-		public void onValueChange(ValueChangeEvent<PreloadedImage> event) {
-			PreloadedImage image = event.getValue();
-
-			int max = Math.min(Window.getClientWidth(), Window.getClientHeight()) - 40;
-			int w = image.getRealWidth();
-			int h = image.getRealHeight();
-
-			if (w > h) {
-				image.setWidth(Math.min(w, max) + "px");
-			} else {
-				image.setHeight(Math.min(h, max) + "px");
-			}
-			popupPanel.clear();
-			popupPanel.add(close);
-			popupPanel.add(image);
-			popupPanel.center();
-		}
+      if (w > h) {
+        image.setWidth(Math.min(w, max) + "px");
+      } else {
+        image.setHeight(Math.min(h, max) + "px");
+      }
+      popupPanel.clear();
+      popupPanel.add(panelCloseHandler);
+      popupPanel.add(image);
+      popupPanel.center();
+    }
 	};
+	
 }

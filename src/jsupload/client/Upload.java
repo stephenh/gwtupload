@@ -19,7 +19,6 @@ package jsupload.client;
 import gwtupload.client.IUploader;
 import gwtupload.client.MultiUploader;
 import gwtupload.client.SingleUploader;
-import gwtupload.client.Uploader;
 import gwtuploadsample.client.ChismesUploadProgress;
 import gwtuploadsample.client.IncubatorUploadProgress;
 
@@ -28,7 +27,6 @@ import org.timepedia.exporter.client.ExportPackage;
 import org.timepedia.exporter.client.Exportable;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HTML;
@@ -43,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
  * 
  * <h3>Features</h3>
  * <ul>
- * <li>Two kind of progress bar, the most advanded one shows upload speed, time remaining, sizes, progress</li>
+ * <li>Two kind of progress bar, the most advanced one shows upload speed, time remaining, sizes, progress</li>
  * <li>Single upload form: after uploading a file the form can be used again, but the user can not interact with the page</li>
  * <li>Multiple upload form: Each time the user selects a file it goes to the queue and the user</li>
  * <li>Configurable functions to be called on the onChange, onStart, onFinish events</li>
@@ -63,32 +61,31 @@ public class Upload implements Exportable {
 
 		this.jsProp = new JsProperties(prop);
 
-		boolean autoSubmit = jsProp.getBoolean(Const.AUTO);
-
 		boolean multiple = jsProp.getBoolean(Const.MULTIPLE);
 
-		if (multiple) {
-			uploader = new MultiUploader();
-		} else if (!autoSubmit) {
-			uploader = new SingleUploader();
-			((SingleUploader)uploader).setText(jsProp.get(Const.SEND_MSG));
+		if ("incubator".equals(jsProp.get(Const.TYPE))) {
+		  if (multiple)
+		    uploader = new MultiUploader(new IncubatorUploadProgress());
+		  else
+        uploader = new SingleUploader();
+		} else if ("basic".equals(jsProp.get(Const.TYPE))) {
+      if (multiple)
+        uploader = new MultiUploader();
+      else
+        uploader = new SingleUploader();
 		} else {
-			uploader = new Uploader();
+      if (multiple)
+        uploader = new MultiUploader(new ChismesUploadProgress(false));
+      else
+        uploader = new SingleUploader(new ChismesUploadProgress(true));
 		}
+		
+		if (uploader instanceof SingleUploader) 
+      ((SingleUploader)uploader).setText(jsProp.get(Const.SEND_MSG));
 
-		if (autoSubmit && "incubator".equals(jsProp.get(Const.TYPE))) {
-			uploader.setStatusWidget(new IncubatorUploadProgress());
-		} else {
-			uploader.setStatusWidget(new ChismesUploadProgress(!autoSubmit));
-		}
-
-		ValueChangeHandler<IUploader> onStart = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_START));
-		ValueChangeHandler<IUploader> onFinish = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_FINISH));
-		ValueChangeHandler<IUploader> onChange = JsUtils.getClosureHandler(uploader, jsProp.getClosure(Const.ON_CHANGE));
-		uploader.setOnStartHandler(onStart);
-		uploader.setOnFinishHandler(onFinish);
-		uploader.setOnChangeHandler(onChange);
-
+		uploader.addOnStartUploadHandler(JsUtils.getOnStartUploaderHandler(jsProp.getClosure(Const.ON_START)));
+    uploader.addOnChangeUploadHandler(JsUtils.getOnChangeUploaderHandler(jsProp.getClosure(Const.ON_CHANGE)));
+    uploader.addOnFinishUploadHandler(JsUtils.getOnFinishUploaderHandler(jsProp.getClosure(Const.ON_FINISH)));
 		
 		Panel panel = RootPanel.get(jsProp.get(Const.CONT_ID, "NoId"));
 		if (panel == null)

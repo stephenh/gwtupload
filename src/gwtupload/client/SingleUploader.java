@@ -34,91 +34,95 @@ import com.google.gwt.user.client.ui.HasText;
  * </p>
  *
  */
-public class  SingleUploader extends Uploader implements HasText {
+public class SingleUploader extends Uploader implements HasText {
 
-	Button button = null;
-	
-	public SingleUploader() {
-		this(new BasicModalProgress());
-	}
-	
-	/**
-	 * If no status gadget is provided, it uses a basic one.
-	 */
-	public SingleUploader(IUploadStatus status) {
-		this(status, new Button("Send"));
-	}
+  Button button = null;
 
-	/**
-	 * This is the constructor for customized single uploaders.
-	 * 
-	 * @param status
-	 *        Customized status widget to use
-	 * @param button
-	 *        Customized button which submits the form
-	 */
-	public SingleUploader(IUploadStatus status, Button button) {
-		super(false);
-		super.setStatusWidget(status);
-		
-		this.button = button;
-		button.addStyleName("submit");
+  /**
+   * If no status gadget is provided, it uses a basic one.
+   */
+  public SingleUploader() {
+    this(new ModalUploadStatus());
+  }
 
-		final Uploader _this = this;
-		button.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				_this.submit();
-			}
-		});
-				
-		super.add(button);
-	}
+  /**
+   * If no submit button is provided it creates new one.
+   */
+  public SingleUploader(IUploadStatus status) {
+    this(status, new Button("Send"));
+  }
 
-	/* (non-Javadoc)
-	 * @see gwtupload.client.Uploader#onChangeInput()
-	 */
-	@Override
-	protected void onChangeInput() {
-		super.onChangeInput();
-		button.addStyleName("changed");
-		button.setFocus(true);
-	}
-	
-	/* (non-Javadoc)
-	 * @see gwtupload.client.Uploader#onStartUpload()
-	 */
-	@Override
+  /**
+   * Constructor for customized single uploaders.
+   * 
+   * @param status
+   *        Customized status widget to use
+   * @param button
+   *        Customized button which submits the form
+   */
+  public SingleUploader(IUploadStatus status, Button button) {
+    super(false);
+    final Uploader _this = this;
+
+    if (status != null)
+      super.setStatusWidget(status);
+
+    this.button = button;
+    button.addStyleName("submit");
+    button.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        _this.submit();
+      }
+    });
+    
+    // The user could have attached the button anywhere in the page.
+    if (!button.isAttached())
+      super.add(button);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.Uploader#onChangeInput()
+   */
+  @Override
+  protected void onChangeInput() {
+    super.onChangeInput();
+    button.addStyleName("changed");
+    button.setFocus(true);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.Uploader#onStartUpload()
+   */
+  @Override
   protected void onStartUpload() {
     super.onStartUpload();
     button.setEnabled(false);
     button.removeStyleName("changed");
   }
 
-	/* (non-Javadoc)
-	 * @see gwtupload.client.Uploader#onFinishUpload()
-	 */
-	@Override
+  /* (non-Javadoc)
+   * @see gwtupload.client.Uploader#onFinishUpload()
+   */
+  @Override
   protected void onFinishUpload() {
     super.onFinishUpload();
     button.setEnabled(true);
     button.removeStyleName("changed");
   }
-	
-	/* (non-Javadoc)
-	 * @see com.google.gwt.user.client.ui.HasText#setText(java.lang.String)
-	 */
-	public void setText(String text) {
-		if (text != null && text.length() > 0)
-		button.setText(text);
-	}
 
-	/* (non-Javadoc)
-	 * @see com.google.gwt.user.client.ui.HasText#getText()
-	 */
-  public String getText() {
-		return button.getText();
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasText#setText(java.lang.String)
+   */
+  public void setText(String text) {
+    if (text != null && text.length() > 0)
+      button.setText(text);
   }
-  
-}
 
-// public <T extends Widget & HasClickHandlers & HasText> SubmitUploader(IUploadStatus status, T button) {
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasText#getText()
+   */
+  public String getText() {
+    return button.getText();
+  }
+
+}
