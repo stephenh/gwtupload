@@ -9,7 +9,7 @@ use File::Basename;
 ###  It inspects the java classes looking for comments and put them in the wiki page.
 ###
 
-my $author = "Manuel Carrasco Moñino";
+my $author = "[http://manolocarrasco.blogspot.com/ Manuel Carrasco Moñino]";
 # Folder with source java files
 my $path = "src/jsupload/client/";
 # Java classes to inspect
