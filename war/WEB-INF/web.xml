@@ -26,4 +26,14 @@
     <url-pattern>*.gupld</url-pattern>
   </servlet-mapping>
 
+  <servlet>
+    <servlet-name>sendMailServlet</servlet-name>
+    <servlet-class>sendmailsample.server.SendMailSampleServlet</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>sendMailServlet</servlet-name>
+    <url-pattern>*.mail</url-pattern>
+  </servlet-mapping>
+
 </web-app>

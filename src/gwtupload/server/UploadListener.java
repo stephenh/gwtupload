@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
  * @author Manolo Carrasco Moñino
  * 
  */
-class UploadListener implements ProgressListener {
+public class UploadListener implements ProgressListener {
 	
   static Logger logger = Logger.getLogger(ProgressListener.class);
 	private static final int MAX_TIME_WITHOUT_DATA = 15000;

@@ -34,10 +34,16 @@ import com.google.gwt.user.client.ui.RootPanel;
  */
 public class PreloadedImage extends Image implements HasJsData {
 
+  /**
+   * Handler called when the image is loaded successfully
+   */
   public interface OnLoadPreloadedImageHandler extends EventHandler {
     void onLoad(PreloadedImage image);
   }
   
+  /**
+   * Handler called when the image load raises an error
+   */
   public interface OnErrorPreloadedImageHandler extends EventHandler {
     void onError(PreloadedImage image);
   }

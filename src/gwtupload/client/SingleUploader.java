@@ -19,7 +19,7 @@ package gwtupload.client;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.FormPanel;
 
 /**
  * <p>
@@ -30,26 +30,26 @@ import com.google.gwt.user.client.ui.HasText;
  * 
  * <p>
  * When the user selects a file, the button changes its style
- * so the he realises that he has to push the button.
+ * so the she could realize that she has to push the button.
  * </p>
  *
  */
-public class SingleUploader extends Uploader implements HasText {
+public class SingleUploader extends Uploader{
 
-  Button button = null;
+  private Button button;
 
   /**
    * If no status gadget is provided, it uses a basic one.
    */
   public SingleUploader() {
-    this(new ModalUploadStatus());
+    this(null);
   }
 
   /**
    * If no submit button is provided it creates new one.
    */
   public SingleUploader(IUploadStatus status) {
-    this(status, new Button("Send"));
+    this(status, new Button());
   }
 
   /**
@@ -61,13 +61,22 @@ public class SingleUploader extends Uploader implements HasText {
    *        Customized button which submits the form
    */
   public SingleUploader(IUploadStatus status, Button button) {
-    super(false);
-    final Uploader _this = this;
+    this(status, button, null);
+  }
 
-    if (status != null)
-      super.setStatusWidget(status);
+  public SingleUploader(IUploadStatus status, Button button, FormPanel form) {
+    super(form);
+    
+    final Uploader _this = this;
+    
+    if (status == null)
+      status = new ModalUploadStatus();
+    super.setStatusWidget(status);
 
     this.button = button;
+    if (button.getText().length() == 0)
+      button.setText(i18nStrs.uploaderSend());
+    
     button.addStyleName("submit");
     button.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
@@ -76,7 +85,7 @@ public class SingleUploader extends Uploader implements HasText {
     });
     
     // The user could have attached the button anywhere in the page.
-    if (!button.isAttached())
+    if (button.getParent() == null)
       super.add(button);
   }
 
@@ -111,18 +120,12 @@ public class SingleUploader extends Uploader implements HasText {
   }
 
   /* (non-Javadoc)
-   * @see com.google.gwt.user.client.ui.HasText#setText(java.lang.String)
+   * @see gwtupload.client.Uploader#setI18Constants(gwtupload.client.IUploader.UploaderConstants)
    */
-  public void setText(String text) {
-    if (text != null && text.length() > 0)
-      button.setText(text);
-  }
-
-  /* (non-Javadoc)
-   * @see com.google.gwt.user.client.ui.HasText#getText()
-   */
-  public String getText() {
-    return button.getText();
+  @Override
+  public void setI18Constants(UploaderConstants strs) {
+    super.setI18Constants(strs);
+    button.setText(strs.uploaderSend());
   }
 
 }

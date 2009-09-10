@@ -65,7 +65,13 @@
 	font-weight: bold;  
 	text-decoration: blink;
 }
-.gwt-PopupPanel {
+.gwt-PopupPanel .GWTUpld {
 	border: 2px groove #F6A828;
 	padding: 10px;
+	background: beige;
+  -moz-border-radius-bottomleft: 6px;
+  -moz-border-radius-bottomright: 6px;
+  -moz-border-radius-topleft: 6px;
+  -moz-border-radius-topright: 6px;
+	
 }

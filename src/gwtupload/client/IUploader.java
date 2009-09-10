@@ -16,10 +16,11 @@
  */
 package gwtupload.client;
 
-import gwtupload.client.Uploader.OnChangeUploaderHandler;
-import gwtupload.client.Uploader.OnFinishUploaderHandler;
-import gwtupload.client.Uploader.OnStartUploaderHandler;
+import gwtupload.client.IUploadStatus.STATUS;
+import gwtupload.client.IUploadStatus.UploadStatusConstants;
 
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasWidgets;
 
 /**
@@ -31,8 +32,46 @@ import com.google.gwt.user.client.ui.HasWidgets;
  *
  */
 public interface IUploader extends HasJsData, HasWidgets {
+  
+  /**
+   * Interface for internationalizable elements  
+   */
+  public interface UploaderConstants extends UploadStatusConstants {
+    @DefaultStringValue("There is already an active upload, try later.")
+    public String uploaderActiveUpload();
+    @DefaultStringValue("This file was already uploaded")
+    public String uploaderAlreadyDone();
+    @DefaultStringValue("Invalid file.\\nOnly these types are allowed:\\n")
+    public String uploaderInvalidExtension();
+    @DefaultStringValue("Timeout sending the file:\\nperhups your browser does not send files correctly\\nor there was a server error.\\nPlease try again.")
+    public String uploaderTimeout();
+    @DefaultStringValue("Invalid server response. Have you configured correctly your application in server-side?")
+    public String uploaderServerError();
+    @DefaultStringValue("Unable to contact with the application server: ")
+    public String uploaderServerUnavailable();
+
+    @DefaultStringValue("Send")
+    public String uploaderSend();
+    
+  }  
+  
 	
-	/**
+	public interface OnStartUploaderHandler extends EventHandler {
+    void onStart(IUploader uploader);
+  }
+
+
+  public interface OnChangeUploaderHandler extends EventHandler {
+    void onChange(IUploader uploader);
+  }
+
+
+  public interface OnFinishUploaderHandler extends EventHandler {
+    void onFinish(IUploader uploader);
+  }
+
+
+  /**
 	 * Changes the status widget used to show the progress.
 	 * @param status
 	 */
@@ -68,7 +107,7 @@ public interface IUploader extends HasJsData, HasWidgets {
 	 * Returns the link reference to the uploaded file in the web server.
 	 * It is useful to show uploaded images or to create links to uploaded documents.
 	 * 
-	 * In multiuploader panels, this method has to return the link to the most recent
+	 * In multi-uploader panels, this method has to return the link to the most recent
 	 * uploaded file
 	 * 
 	 * @return string 	
@@ -91,21 +130,41 @@ public interface IUploader extends HasJsData, HasWidgets {
    * This happens just in the moment that the form receives the submit event.
    * 
    * @param handler
+   * @return
    */
-  public void addOnStartUploadHandler(OnStartUploaderHandler handler);
+  public HandlerRegistration addOnStartUploadHandler(IUploader.OnStartUploaderHandler handler);
   
   /**
    * Sets the handler that is called when the user selects a file
+   * 
    * @param handler
+   * @return
    */
-  public void addOnChangeUploadHandler(OnChangeUploaderHandler handler);
+  public HandlerRegistration addOnChangeUploadHandler(IUploader.OnChangeUploaderHandler handler);
 
   /**
    * Sets the handler that will be called when the upload process finishes.
    * It is called even the process is canceled or finishes with error 
+   * 
    * @param handler
+   * @return
    */
-  public void addOnFinishUploadHandler(OnFinishUploaderHandler handler);
+  public HandlerRegistration addOnFinishUploadHandler(IUploader.OnFinishUploaderHandler handler);
+  
+  
+  /**
+   * Internationalize the Uploader widget
+   * 
+   * @param strs
+   */
+  public void setI18Constants(UploaderConstants strs);
+  
+  /**
+   * Return the status of the upload process.
+   * 
+   * @return
+   */
+  public STATUS getStatus();
 
 	
 }

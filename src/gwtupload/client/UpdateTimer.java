@@ -33,7 +33,7 @@ public class UpdateTimer extends Timer {
 
     private boolean isRunning = true;
 
-    UpdateTimer(IsUpdateable updateable, int interval) {
+    public UpdateTimer(IsUpdateable updateable, int interval) {
         this.updateable = updateable;
         this.interval = interval;
     }

@@ -3,4 +3,8 @@
   <inherits name="com.google.code.p.gwtchismes.GWTChismes" />
   <entry-point class="gwtuploadsample.client.ChismesUploadSample"/>
   <inherits name="com.google.gwt.widgetideas.BasicTable"/>
+  
+  <extend-property name="locale" values="es" />
+  <extend-property name="locale" values="en" />
+  
 </module>

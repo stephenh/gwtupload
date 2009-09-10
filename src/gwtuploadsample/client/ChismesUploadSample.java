@@ -21,13 +21,13 @@ import gwtupload.client.MultiUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.SingleUploader;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
-import gwtupload.client.Uploader.OnFinishUploaderHandler;
 
 import com.google.code.p.gwtchismes.client.GWTCBox;
 import com.google.code.p.gwtchismes.client.GWTCModalBox;
 import com.google.code.p.gwtchismes.client.GWTCPopupBox;
 import com.google.code.p.gwtchismes.client.GWTCTabPanel;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -63,6 +63,8 @@ import com.google.gwt.user.client.ui.RootPanel;
  */
 public class ChismesUploadSample implements EntryPoint {
 
+  SampleI18nConstants i18nStrs = GWT.create(SampleI18nConstants.class);
+  
 	String[] validExtensions = new String[] { "jpg", "jpeg", "png", "gif" };
 
 	private FlexTable mainPanel = new FlexTable();
@@ -79,16 +81,14 @@ public class ChismesUploadSample implements EntryPoint {
 
 		thumbnailsBox.addStyleName("thumbnailsBox");
 		thumbPanel.setStyleName("thumbPanel");
-		thumbnailsBox.setText("Image thumbs: click on the images to view them in a popup window");
+		thumbnailsBox.setText(i18nStrs.thumbNailsBoxText());
 		thumbnailsBox.add(thumbPanel);
 
 		multiUploadBox.addStyleName("mutiUploadBox");
-		multiUploadBox
-		    .setText("Select a file and add it to the upload queue, after a short while the upload process will begin and a new input will be added to the form.");
+		multiUploadBox.setText(i18nStrs.multiUploadBoxText());
 
 		simpleUploadBox.addStyleName("simpleUploadBox");
-		simpleUploadBox
-		    .setText("Select a file to upload and then push the send button, then a modal dialog showing the progress will appear. Image files will be displayed in the panel");
+		simpleUploadBox.setText(i18nStrs.simpleUploadBoxText());
 
 		popupPanel.setAnimationEnabled(true);
 		popupPanel.addStyleName("previewBox");
@@ -102,7 +102,7 @@ public class ChismesUploadSample implements EntryPoint {
 		uploader.addOnFinishUploadHandler(onFinishHandler);
 		uploader.setValidExtensions(validExtensions);
 		multiUploadBox.add(uploader);
-		tabPanel.add(multiUploadBox, "Multiple Uploader");
+		tabPanel.add(multiUploadBox, i18nStrs.multiUploadTabText());
 
 		// FIXME: GWTCButton here doesn't handle onClick
 		SingleUploader simpleUploader = new SingleUploader(new ChismesUploadProgress(true));
@@ -111,12 +111,12 @@ public class ChismesUploadSample implements EntryPoint {
 
 		// FIXME: changing the order of these two lines makes onchange fail.
 		simpleUploadBox.add(simpleUploader);
-		tabPanel.add(simpleUploadBox, "Single Uploader");
+		tabPanel.add(simpleUploadBox, i18nStrs.singleUploadTabText());
 
 		tabPanel.selectTab(0);
 	}
 
-	private OnFinishUploaderHandler onFinishHandler = new OnFinishUploaderHandler() {
+	private IUploader.OnFinishUploaderHandler onFinishHandler = new IUploader.OnFinishUploaderHandler() {
     public void onFinish(IUploader uploader) {
       new PreloadedImage(uploader.fileUrl(), addToThumbPanelHandler);
     }
@@ -140,7 +140,7 @@ public class ChismesUploadSample implements EntryPoint {
 		}
 	};
 
-	private Label panelCloseHandler = new Label("Close") {
+	private Label panelCloseHandler = new Label(i18nStrs.close()) {
     {
       addClickHandler(new ClickHandler() {
         public void onClick(ClickEvent event) {

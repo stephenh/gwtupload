@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,16 +49,26 @@ public abstract class UploadAction extends UploadServlet {
      * @param sessionFiles
      * @return a message that is sent to the client.
      */
-    abstract public String doAction(Vector<FileItem> sessionFiles) throws IOException;
+    abstract public String doAction(Vector<FileItem> sessionFiles) throws IOException, ServletException;
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         String error = super.parsePostRequest(request, response);
 
         String message = null;
         if (error == null) {
             @SuppressWarnings("unchecked")
             Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
-            message = doAction(sessionFiles);
+            try {
+              message = doAction(sessionFiles);
+            } catch (Exception e) {
+              message = e.getMessage();
+            }
+            if (message != null){
+              UploadListener listener = (UploadListener)request.getSession().getAttribute(ATTR_LISTENER);
+              if (listener != null) {
+                listener.setException(new RuntimeException(message));
+              }
+            }
             for (FileItem fileItem : sessionFiles)
                 if (false == fileItem.isFormField())
                     fileItem.delete();

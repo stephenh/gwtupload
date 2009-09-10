@@ -16,7 +16,12 @@
  */
 package gwtupload.client;
 
+
+import java.util.EnumSet;
+import java.util.Set;
+
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -27,27 +32,32 @@ import com.google.gwt.user.client.ui.Widget;
  * @author Manolo Carrasco Moñino
  * 
  */
-public interface IUploadStatus extends HasProgress {
-  final public static class STATUS {
-    final public static int UNINITIALIZED = 0;
-    final public static int QUEUED = 1;
-    final public static int INPROGRESS = 2;
-    final public static int FINISHED = 3;
-    final public static int ERROR = 4;
-    final public static int CANCELLING = 5;
-    final public static int CANCELLED = 6;
-    final public static int SUBMITTING = 7;
-  }
-  
-  final public static class CANCEL  {
-    final static int DISABLED = 1;
-    final static int REMOVE_REMOTE = 2;
-    final static int REMOVE_FROM_LIST = 4;
-    final static int STOP_CURRENT = 8;
-    final static int DEFAULT = REMOVE_REMOTE | STOP_CURRENT;
-    final static int LIKE_GMAIL = REMOVE_FROM_LIST | REMOVE_REMOTE | STOP_CURRENT;
-  }
-  
+public interface IUploadStatus extends HasProgress {  
+
+  /**
+   * Interface for internationalizable elements  
+   */
+  public interface UploadStatusConstants extends Constants {
+    
+    @DefaultStringValue("Queued")
+    public String uploadStatusQueued();
+    @DefaultStringValue("In progress")
+    public String uploadStatusInProgress();
+    @DefaultStringValue("Done")
+    public String uploadStatusSuccess();
+    @DefaultStringValue("Error")
+    public String uploadStatusError();
+    @DefaultStringValue("Canceling ...")
+    public String uploadStatusCanceling();
+    @DefaultStringValue("Canceled ...")
+    public String uploadStatusCanceled();
+    @DefaultStringValue("Submitting form ...")
+    public String uploadStatusSubmitting();
+    
+    @DefaultStringValue(" ")
+    public String uploadLabelCancel();
+
+  }    
   /**
    * Handler for {@link Uploader.UploadCancelEvent} events.
    */
@@ -57,6 +67,23 @@ public interface IUploadStatus extends HasProgress {
      */
     void onCancel();
   }
+
+  /**
+   * Enumeration of possible status values
+   */
+  public static enum STATUS {
+    UNITIALIZED, QUEUED, INPROGRESS, SUCCESS, ERROR, CANCELING, CANCELED, SUBMITING
+  }
+
+  /**
+   * Enumeration of possible cancel options
+   */
+  public static enum CFG_CANCEL {
+    DISABLED, REMOVE_REMOTE, REMOVE_CANCELLED_FROM_LIST, STOP_CURRENT
+  }
+
+  public final static Set<CFG_CANCEL> DEFAULT_CANCEL_CFG = EnumSet.of(CFG_CANCEL.REMOVE_REMOTE, CFG_CANCEL.STOP_CURRENT);
+  public final static Set<CFG_CANCEL> GMAIL_CANCEL_CFG = EnumSet.of(CFG_CANCEL.STOP_CURRENT, CFG_CANCEL.REMOVE_REMOTE, CFG_CANCEL.REMOVE_CANCELLED_FROM_LIST);
 
   /**
    * Creates a new instance of the current object type
@@ -85,16 +112,10 @@ public interface IUploadStatus extends HasProgress {
 
   /**
    * Set the process status
-   * @param status possible values are:
-   *     UNINITIALIZED = 0;
-   *     QUEUED = 1;
-   *     INPROGRESS = 2;
-   *     FINISHED = 3;
-   *     ERROR = 4;
-   *     CANCELLING = 5;
-   *     CANCELLED = 6;
+   * 
+   * @param status 
    */
-  public void setStatus(int status);
+  public void setStatus(IUploadStatus.STATUS status);
 
   /**
    * show/hide the widget
@@ -112,9 +133,25 @@ public interface IUploadStatus extends HasProgress {
    * Set the configuration for the cancel action.
    * 
    * @param config
-   *     Configuration can be passed joining these values using the or bit wise operator:
+   *   Set of configuration parameters. 
+   *   @tip Use EnumSet.of() to fill them.
    * 
    */
-  public void setCancelConfiguration(int config);
+  public void setCancelConfiguration(Set<IUploadStatus.CFG_CANCEL> config);
   
+  /**
+   * Internationalize the UploadStatus widget
+   * 
+   * @param strs
+   */
+  public void setI18Constants(UploadStatusConstants strs);
+  
+  /**
+   * Return the status of the upload process.
+   * 
+   * @return
+   */
+  public STATUS getStatus();
+
+
 }

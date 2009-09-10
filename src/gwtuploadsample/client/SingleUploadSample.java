@@ -20,7 +20,6 @@ import gwtupload.client.IUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.SingleUploader;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
-import gwtupload.client.Uploader.OnFinishUploaderHandler;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -46,7 +45,7 @@ public class SingleUploadSample implements EntryPoint {
           RootPanel.get("thumbnails").add(panelImages);
   }
 
-  private OnFinishUploaderHandler onFinishUploaderHandler = new OnFinishUploaderHandler(){
+  private IUploader.OnFinishUploaderHandler onFinishUploaderHandler = new IUploader.OnFinishUploaderHandler(){
     public void onFinish(IUploader uploader) {
       new PreloadedImage(uploader.fileUrl(), showImage);
     }

@@ -36,23 +36,40 @@ public class Const implements Exportable {
     
     protected static final String TOTAL_MSG = "totalMsg"; //["{0}% {1}/{2} "] Set the message to show when the process has finished
     protected static final String PERCENT_MSG = "percentMsg"; //["{0}%"] Set the message used to format the progress in percent units. 
-    protected static final String SECONDS_MSG = "secondsMsg"; //["Time remaining: {0} Seconds"] Set the message used to format the time remaining text below the progres bar in seconds.
-    protected static final String MINUTES_MSG = "minutesMsg"; //["Time remaining: {0} Minutes"]Set the message used to format the time remaining text below the progres bar in minutes
+    protected static final String SECONDS_MSG = "secondsMsg"; //["Time remaining: {0} Seconds"] Set the message used to format the time remaining text below the progress bar in seconds.
+    protected static final String MINUTES_MSG = "minutesMsg"; //["Time remaining: {0} Minutes"]Set the message used to format the time remaining text below the progress bar in minutes
     protected static final String SEND_MSG = "sendMsg"; //["Send"] Text for the submit button in simple uploaders     
-    protected static final String HOURS_MSG = "hoursMsg"; //["Time remaining: {0} Hours"]Set the message used to format the time remaining text below the progres bar in hours
+    protected static final String HOURS_MSG = "hoursMsg"; //["Time remaining: {0} Hours"]Set the message used to format the time remaining text below the progress bar in hours
     protected static final String ELEMENTS = "elements"; //[20] number of bars to show in the progress bar
     protected static final String NUMBERS = "numbers"; //[true] show numeric information of the progress
     protected static final String TIME_REMAINING = "timeRemaining"; //[false] show time remaining
     
     protected static final String REGIONAL = "regional";  //[null] hash with the set of key/values to internationalize the widget
-    protected static final String VALID_EXTENSIONS = "validExtensions"; //[null] List of valid extensions, the extensions has to be separated by coma or spaces
-    protected static final String ACTION = "action"; //["servlet.gupld"] Servlet path, it has to be in the same domain, because crossdomain is not supported
+    protected static final String VALID_EXTENSIONS = "validExtensions"; //[null] List of valid extensions, the extensions has to be separated by comma or spaces
+    protected static final String ACTION = "action"; //["servlet.gupld"] Servlet path, it has to be in the same domain, because cross-domain is not supported
     protected static final String ON_FINISH = "onFinish"; //[null] Javascript method called when the upload process finishes
     protected static final String ON_START = "onStart"; //[null] Javascript method called when the upload process starts
     protected static final String ON_CHANGE = "onChange"; //[null] Javascript method called when the upload process starts
-    protected static final String MULTIPLE = "multiple"; //[false] specify whether the uploader has a multiple behaviour 
+    protected static final String MULTIPLE = "multiple"; //[false] specify whether the uploader has a multiple behavior 
     protected static final String TYPE = "type"; //["chismes"] Type of progress bar, valid options are "basic", "chismes" or "incubator"
     protected static final String ON_LOAD = "onLoad"; //[null] Javascript method called after the browser has loaded the image
     protected static final String URL = "url"; //[null] web address for the image
+    
+    
+    
+    protected static final String TXT_STATUS_QUEUED = "Queued"; //(Upload) ["Queued"] Status text when the file is in queue
+    protected static final String TXT_STATUS_INPROGRESS = "InProgress"; //(Upload) ["In progress"] Status text when the file is being transfered
+    protected static final String TXT_STATUS_FINISHED = "Finished"; //(Upload) ["Finished"] Status text when the file has been sent
+    protected static final String TXT_STATUS_ERROR = "Error"; //(Upload) ["Error"] Status text when the upload was not success
+    protected static final String TXT_STATUS_CANCELING = "Canceling"; //(Upload) ["Canceling"] Status text when the file is being canceled
+    protected static final String TXT_STATUS_CANCELLED = "Canceled"; //(Upload) ["Canceled"] Status text when the file has been canceled
+    protected static final String TXT_STATUS_SUBMITTING = "Submitting"; //(Upload) ["Submitting"] Status text when the form is being submitted
 
+//    uploaderActiveUpload=Se esta enviando un archivo al servidor, intenteló mas tarde.
+//    uploaderAlreadyDone=Este archivo ya fué enviado.
+//    uploaderInvalidExtension=Sólo está permitido enviar estos tipos de archivo:\n
+//    uploaderTimeout=Se ha sobrepasado el tiempo de espera al enviar el archivo.\n Es posible que su navegador no envíe correctamente archivos,\n o quizás ocurrió un error en el servidor\nPor favor intenteló mas tarde
+//    uploaderServerError=El servidor ha enviado una respuesta incorrecta.\n Compruebe que la aplicación en el servidor está bien configurada.
+//    uploaderServerUnavailable=Ha sido imposible conectar con el servidor de la aplicación.
+//    uploaderSend=Enviar
 }

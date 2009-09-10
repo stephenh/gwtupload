@@ -69,12 +69,6 @@ h2, p, ul {
   color: grey;
 }
 
-/*
- * GWT Popup panels
- */
-.gwt-PopupPanel {
-  background-color: beige; 
-}
 .thumbsContainer, .thumbsContainer img {
   border: 1px solid #DDDDDD;
 }
@@ -82,7 +76,7 @@ h2, p, ul {
   margin: 3px;
 }
 
-.gwt-PopupPanel, .thumbsContainer,  .thumbsContainer img  {
+.thumbsContainer,  .thumbsContainer img  {
   -moz-border-radius-bottomleft: 6px;
   -moz-border-radius-bottomright: 6px;
   -moz-border-radius-topleft: 6px;

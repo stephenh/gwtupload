@@ -102,7 +102,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	protected static final String ATTR_FILES = "FILES";
 
-	private static final String ATTR_LISTENER = "LISTENER";
+	protected static final String ATTR_LISTENER = "LISTENER";
 
 	private static final String ATTR_ERROR = "ERROR";
 
@@ -170,7 +170,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 * the upload process or the string OK in the case of success.
 	 * 
 	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		String error;
 		try {
 			error = parsePostRequest(request, response);
@@ -279,9 +279,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			logger.error(session.getId() + " UPLOAD servlet error NO DATA received ");
 			error += "\nError, your browser has not sent any information.\nPlease try again or try it using another browser\n";
 		}
-		logger.debug(session.getId() + " UPLOAD servlet removing listener from session");
-		session.removeAttribute(ATTR_LISTENER);
-		return error;
+		return error!=null && error.length() > 0 ? error : null;
 	}
 
 	/**

@@ -16,6 +16,9 @@
  */
 package gwtupload.client;
 
+import java.util.Set;
+
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
@@ -38,19 +41,46 @@ import com.google.gwt.user.client.ui.Widget;
  * 
  */
 public class BaseUploadStatus implements IUploadStatus {
-  
-	private static final String MSG_ERROR = "ERROR";
-	private static final String MSG_FINISHED = "OK";
-	private static final String MSG_INPROGRESS = "Sending";
-	private static final String MSG_QUEUED = "Queued";
-  private static final String MSG_CANCELING = "Canceling";
-  private static final String MSG_CANCELED = "Canceled";
 
-  private int status = 0;
+  /**
+   * A basic progress bar implementation used when the user doesn't provide anyone.
+   */
+  public class BasicProgressBar extends FlowPanel implements HasProgress {
+
+    SimplePanel statusBar = new SimplePanel();
+    Label statusMsg = new Label();
+    
+    public BasicProgressBar(){
+      this.setWidth("100px");
+      this.setStyleName("prgbar-back");
+      this.add(statusBar);
+      this.add(statusMsg);
+      statusBar.setStyleName("prgbar-done");
+      statusBar.setWidth("0px");
+      statusMsg.setStyleName("prgbar-msg");
+    }
+
+    /* (non-Javadoc)
+     * @see gwtupload.client.HasProgress#setProgress(int, int)
+     */
+    public void setProgress(int done, int total) {
+      if (statusBar == null)
+        return;
+      int percent = HasProgress.Utils.getPercent(done, total);
+      statusBar.setWidth(percent + "px");
+      statusMsg.setText(percent + "%");
+    }
+
+  }
+
+
+  private IUploadStatus.STATUS status = STATUS.UNITIALIZED;
 	private Widget prg = null;
   private boolean hasCancelActions = false;
   
-  int cancelCfg = CANCEL.DEFAULT;
+  private UploadStatusConstants i18nStrs = GWT.create(UploadStatusConstants.class);
+  
+  private Set<CFG_CANCEL> cancelCfg = DEFAULT_CANCEL_CFG;
 
 	/**
 	 * Main panel, attach it to the document using getWidget()
@@ -64,12 +94,14 @@ public class BaseUploadStatus implements IUploadStatus {
 	 * Label with the progress status 
 	 */
 	protected Label statusLabel = new Label();
-	
   /**
    * Cancel button 
    */
 	protected Label cancelLabel = new Label(" ");
 	
+	/**
+	 * Default Constructor
+	 */
 	public BaseUploadStatus() {
     panel.add(cancelLabel);
     panel.add(fileNameLabel);
@@ -161,46 +193,44 @@ public class BaseUploadStatus implements IUploadStatus {
     statusLabel.setVisible(!showProgress);
     
     statusLabel.setText(message);
-    cancelLabel.setVisible(hasCancelActions && (cancelCfg & CANCEL.DISABLED) != CANCEL.DISABLED );
+    cancelLabel.setVisible(hasCancelActions && !cancelCfg.contains(CFG_CANCEL.DISABLED));
   }
   
 
   /* (non-Javadoc)
    * @see gwtupload.client.IUploadStatus#setStatus(int)
    */
-  public void setStatus(int stat) {
+  public void setStatus(STATUS stat) {
     statusLabel.removeStyleDependentName("" + status);
     status = stat;
     statusLabel.addStyleDependentName("" + status);
-    switch (status) {
-      case STATUS.QUEUED:
-        updateStatusPanel(false, MSG_QUEUED);
+    switch(stat){
+      case QUEUED:
+        updateStatusPanel(false, i18nStrs.uploadStatusQueued());
         break;
-      case STATUS.SUBMITTING:
-        updateStatusPanel(false, MSG_QUEUED);
+      case SUBMITING:
+        updateStatusPanel(false, i18nStrs.uploadStatusSubmitting());
         break;
-      case STATUS.INPROGRESS:
-        updateStatusPanel(true, MSG_INPROGRESS);
-        if ((cancelCfg & CANCEL.STOP_CURRENT) != CANCEL.STOP_CURRENT) {
-          cancelLabel.setVisible(false);
-        }
-        cancelLabel.setVisible(true);
-        break;
-      case STATUS.FINISHED:
-        updateStatusPanel(false, MSG_FINISHED);
-        if ((cancelCfg & CANCEL.REMOVE_REMOTE) != CANCEL.REMOVE_REMOTE)
+      case INPROGRESS:
+        updateStatusPanel(true, i18nStrs.uploadStatusInProgress());
+        if (!cancelCfg.contains(CFG_CANCEL.STOP_CURRENT))
           cancelLabel.setVisible(false);
         break;
-      case STATUS.CANCELLING:
-        updateStatusPanel(false, MSG_CANCELING);
+      case SUCCESS:
+        updateStatusPanel(false, i18nStrs.uploadStatusSuccess());
+        if (!cancelCfg.contains(CFG_CANCEL.REMOVE_REMOTE))
+          cancelLabel.setVisible(false);
         break;
-      case STATUS.CANCELLED:
-        updateStatusPanel(false, MSG_CANCELED);
-        if ((cancelCfg & CANCEL.REMOVE_FROM_LIST) == CANCEL.REMOVE_FROM_LIST)
+      case CANCELING:
+        updateStatusPanel(false, i18nStrs.uploadStatusCanceling());
+        break;
+      case CANCELED:
+        updateStatusPanel(false, i18nStrs.uploadStatusCanceled());
+        if (cancelCfg.contains(CFG_CANCEL.REMOVE_CANCELLED_FROM_LIST))
           this.setVisible(false);
         break;
-      case STATUS.ERROR:
-        updateStatusPanel(false, MSG_ERROR);
+      case ERROR:
+        updateStatusPanel(false, i18nStrs.uploadStatusError());
         break;
     }
   }
@@ -225,7 +255,7 @@ public class BaseUploadStatus implements IUploadStatus {
 	}
 	
   /* (non-Javadoc)
-   * @see gwtupload.client.IUploadStatus#addCancelHandler(gwtupload.client.IUploadStatus.UploadCancelHandler)
+   * @see gwtupload.client.IUploadStatus#addCancelHandler(gwtupload.client.UploadCancelHandler)
    */
   public void addCancelHandler(final UploadCancelHandler handler) {
     hasCancelActions = true;
@@ -239,44 +269,20 @@ public class BaseUploadStatus implements IUploadStatus {
   /* (non-Javadoc)
    * @see gwtupload.client.IUploadStatus#setCancelConfiguration(int)
    */
-  public void setCancelConfiguration(int config) {
-    System.out.println("Setting cancel configuration");
+  public void setCancelConfiguration(Set<CFG_CANCEL> config) {
     cancelCfg = config;
   }
   
-  
-  /**
-   * The default progress bar used when the user doesn't provide anyone.
-   * 
-   * @author Manolo Carrasco Moñino
-   *
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploadStatus#setI18Constants(gwtupload.client.IUploadStatus.UploadConstants)
    */
-  public class BasicProgressBar extends FlowPanel implements HasProgress {
+  public void setI18Constants(UploadStatusConstants strs) {
+    assert strs != null;
+    i18nStrs = strs;
+  }
 
-    SimplePanel statusBar = new SimplePanel();
-    Label statusMsg = new Label();
-    
-    public BasicProgressBar(){
-      this.setWidth("100px");
-      this.setStyleName("prgbar-back");
-      this.add(statusBar);
-      this.add(statusMsg);
-      statusBar.setStyleName("prgbar-done");
-      statusBar.setWidth("0px");
-      statusMsg.setStyleName("prgbar-msg");
-    }
-
-    /* (non-Javadoc)
-     * @see gwtupload.client.HasProgress#setProgress(int, int)
-     */
-    public void setProgress(int done, int total) {
-    	if (statusBar == null)
-    		return;
-      int percent = HasProgress.Utils.getPercent(done, total);
-      statusBar.setWidth(percent + "px");
-      statusMsg.setText(percent + "%");
-    }
-
+  public STATUS getStatus() {
+    return status;
   }
   
 }

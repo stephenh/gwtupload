@@ -20,9 +20,6 @@ import gwtupload.client.HasJsData;
 import gwtupload.client.IUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
-import gwtupload.client.Uploader.OnChangeUploaderHandler;
-import gwtupload.client.Uploader.OnFinishUploaderHandler;
-import gwtupload.client.Uploader.OnStartUploaderHandler;
 
 import org.timepedia.exporter.client.Export;
 import org.timepedia.exporter.client.ExportClosure;
@@ -89,8 +86,8 @@ class JsUtils {
     };
   }
   
-  public final static OnStartUploaderHandler getOnStartUploaderHandler(final JsChangeClosure jsChange) {
-    return new OnStartUploaderHandler(){
+  public final static IUploader.OnStartUploaderHandler getOnStartUploaderHandler(final JsChangeClosure jsChange) {
+    return new IUploader.OnStartUploaderHandler(){
       public void onStart(IUploader u) {
         if (jsChange != null);
           jsChange.onChange(u.getData());
@@ -98,8 +95,8 @@ class JsUtils {
     };
   }
   
-  public final static OnChangeUploaderHandler getOnChangeUploaderHandler(final JsChangeClosure jsChange) {
-    return new OnChangeUploaderHandler(){
+  public final static IUploader.OnChangeUploaderHandler getOnChangeUploaderHandler(final JsChangeClosure jsChange) {
+    return new IUploader.OnChangeUploaderHandler(){
       public void onChange(IUploader u) {
         if (jsChange != null);
           jsChange.onChange(u.getData());
@@ -107,8 +104,8 @@ class JsUtils {
     };
   }
   
-  public final static OnFinishUploaderHandler getOnFinishUploaderHandler(final JsChangeClosure jsChange) {
-    return new OnFinishUploaderHandler(){
+  public final static IUploader.OnFinishUploaderHandler getOnFinishUploaderHandler(final JsChangeClosure jsChange) {
+    return new IUploader.OnFinishUploaderHandler(){
       public void onFinish(IUploader u) {
         if (jsChange != null);
           jsChange.onChange(u.getData());

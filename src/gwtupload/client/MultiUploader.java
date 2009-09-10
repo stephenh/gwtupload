@@ -16,13 +16,13 @@
  */
 package gwtupload.client;
 
-import gwtupload.client.Uploader.OnChangeUploaderHandler;
-import gwtupload.client.Uploader.OnFinishUploaderHandler;
-import gwtupload.client.Uploader.OnStartUploaderHandler;
+import gwtupload.client.IUploadStatus.STATUS;
 
 import java.util.Iterator;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -45,10 +45,11 @@ public class MultiUploader extends Composite implements IUploader {
 	boolean avoidRepeat = true;
 	private String[] validExtensions = null;
 	private String servletPath = null;
+	private UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
 	
-  private OnStartUploaderHandler onStartHandler = null;
-  private OnChangeUploaderHandler onChangeHandler = null;
-  private OnFinishUploaderHandler onFinishHandler = null;
+  private IUploader.OnStartUploaderHandler onStartHandler = null;
+  private IUploader.OnChangeUploaderHandler onChangeHandler = null;
+  private IUploader.OnFinishUploaderHandler onFinishHandler = null;
 
 	private Uploader currentUploader = null;
 	private Uploader lastUploader = null;
@@ -74,7 +75,7 @@ public class MultiUploader extends Composite implements IUploader {
     newUploaderInstance();
   }
   
-  OnStartUploaderHandler startHandler = new OnStartUploaderHandler(){
+  IUploader.OnStartUploaderHandler startHandler = new IUploader.OnStartUploaderHandler(){
     public void onStart(IUploader uploader) {
       newUploaderInstance();
     }
@@ -94,6 +95,7 @@ public class MultiUploader extends Composite implements IUploader {
     currentUploader.setValidExtensions(validExtensions);
     currentUploader.setServletPath(servletPath);
     currentUploader.avoidRepeatFiles(avoidRepeat);
+    currentUploader.setI18Constants(i18nStrs);
     // Set the handlers
     currentUploader.addOnStartUploadHandler(startHandler);
     if (onChangeHandler != null)
@@ -192,24 +194,48 @@ public class MultiUploader extends Composite implements IUploader {
   /* (non-Javadoc)
    * @see gwtupload.client.IUploader#addOnChangeUploadHandler(gwtupload.client.Uploader.OnChangeUploaderHandler)
    */
-  public void addOnChangeUploadHandler(OnChangeUploaderHandler handler) {
+  public HandlerRegistration addOnChangeUploadHandler(IUploader.OnChangeUploaderHandler handler) {
     onChangeHandler = handler;
-    currentUploader.addOnChangeUploadHandler(handler);
+    return currentUploader.addOnChangeUploadHandler(handler);
   }
 
   /* (non-Javadoc)
    * @see gwtupload.client.IUploader#addOnFinishUploadHandler(gwtupload.client.Uploader.OnFinishUploaderHandler)
    */
-  public void addOnFinishUploadHandler(OnFinishUploaderHandler handler) {
+  public HandlerRegistration addOnFinishUploadHandler(IUploader.OnFinishUploaderHandler handler) {
     onFinishHandler = handler;
-    currentUploader.addOnFinishUploadHandler(handler);
+    return currentUploader.addOnFinishUploadHandler(handler);
   }
 
   /* (non-Javadoc)
    * @see gwtupload.client.IUploader#addOnStartUploadHandler(gwtupload.client.Uploader.OnStartUploaderHandler)
    */
-  public void addOnStartUploadHandler(OnStartUploaderHandler handler) {
+  public HandlerRegistration addOnStartUploadHandler(IUploader.OnStartUploaderHandler handler) {
     onStartHandler = handler;
+    return new HandlerRegistration(){
+      public void removeHandler() {
+        onStartHandler = null;
+      }
+    };
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setI18Constants(gwtupload.client.I18nUploadConstants)
+   */
+  public void setI18Constants(UploaderConstants strs) {
+    i18nStrs = strs;
+    currentUploader.setI18Constants(i18nStrs);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#getStatus()
+   */
+  public STATUS getStatus() {
+    STATUS ret = currentUploader.getStatus();
+    if (ret == STATUS.UNITIALIZED && lastUploader != null) {
+      ret = lastUploader.getStatus();
+    }
+    return ret;
   }
 	
 }

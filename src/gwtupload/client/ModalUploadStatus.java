@@ -16,6 +16,8 @@
  */
 package gwtupload.client;
 
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -36,7 +38,7 @@ public class ModalUploadStatus extends BaseUploadStatus {
 		super();
     super.getWidget().addStyleName("upld-status");
 		box.add(super.getWidget());
-		box.addStyleName("GWTUpld");
+		DOM.setElementAttribute((Element)box.getElement().getFirstChild(), "class", "GWTUpld");
   }
 	
 	/**

@@ -80,8 +80,8 @@ public class Upload implements Exportable {
         uploader = new SingleUploader(new ChismesUploadProgress(true));
 		}
 		
-		if (uploader instanceof SingleUploader) 
-      ((SingleUploader)uploader).setText(jsProp.get(Const.SEND_MSG));
+//		if (uploader instanceof SingleUploader) 
+//      ((SingleUploader)uploader).setText(jsProp.get(Const.SEND_MSG));
 
 		uploader.addOnStartUploadHandler(JsUtils.getOnStartUploaderHandler(jsProp.getClosure(Const.ON_START)));
     uploader.addOnChangeUploadHandler(JsUtils.getOnChangeUploaderHandler(jsProp.getClosure(Const.ON_CHANGE)));
