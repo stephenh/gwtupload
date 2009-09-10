@@ -49,7 +49,7 @@ public interface IUploadStatus extends HasProgress {
     public String uploadStatusError();
     @DefaultStringValue("Canceling ...")
     public String uploadStatusCanceling();
-    @DefaultStringValue("Canceled ...")
+    @DefaultStringValue("Canceled")
     public String uploadStatusCanceled();
     @DefaultStringValue("Submitting form ...")
     public String uploadStatusSubmitting();

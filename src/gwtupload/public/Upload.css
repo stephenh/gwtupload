@@ -32,10 +32,11 @@
 	white-space: nowrap;
 	height: 100%;
 }
-.GWTUpld .upld-status .status-3 {
+.GWTUpld .upld-status .status-success {
 	color: green;
 }
-.GWTUpld .upld-status .status-4, .upld-status .status-6 {
+.GWTUpld .upld-status .status-error,
+.GWTUpld .upld-status .status-canceled {
 	color: red;
 }
 .GWTUpld .prgbar-back {

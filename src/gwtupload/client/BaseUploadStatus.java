@@ -201,9 +201,10 @@ public class BaseUploadStatus implements IUploadStatus {
    * @see gwtupload.client.IUploadStatus#setStatus(int)
    */
   public void setStatus(STATUS stat) {
-    statusLabel.removeStyleDependentName("" + status);
     status = stat;
-    statusLabel.addStyleDependentName("" + status);
+    String statusName = status.toString().toLowerCase();
+    statusLabel.removeStyleDependentName(statusName);
+    statusLabel.addStyleDependentName(statusName);
     switch(stat){
       case QUEUED:
         updateStatusPanel(false, i18nStrs.uploadStatusQueued());

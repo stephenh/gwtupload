@@ -141,18 +141,28 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 * Initialize widget components and layout elements
 	 */
 	public Uploader() {
-    this(new FormPanel() {
-      // FormPanel's add method only can be called once
-      // This in-line class override the add method to allow multiple additions
-			FlowPanel formElements = new FlowPanel();
-			public void add(Widget w) {
-				formElements.add(w);
-			}
-			{super.add(formElements);}
-		});
+	  this(null);
+	}
+	
+	/**
+   * FormPanel's add method only can be called once
+   * This class override the add method to allow multiple additions
+   * to a flowPanel
+	 */
+	public class FormFlowPanel extends FormPanel {
+	  FlowPanel formElements = new FlowPanel();
+	  public FormFlowPanel() {
+	    super.add(formElements);
+	  }
+    public void add(Widget w) {
+      formElements.add(w);
+    }
 	}
 
 	public Uploader(FormPanel form) {
+	  if (form == null)
+	    form = new FormFlowPanel();
+	  
     uploadForm = form;
     uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
     uploadForm.setMethod(FormPanel.METHOD_POST);
@@ -244,7 +254,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     public void onResponseReceived(Request request, Response response) {
       statusWidget.setVisible(false);
       statusWidget.getWidget().removeFromParent();
-
+      fileDone.remove(fileName);
     }
   };
 	
