@@ -1,5 +1,0 @@
-<module>
-  <inherits name="gwtupload.GWTUpload"/>
-  <inherits name="com.google.code.p.gwtchismes.GWTChismes" />
-  <entry-point class="sendmailsample.client.SendMailSample"/>
-</module>

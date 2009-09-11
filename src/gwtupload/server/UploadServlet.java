@@ -108,7 +108,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	private static final String TAG_CANCELLED = "cancelled";
 
-	private static Logger logger = Logger.getLogger(UploadServlet.class);
+	protected static Logger logger = Logger.getLogger(UploadServlet.class);
 
 	//private static String XML_TPL = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<response>\n<![CDATA[\n%%MESSAGE%%\n<![CDATA[\n</response>\n";
   private static String XML_TPL = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<response>%%MESSAGE%%</response>\n";
@@ -179,7 +179,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
     	writeResponse(request, response, "<cancelled>true</cancelled>");
     } catch(Exception e) {
 			logger.error(request.getSession().getId() + " UPLOAD servlet Exception: " + e.getMessage() + "\n" + stackTraceToString(e));
-			error = "\nUnexpected exception receiving the file: \n" + e.getMessage();
+			error = "\nError receiving the file: \n" + e.getMessage();
 			writeResponse(request, response, "<error>" + error + "</error>");
     }
 	}
@@ -232,7 +232,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	    uploadedItems = uploader.parseRequest(request);
 			logger.debug(session.getId() + " UPLOAD servlet servlet received items: " + uploadedItems.size());
     } catch (SizeLimitExceededException e) {
-      RuntimeException ex = new UploadSizelimitException(e);
+      RuntimeException ex = new UploadSizelimitException(e.getPermittedSize(), e.getActualSize());
       listener.setException(ex);
       throw ex;
     } catch (FileUploadException e) {

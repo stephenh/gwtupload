@@ -16,7 +16,7 @@
  */
 package gwtupload.client;
 
-import gwtupload.client.IUploadStatus.STATUS;
+import gwtupload.client.IUploadStatus.Status;
 
 import java.util.Iterator;
 
@@ -103,6 +103,9 @@ public class MultiUploader extends Composite implements IUploader {
     if (onFinishHandler != null)
       currentUploader.addOnFinishUploadHandler(onFinishHandler);
     multiUploaderPanel.add(currentUploader);
+    
+    if (lastUploader == null)
+      lastUploader = currentUploader;
   }
 
 
@@ -138,14 +141,14 @@ public class MultiUploader extends Composite implements IUploader {
 	 * @see gwtupload.client.HasJsData#getData()
 	 */
 	public JavaScriptObject getData() {
-	  return lastUploader != null ? lastUploader.getData() : null;
+	  return lastUploader.getData();
 	}
 
 	/* (non-Javadoc)
 	 * @see gwtupload.client.IUploader#fileUrl()
 	 */
 	public String fileUrl() {
-    return lastUploader != null ? lastUploader.fileUrl() : "";
+    return lastUploader.fileUrl();
 	}
 
 
@@ -230,12 +233,39 @@ public class MultiUploader extends Composite implements IUploader {
   /* (non-Javadoc)
    * @see gwtupload.client.IUploader#getStatus()
    */
-  public STATUS getStatus() {
-    STATUS ret = currentUploader.getStatus();
-    if (ret == STATUS.UNITIALIZED && lastUploader != null) {
+  public Status getStatus() {
+    Status ret = currentUploader.getStatus();
+    if (ret == Status.UNITIALIZED && lastUploader != null) {
       ret = lastUploader.getStatus();
     }
     return ret;
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#getFileName()
+   */
+  public String getFileName() {
+    return lastUploader.getFileName();
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#getInputName()
+   */
+  public String getInputName() {
+    return lastUploader.getInputName();
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#getServerResponse()
+   */
+  public String getServerResponse() {
+    return lastUploader.getServerResponse();
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#reset()
+   */
+  public void reset() {
   }
 	
 }

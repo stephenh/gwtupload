@@ -125,4 +125,15 @@ public class Upload implements Exportable {
 		return uploader.fileUrl();
 	}
 	
+	/**
+	 * returns a javascript structure with this information: 
+	 *    data.url      // The url to get the uploaded file from the server
+   *    data.name     // The name of the input form element
+   *    data.filename // The name of the file selected by the user
+   *    data.response // The server response
+	 */
+	public JavaScriptObject data() {
+	  return uploader.getData();
+	}
+	
 }

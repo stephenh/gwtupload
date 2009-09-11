@@ -66,7 +66,7 @@ public class BaseUploadStatus implements IUploadStatus {
     public void setProgress(int done, int total) {
       if (statusBar == null)
         return;
-      int percent = HasProgress.Utils.getPercent(done, total);
+      int percent = IUploader.Utils.getPercent(done, total);
       statusBar.setWidth(percent + "px");
       statusMsg.setText(percent + "%");
     }
@@ -74,13 +74,13 @@ public class BaseUploadStatus implements IUploadStatus {
   }
 
 
-  private IUploadStatus.STATUS status = STATUS.UNITIALIZED;
+  private IUploadStatus.Status status = Status.UNITIALIZED;
 	private Widget prg = null;
   private boolean hasCancelActions = false;
   
   private UploadStatusConstants i18nStrs = GWT.create(UploadStatusConstants.class);
   
-  private Set<CFG_CANCEL> cancelCfg = DEFAULT_CANCEL_CFG;
+  private Set<CancelBehavior> cancelCfg = DEFAULT_CANCEL_CFG;
 
 	/**
 	 * Main panel, attach it to the document using getWidget()
@@ -193,14 +193,14 @@ public class BaseUploadStatus implements IUploadStatus {
     statusLabel.setVisible(!showProgress);
     
     statusLabel.setText(message);
-    cancelLabel.setVisible(hasCancelActions && !cancelCfg.contains(CFG_CANCEL.DISABLED));
+    cancelLabel.setVisible(hasCancelActions && !cancelCfg.contains(CancelBehavior.DISABLED));
   }
   
 
   /* (non-Javadoc)
    * @see gwtupload.client.IUploadStatus#setStatus(int)
    */
-  public void setStatus(STATUS stat) {
+  public void setStatus(Status stat) {
     status = stat;
     String statusName = status.toString().toLowerCase();
     statusLabel.removeStyleDependentName(statusName);
@@ -214,12 +214,12 @@ public class BaseUploadStatus implements IUploadStatus {
         break;
       case INPROGRESS:
         updateStatusPanel(true, i18nStrs.uploadStatusInProgress());
-        if (!cancelCfg.contains(CFG_CANCEL.STOP_CURRENT))
+        if (!cancelCfg.contains(CancelBehavior.STOP_CURRENT))
           cancelLabel.setVisible(false);
         break;
       case SUCCESS:
         updateStatusPanel(false, i18nStrs.uploadStatusSuccess());
-        if (!cancelCfg.contains(CFG_CANCEL.REMOVE_REMOTE))
+        if (!cancelCfg.contains(CancelBehavior.REMOVE_REMOTE))
           cancelLabel.setVisible(false);
         break;
       case CANCELING:
@@ -227,7 +227,7 @@ public class BaseUploadStatus implements IUploadStatus {
         break;
       case CANCELED:
         updateStatusPanel(false, i18nStrs.uploadStatusCanceled());
-        if (cancelCfg.contains(CFG_CANCEL.REMOVE_CANCELLED_FROM_LIST))
+        if (cancelCfg.contains(CancelBehavior.REMOVE_CANCELLED_FROM_LIST))
           this.setVisible(false);
         break;
       case ERROR:
@@ -242,8 +242,8 @@ public class BaseUploadStatus implements IUploadStatus {
 	 * @see gwtupload.client.IUploadStatus#setError(java.lang.String)
 	 */
 	public void setError(String msg) {
-	  setStatus(STATUS.ERROR);
-		Window.alert(msg);
+	  setStatus(Status.ERROR);
+		Window.alert(msg.replaceAll("\\\\n", "\\n"));
 	}
 
 	/* (non-Javadoc)
@@ -270,7 +270,7 @@ public class BaseUploadStatus implements IUploadStatus {
   /* (non-Javadoc)
    * @see gwtupload.client.IUploadStatus#setCancelConfiguration(int)
    */
-  public void setCancelConfiguration(Set<CFG_CANCEL> config) {
+  public void setCancelConfiguration(Set<CancelBehavior> config) {
     cancelCfg = config;
   }
   
@@ -282,7 +282,7 @@ public class BaseUploadStatus implements IUploadStatus {
     i18nStrs = strs;
   }
 
-  public STATUS getStatus() {
+  public Status getStatus() {
     return status;
   }
   

@@ -36,12 +36,18 @@ import com.google.gwt.user.client.ui.RootPanel;
  */
 public class MultipleUploadSample implements EntryPoint {
 
+  // A panel where the thumbnails of uploaded images will be shown
   private FlowPanel panelImages = new FlowPanel();
 
   public void onModuleLoad() {
+    // Attach the image viewer to the document
+    RootPanel.get("thumbnails").add(panelImages);
+    
+    // Create a new uploader panel and attach it to the document
     MultiUploader defaultUploader = new MultiUploader();
-    defaultUploader.addOnFinishUploadHandler(onFinishUploaderHandler);
     RootPanel.get("default").add(defaultUploader);
+    // Add a finish handler which will load the image once the upload finishes
+    defaultUploader.addOnFinishUploadHandler(onFinishUploaderHandler);
 
     MultiUploader incubatorUploader = new MultiUploader(new IncubatorUploadProgress());
     incubatorUploader.addOnFinishUploadHandler(onFinishUploaderHandler);
@@ -51,15 +57,16 @@ public class MultipleUploadSample implements EntryPoint {
     chismesUploader.addOnFinishUploadHandler(onFinishUploaderHandler);
     RootPanel.get("chismes").add(chismesUploader);
 
-    RootPanel.get("thumbnails").add(panelImages);
   }
 
+  // Load the image in the document and in the case of success attach it to the viewer
   private IUploader.OnFinishUploaderHandler onFinishUploaderHandler = new IUploader.OnFinishUploaderHandler() {
     public void onFinish(IUploader uploader) {
       new PreloadedImage(uploader.fileUrl(), showImage);
     }
   };
 
+  // Attach an image to the pictures viewer
   private OnLoadPreloadedImageHandler showImage = new OnLoadPreloadedImageHandler() {
     public void onLoad(PreloadedImage image) {
       image.setWidth("75px");

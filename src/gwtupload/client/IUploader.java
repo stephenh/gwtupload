@@ -16,12 +16,15 @@
  */
 package gwtupload.client;
 
-import gwtupload.client.IUploadStatus.STATUS;
+import gwtupload.client.IUploadStatus.Status;
 import gwtupload.client.IUploadStatus.UploadStatusConstants;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.gwt.xml.client.Document;
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
 
 /**
  * <p>
@@ -32,6 +35,53 @@ import com.google.gwt.user.client.ui.HasWidgets;
  *
  */
 public interface IUploader extends HasJsData, HasWidgets {
+  
+  final public static class Utils {
+    public static int getPercent(int done, int total){
+      return (total > 0 ? done * 100 / total : 0);
+    }
+
+    /**
+     * return the name of a file without path 
+     */
+    public static String basename(String name) {
+    	return name.replaceAll("^.*[/\\\\]", "");
+    }
+
+    /**
+     * return the content text of a tag in a xml document. 
+     */
+    public static String getXmlNodeValue(Document doc, String tag) {
+      if (doc == null)
+        return null;
+      
+    	NodeList list = doc.getElementsByTagName(tag);
+    	if (list.getLength() == 0)
+    		return null;
+    
+    	Node node = list.item(0);
+    	if (node.getNodeType() != Node.ELEMENT_NODE)
+    		return null;
+    
+    	String ret = "";
+    	NodeList textNodes = node.getChildNodes();
+    	for (int i = 0; i < textNodes.getLength(); i++) {
+    		Node n = textNodes.item(i);
+    		if (n.getNodeType() == Node.TEXT_NODE && n.getNodeValue().replaceAll("[ \\n\\t\\r]", "").length() > 0)
+    			ret += n.getNodeValue();
+    	}
+    	return ret.length() == 0 ? null : ret;
+    }
+
+    public static boolean validateExtension(String validExtensions[], String fileName) {
+    	boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
+    	for (int i = 0; valid == false && i < validExtensions.length; i++) {
+    		if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i]))
+    			valid = true;
+    	}
+    	return valid;
+    }
+  }
   
   /**
    * Interface for internationalizable elements  
@@ -45,7 +95,7 @@ public interface IUploader extends HasJsData, HasWidgets {
     public String uploaderInvalidExtension();
     @DefaultStringValue("Timeout sending the file:\\nperhups your browser does not send files correctly\\nor there was a server error.\\nPlease try again.")
     public String uploaderTimeout();
-    @DefaultStringValue("Invalid server response. Have you configured correctly your application in server-side?")
+    @DefaultStringValue("Invalid server response. Have you configured correctly your application in the server side?")
     public String uploaderServerError();
     @DefaultStringValue("Unable to contact with the application server: ")
     public String uploaderServerUnavailable();
@@ -115,9 +165,40 @@ public interface IUploader extends HasJsData, HasWidgets {
 	public String fileUrl();
 	
 	/**
+	 * Returns the last response returned by the server when the upload
+	 * process has finished.
+	 * 
+	 * It is the raw content of the hidden iframe.
+	 *
+	 * It can return null in the case of unaccessible content or when the
+	 * upload process has not finished.
+	 * 
+	 */
+	public String getServerResponse();
+	
+	/**
+	 * Returns the name of the file input in the form.
+	 * 
+	 * It has to be unique for each file
+	 */
+	public String getInputName();
+	
+	/**
+	 * Returns the name of the file selected by the user
+	 * or null when the user has not selected any one.
+	 * 
+	 */
+	public String getFileName();
+	
+	/**
 	 * Submit the form to the server
 	 */
 	public void submit();
+
+	/**
+   * Reset form elements
+   */
+  public void reset();
 	
 	/**
 	 * Cancel the upload
@@ -164,7 +245,7 @@ public interface IUploader extends HasJsData, HasWidgets {
    * 
    * @return
    */
-  public STATUS getStatus();
+  public Status getStatus();
 
 	
 }

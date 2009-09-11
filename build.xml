@@ -2,7 +2,7 @@
 <project name="GWTUpload" default="build" basedir=".">
 	<property name="project" value="gwtupload" />
 	<property name="jsproject" value="jsupload" />
-	<property name="version" value="0.5.0" />
+	<property name="version" value="0.5.1" />
 
 	<property name="tmp.dir" value="${project}-${version}" />
 	<property name="jar.file" value="${project}-${version}.jar" />

@@ -71,19 +71,19 @@ public interface IUploadStatus extends HasProgress {
   /**
    * Enumeration of possible status values
    */
-  public static enum STATUS {
+  public static enum Status {
     UNITIALIZED, QUEUED, INPROGRESS, SUCCESS, ERROR, CANCELING, CANCELED, SUBMITING
   }
 
   /**
    * Enumeration of possible cancel options
    */
-  public static enum CFG_CANCEL {
+  public static enum CancelBehavior {
     DISABLED, REMOVE_REMOTE, REMOVE_CANCELLED_FROM_LIST, STOP_CURRENT
   }
 
-  public final static Set<CFG_CANCEL> DEFAULT_CANCEL_CFG = EnumSet.of(CFG_CANCEL.REMOVE_REMOTE, CFG_CANCEL.STOP_CURRENT);
-  public final static Set<CFG_CANCEL> GMAIL_CANCEL_CFG = EnumSet.of(CFG_CANCEL.STOP_CURRENT, CFG_CANCEL.REMOVE_REMOTE, CFG_CANCEL.REMOVE_CANCELLED_FROM_LIST);
+  public final static Set<CancelBehavior> DEFAULT_CANCEL_CFG = EnumSet.of(CancelBehavior.REMOVE_REMOTE, CancelBehavior.STOP_CURRENT);
+  public final static Set<CancelBehavior> GMAIL_CANCEL_CFG = EnumSet.of(CancelBehavior.STOP_CURRENT, CancelBehavior.REMOVE_REMOTE, CancelBehavior.REMOVE_CANCELLED_FROM_LIST);
 
   /**
    * Creates a new instance of the current object type
@@ -115,7 +115,7 @@ public interface IUploadStatus extends HasProgress {
    * 
    * @param status 
    */
-  public void setStatus(IUploadStatus.STATUS status);
+  public void setStatus(IUploadStatus.Status status);
 
   /**
    * show/hide the widget
@@ -137,7 +137,7 @@ public interface IUploadStatus extends HasProgress {
    *   @tip Use EnumSet.of() to fill them.
    * 
    */
-  public void setCancelConfiguration(Set<IUploadStatus.CFG_CANCEL> config);
+  public void setCancelConfiguration(Set<IUploadStatus.CancelBehavior> config);
   
   /**
    * Internationalize the UploadStatus widget
@@ -151,7 +151,7 @@ public interface IUploadStatus extends HasProgress {
    * 
    * @return
    */
-  public STATUS getStatus();
+  public Status getStatus();
 
 
 }

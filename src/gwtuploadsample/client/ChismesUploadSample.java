@@ -34,9 +34,11 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 
 
@@ -79,6 +81,8 @@ public class ChismesUploadSample implements EntryPoint {
 	
 	public void onModuleLoad() {
 
+	  setupLanguageLinks();
+	  
 		thumbnailsBox.addStyleName("thumbnailsBox");
 		thumbPanel.setStyleName("thumbPanel");
 		thumbnailsBox.setText(i18nStrs.thumbNailsBoxText());
@@ -169,4 +173,31 @@ public class ChismesUploadSample implements EntryPoint {
     }
 	};
 	
+  void setupLanguageLinks() {
+    final Label english = new Label("English");
+    final Label spanish = new Label("Spanish");
+    final ClickHandler changeLocale = new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        Widget sender = (Widget) event.getSource();
+        if (sender == english) {
+          Window.Location.assign("?locale=en");
+        } else if (sender == spanish) {
+          Window.Location.assign("?locale=es");
+        }
+      }
+    };
+
+    HorizontalPanel langPanel = new HorizontalPanel();
+    langPanel.setStyleName("langPanel");
+    String loc = Window.Location.getParameter("locale");
+    if (loc != null && !"en".equals(loc))
+      langPanel.add(english);
+    if (!"es".equals(loc))
+      langPanel.add(spanish);
+    english.addClickHandler(changeLocale);
+    spanish.addClickHandler(changeLocale);
+    
+    RootPanel.get().add(langPanel);
+  }
+  
 }
