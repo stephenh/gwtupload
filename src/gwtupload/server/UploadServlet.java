@@ -222,7 +222,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			}
 		}
 
-		Vector<FileItem> sessionFiles = getSessionItems(request);
+		Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionItems(request);
 		logger.debug(session.getId() + " UPLOAD servlet procesing request " + request.getContentLength() + " < " + maxSize);
 
 		// Create the factory used for uploading files,
@@ -366,7 +366,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 				ret.put(TAG_FINISHED, "ok");
 				logger.debug(session.getId() + " UPLOAD status filename=null finished with files: " + session.getAttribute(ATTR_FILES));
 			} else {
-				Vector<FileItem> sessionFiles = getSessionItems(request);
+				Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionItems(request);
 				for (FileItem file : sessionFiles) {
 					if (file.isFormField() == false && file.getFieldName().equals(filename)) {
 						ret.put(TAG_FINISHED, "ok");
@@ -456,7 +456,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 * @param attrName
 	 * @return fileItem found or null
 	 */
-	public static FileItem findItemByFieldName(Vector<FileItem> sessionFiles, String attrName) {
+	public static FileItem findItemByFieldName(List<FileItem> sessionFiles, String attrName) {
 		if (sessionFiles != null) {
 			for (FileItem fileItem : sessionFiles) {
 				if (fileItem.getFieldName().equalsIgnoreCase(attrName))
@@ -474,7 +474,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 * @param fileName
 	 * @return fileItem of the file found or null
 	 */
-	public static FileItem findItemByFileName(Vector<FileItem> sessionFiles, String fileName) {
+	public static FileItem findItemByFileName(List<FileItem> sessionFiles, String fileName) {
 		if (sessionFiles != null) {
 			for (FileItem fileItem : sessionFiles) {
 				if (fileItem.isFormField() == false && fileItem.getName().equalsIgnoreCase(fileName))
@@ -492,7 +492,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
    * @param parameter 
    * @return fileItem of the file found or null
    */
-  public static FileItem findFileItem(Vector<FileItem> sessionFiles, String parameter) {
+  public static FileItem findFileItem(List<FileItem> sessionFiles, String parameter) {
     if (sessionFiles == null || parameter == null)
       return null;
     
@@ -535,7 +535,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	}
 	
 	@SuppressWarnings("unchecked")
-  public static Vector<FileItem> getSessionItems(HttpServletRequest request) {
+  public static List<FileItem> getSessionItems(HttpServletRequest request) {
 	  return  (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
 	}
 }

@@ -129,16 +129,12 @@ public class UploadAction extends UploadServlet {
       error = super.parsePostRequest(request, response);
 
       if (error == null) {
-        // Received files are put in session when parsing the request
-        @SuppressWarnings("unchecked")
-        Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
-        
-        // This call is going to be @deprecated in a new release
-        error = doAction(sessionFiles);
-        
+        // This call is going to be removed in a new release
+        error = doAction((Vector<FileItem>)getSessionItems(request));
+
         if (error == null)
           // Call to the user code 
-          message = executeAction(request, sessionFiles);
+          message = executeAction(request, getSessionItems(request));
       }
       
     } catch (UploadCanceledException e) {
