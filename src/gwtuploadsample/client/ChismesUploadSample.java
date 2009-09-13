@@ -20,6 +20,7 @@ import gwtupload.client.IUploader;
 import gwtupload.client.MultiUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.SingleUploader;
+import gwtupload.client.IUploadStatus.Status;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
 
 import com.google.code.p.gwtchismes.client.GWTCBox;
@@ -112,6 +113,7 @@ public class ChismesUploadSample implements EntryPoint {
 		SingleUploader simpleUploader = new SingleUploader(new ChismesUploadProgress(true));
 		simpleUploader.addOnFinishUploadHandler(onFinishHandler);
 		simpleUploader.setValidExtensions(validExtensions);
+		simpleUploader.avoidRepeatFiles(true);
 
 		// FIXME: changing the order of these two lines makes onchange fail.
 		simpleUploadBox.add(simpleUploader);
@@ -122,7 +124,8 @@ public class ChismesUploadSample implements EntryPoint {
 
 	private IUploader.OnFinishUploaderHandler onFinishHandler = new IUploader.OnFinishUploaderHandler() {
     public void onFinish(IUploader uploader) {
-      new PreloadedImage(uploader.fileUrl(), addToThumbPanelHandler);
+      if (uploader.getStatus() == Status.SUCCESS)
+        new PreloadedImage(uploader.fileUrl(), addToThumbPanelHandler);
     }
 	};
 	

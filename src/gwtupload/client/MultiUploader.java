@@ -46,6 +46,7 @@ public class MultiUploader extends Composite implements IUploader {
 	private String[] validExtensions = null;
 	private String servletPath = null;
 	private UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
+	private String fileInputPrefix = "GWTMU";
 	
   private IUploader.OnStartUploaderHandler onStartHandler = null;
   private IUploader.OnChangeUploaderHandler onChangeHandler = null;
@@ -54,6 +55,9 @@ public class MultiUploader extends Composite implements IUploader {
 	private Uploader currentUploader = null;
 	private Uploader lastUploader = null;
 	private IUploadStatus statusWidget = null;
+	
+	private int fileCount = 0;
+	private int maximumFiles = 0;
 
 	/**
    * If no status gadget is provided, it uses a basic one.
@@ -80,8 +84,24 @@ public class MultiUploader extends Composite implements IUploader {
       newUploaderInstance();
     }
   };
+
+  IUploader.OnFinishUploaderHandler finishHandler = new IUploader.OnFinishUploaderHandler(){
+    public void onFinish(IUploader uploader) {
+      if (uploader.getStatus() != Status.SUCCESS) {
+        fileCount --;
+        if (currentUploader.getStatus() != Status.UNITIALIZED)
+          newUploaderInstance(); 
+      }
+    }
+  };
 	
   private void newUploaderInstance() {
+    if (maximumFiles > 0 && fileCount >= maximumFiles) {
+      GWT.log("Reached maximum number of files in MultiUploader widget:" + maximumFiles, null);
+      return;
+    }
+    fileCount ++;
+    
     if (currentUploader != null) {
       // Save the last uploader, create a new statusWidget and fire onChange event
       lastUploader = currentUploader;
@@ -100,8 +120,11 @@ public class MultiUploader extends Composite implements IUploader {
     currentUploader.addOnStartUploadHandler(startHandler);
     if (onChangeHandler != null)
       currentUploader.addOnChangeUploadHandler(onChangeHandler);
+    currentUploader.addOnFinishUploadHandler(finishHandler);
     if (onFinishHandler != null)
       currentUploader.addOnFinishUploadHandler(onFinishHandler);
+    currentUploader.setFileInputPrefix(fileInputPrefix);
+    
     multiUploaderPanel.add(currentUploader);
     
     if (lastUploader == null)
@@ -268,4 +291,27 @@ public class MultiUploader extends Composite implements IUploader {
   public void reset() {
   }
 	
+  /**
+   * Set the maximum number of files that could be uploaded to the server.
+   * Only success uploads are counted, so in the case of canceled files or
+   * erroneous uploads, the user could select new files.
+   * 
+   * @param max
+   */
+  public void setMaximumFiles(int max) {
+    maximumFiles = max;
+  }
+
+  public int getMaximumFiles() {
+    return maximumFiles;
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setFileInputPrefix(java.lang.String)
+   */
+  public void setFileInputPrefix(String prefix) {
+    fileInputPrefix = prefix;
+    currentUploader.setFileInputPrefix(prefix);
+  }
+
 }

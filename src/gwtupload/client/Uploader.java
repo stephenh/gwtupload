@@ -19,6 +19,7 @@ package gwtupload.client;
 import gwtupload.client.IUploadStatus.Status;
 import gwtupload.client.IUploadStatus.UploadCancelHandler;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
@@ -108,6 +109,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	protected static final String STYLE_INPUT = "upld-input";
 	protected static final String STYLE_MAIN = "GWTUpld";
 	protected static final String STYLE_STATUS = "upld-status";
+	
+	private String fileInputPrefix = "GWTU";
 
 	private boolean uploading = false;
 	private boolean cancelled = false;
@@ -118,7 +121,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private boolean successful = false;
 	private boolean hasSession = false;
 	private boolean avoidRepeatedFiles = false;
-	private int numOfTries = 0;
 	private String fileName = "";
 	private String[] validExtensions = null;
 	private String validExtensionsMsg = "";
@@ -127,7 +129,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 
 	private IUploadStatus statusWidget = new BaseUploadStatus();
   protected UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
-	
+  private long lastData = now();
+  
 	private final FileUpload fileInput = new FileUpload() {
 		{
 			addDomHandler(new ChangeHandler() {
@@ -147,6 +150,10 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 */
 	public Uploader() {
 	  this(null);
+	}
+	
+	private static long now() {
+	  return (new Date()).getTime();
 	}
 	
 	/**
@@ -234,7 +241,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	};
 
 	private boolean validateExtension(String filename) {
-	  boolean valid = Utils.validateExtension(validExtensions, fileName);
+	  boolean valid = Utils.validateExtension(validExtensions, filename);
     if (!valid)
       statusWidget.setError(i18nStrs.uploaderInvalidExtension() + validExtensionsMsg);
     return valid;
@@ -322,26 +329,30 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     if (error != null) {
       successful = false;
       cancelUpload(error);
+      return;
     } else if (Utils.getXmlNodeValue(doc, TAG_WAIT) != null) {
-      numOfTries++;
     } else if (Utils.getXmlNodeValue(doc, TAG_CANCELLED) != null) {
       successful = false;
       cancelled = true;
       uploadFinished();
+      return;
     } else if (Utils.getXmlNodeValue(doc, TAG_FINISHED) != null) {
       successful = true;
       uploadFinished();
+      return;
     } else if (Utils.getXmlNodeValue(doc, TAG_PERCENT) != null) {
-      numOfTries = 0;
+      lastData = now();
       int transferredKB = Integer.valueOf(Utils.getXmlNodeValue(doc, TAG_CURRENT_BYTES)) / 1024;
       int totalKB = Integer.valueOf(Utils.getXmlNodeValue(doc, TAG_TOTAL_BYTES)) / 1024;
       statusWidget.setProgress(transferredKB, totalKB);
-    } else if ((numOfTries * UPDATE_INTERVAL) > MAX_TIME_WITHOUT_RESPONSE) {
+      return;
+    } else {
+      GWT.log("incorrect response: " + fileName + " " + responseTxt, null);
+    }
+    
+    if (  now() - lastData >  MAX_TIME_WITHOUT_RESPONSE) {
       successful = false;
       cancelUpload(i18nStrs.uploaderTimeout());
-    } else {
-      numOfTries++;
-      GWT.log("incorrect response: " + fileName + " " + responseTxt, null);
     }
   }
 
@@ -398,7 +409,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 
 			uploading = true;
 			finished = false;
-			numOfTries = 0;
 
 			if (autoSubmit) {
 				(new Timer() {
@@ -407,12 +417,15 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 						fileInput.setVisible(false);
 						updateStatusTimer.start();
 			      statusWidget.setStatus(IUploadStatus.Status.INPROGRESS);
+			      lastData = now();
 					}
 				}).schedule(200);
 			} else {
 				statusWidget.setVisible(true);
-				updateStatusTimer.start();
+				// wait a time before asking the server status
+				updateStatusTimer.squeduleStart();
 	      statusWidget.setStatus(IUploadStatus.Status.INPROGRESS);
+	      lastData = now();
 			}
 		}
 	};
@@ -546,7 +559,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 * Change the fileInput name, because the server uses it as an uniq identifier
 	 */
 	private void assignNewNameToFileInput() {
-		String fileInputName = ("GWTCU_" + Math.random()).replaceAll("\\.", "");
+		String fileInputName = (fileInputPrefix + "-" + Math.random()).replaceAll("\\.", "");
 		fileInput.setName(fileInputName);
 	}
 
@@ -615,7 +628,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	}
 
 	/**
-	 * Method called when the file upload process has finished
+	 * Method called when the file upload process has finished,  
+	 * or the file has been canceled or removed from the queue.
 	 * Override this method if you want to add a customized behavior,
 	 * but remember to call this in your function
 	 */
@@ -637,6 +651,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       handler.onStart(this);
     }
 	}
+
 
 	/**
 	 * remove a widget from the form panel
@@ -870,9 +885,16 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     this.uploadForm.reset();
     updateStatusTimer.finish();
     uploading = cancelled = finished = successful = false;
-    numOfTries = 0;
     fileName = "";
     serverResponse = null;
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setFileInputPrefix(java.lang.String)
+   */
+  public void setFileInputPrefix(String prefix) {
+    fileInputPrefix = prefix;
+    assignNewNameToFileInput();
   }
 	
 }

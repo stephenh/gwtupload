@@ -14,7 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package gwtupload.server;
+package gwtupload.server.appeng;
+
+import gwtupload.server.UploadServlet;
 
 import org.apache.commons.fileupload.FileItemFactory;
 

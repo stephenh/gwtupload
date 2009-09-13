@@ -27,15 +27,25 @@ import com.google.gwt.user.client.Timer;
  * 
  */
 public class UpdateTimer extends Timer {
+  
+    private UpdateTimer _this;
+    
     private IsUpdateable updateable;
 
     private int interval = 1500;
 
     private boolean isRunning = true;
+    
+    private Timer delayedStarter = new Timer() {
+      public void run() {
+        _this.start();
+      }
+    };
 
-    public UpdateTimer(IsUpdateable updateable, int interval) {
+    public UpdateTimer(IsUpdateable updateable, int periodMillis) {
         this.updateable = updateable;
-        this.interval = interval;
+        this.interval = periodMillis;
+        _this = this;
     }
 
     /* (non-Javadoc)
@@ -49,10 +59,9 @@ public class UpdateTimer extends Timer {
      * @see com.google.gwt.user.client.Timer#scheduleRepeating(int)
      */
     @Override
-    public void scheduleRepeating(int interval) {
+    public void scheduleRepeating(int periodMillis) {
       isRunning = true;
-      super.scheduleRepeating(interval);
-    	
+      super.scheduleRepeating(periodMillis);
     }
     
     /* (non-Javadoc)
@@ -69,6 +78,23 @@ public class UpdateTimer extends Timer {
      */
     public void start() {
     	scheduleRepeating(interval);
+    }
+    
+    /**
+     * Schedules the timer's start to elapse in the future.
+     * The time to wait is the default configured period.
+     */
+    public void squeduleStart() {
+      squeduleStart(interval);
+    }
+    
+    /**
+     * Schedules the timer's start to elapse in the future.
+     * 
+     * @param delayMillis time in milliseconds to wait before start the timer
+     */
+    public void squeduleStart(int delayMillis) {
+      delayedStarter.schedule(delayMillis);
     }
 
     /**
@@ -88,11 +114,11 @@ public class UpdateTimer extends Timer {
     }
 
     /**
-     * @param interval
+     * @param periodMillis
      */
-    public void setInterval(int interval) {
-        if (this.interval != interval) {
-            this.interval = interval;
+    public void setInterval(int periodMillis) {
+        if (this.interval != periodMillis) {
+            this.interval = periodMillis;
             if (isRunning) {
                 finish();
                 start();

@@ -19,6 +19,7 @@ package gwtuploadsample.client;
 import gwtupload.client.IUploader;
 import gwtupload.client.MultiUploader;
 import gwtupload.client.PreloadedImage;
+import gwtupload.client.IUploadStatus.Status;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -48,6 +49,8 @@ public class MultipleUploadSample implements EntryPoint {
     RootPanel.get("default").add(defaultUploader);
     // Add a finish handler which will load the image once the upload finishes
     defaultUploader.addOnFinishUploadHandler(onFinishUploaderHandler);
+    defaultUploader.setMaximumFiles(2);
+    defaultUploader.setFileInputPrefix("default");
 
     MultiUploader incubatorUploader = new MultiUploader(new IncubatorUploadProgress());
     incubatorUploader.addOnFinishUploadHandler(onFinishUploaderHandler);
@@ -62,7 +65,8 @@ public class MultipleUploadSample implements EntryPoint {
   // Load the image in the document and in the case of success attach it to the viewer
   private IUploader.OnFinishUploaderHandler onFinishUploaderHandler = new IUploader.OnFinishUploaderHandler() {
     public void onFinish(IUploader uploader) {
-      new PreloadedImage(uploader.fileUrl(), showImage);
+      if (uploader.getStatus() == Status.SUCCESS)
+        new PreloadedImage(uploader.fileUrl(), showImage);
     }
   };
 

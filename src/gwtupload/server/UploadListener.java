@@ -16,6 +16,8 @@
  */
 package gwtupload.server;
 
+import gwtupload.server.exceptions.UploadTimeoutException;
+
 import java.util.Date;
 
 import org.apache.commons.fileupload.ProgressListener;
@@ -46,7 +48,7 @@ public class UploadListener implements ProgressListener {
   
   private TimeoutWatchDog watcher;
   
-  long lastData = (new Date()).getTime();
+  private long lastData = (new Date()).getTime();
   
   public UploadListener() {
      watcher = new TimeoutWatchDog(this);
@@ -149,11 +151,10 @@ public class UploadListener implements ProgressListener {
           logger.error("TimeoutWatchDog: sleep Exception: " + e.getMessage());
         }
         
-        if (listener.getBytesRead() > 0 && listener.getBytesRead() >= listener.getContentLength()) {
+        if (listener.getBytesRead() > 0 && listener.getPercent() >= 100) {
           logger.debug("TimeoutWatchDog: upload process has finished, stoping watcher");
           listener = null;
         } else {
-          logger.debug("TimeoutWatchDog: updating listener");
           listener.update(listener.getBytesRead(), listener.getContentLength(), listener.getItem());
           run();
         }

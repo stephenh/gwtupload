@@ -58,13 +58,11 @@ public interface IUploadStatus extends HasProgress {
     public String uploadLabelCancel();
 
   }    
+  
   /**
-   * Handler for {@link Uploader.UploadCancelEvent} events.
+   * Handler for called when the user clicks on the cancel button
    */
   public interface UploadCancelHandler extends EventHandler {
-    /**
-     * Fired when a Upload process has been canceled
-     */
     void onCancel();
   }
 
@@ -149,7 +147,7 @@ public interface IUploadStatus extends HasProgress {
   /**
    * Return the status of the upload process.
    * 
-   * @return
+   * @return Status
    */
   public Status getStatus();
 

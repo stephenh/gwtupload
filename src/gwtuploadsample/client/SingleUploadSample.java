@@ -19,6 +19,7 @@ package gwtuploadsample.client;
 import gwtupload.client.IUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.SingleUploader;
+import gwtupload.client.IUploadStatus.Status;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -47,7 +48,8 @@ public class SingleUploadSample implements EntryPoint {
 
   private IUploader.OnFinishUploaderHandler onFinishUploaderHandler = new IUploader.OnFinishUploaderHandler(){
     public void onFinish(IUploader uploader) {
-      new PreloadedImage(uploader.fileUrl(), showImage);
+      if (uploader.getStatus() == Status.SUCCESS)
+        new PreloadedImage(uploader.fileUrl(), showImage);
     }
   };
   

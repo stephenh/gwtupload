@@ -76,8 +76,10 @@ public interface IUploader extends HasJsData, HasWidgets {
     public static boolean validateExtension(String validExtensions[], String fileName) {
     	boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
     	for (int i = 0; valid == false && i < validExtensions.length; i++) {
-    		if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i]))
+    		if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i])){
     			valid = true;
+    			break;
+    		}
     	}
     	return valid;
     }
@@ -91,13 +93,13 @@ public interface IUploader extends HasJsData, HasWidgets {
     public String uploaderActiveUpload();
     @DefaultStringValue("This file was already uploaded")
     public String uploaderAlreadyDone();
-    @DefaultStringValue("Invalid file.\\nOnly these types are allowed:\\n")
+    @DefaultStringValue("Invalid file.\nOnly these types are allowed:\n")
     public String uploaderInvalidExtension();
-    @DefaultStringValue("Timeout sending the file:\\nperhups your browser does not send files correctly\\nor there was a server error.\\nPlease try again.")
+    @DefaultStringValue("Timeout sending the file:\n perhups your browser does not send files correctly,\n your session has expired,\n or there was a server error.\nPlease try again.")
     public String uploaderTimeout();
     @DefaultStringValue("Invalid server response. Have you configured correctly your application in the server side?")
     public String uploaderServerError();
-    @DefaultStringValue("Unable to contact with the application server: ")
+    @DefaultStringValue("Unable to contact with the server: ")
     public String uploaderServerUnavailable();
 
     @DefaultStringValue("Send")
@@ -119,7 +121,6 @@ public interface IUploader extends HasJsData, HasWidgets {
   public interface OnFinishUploaderHandler extends EventHandler {
     void onFinish(IUploader uploader);
   }
-
 
   /**
 	 * Changes the status widget used to show the progress.
@@ -211,7 +212,7 @@ public interface IUploader extends HasJsData, HasWidgets {
    * This happens just in the moment that the form receives the submit event.
    * 
    * @param handler
-   * @return
+   * @return HandlerRegistration
    */
   public HandlerRegistration addOnStartUploadHandler(IUploader.OnStartUploaderHandler handler);
   
@@ -219,7 +220,7 @@ public interface IUploader extends HasJsData, HasWidgets {
    * Sets the handler that is called when the user selects a file
    * 
    * @param handler
-   * @return
+   * @return HandlerRegistration
    */
   public HandlerRegistration addOnChangeUploadHandler(IUploader.OnChangeUploaderHandler handler);
 
@@ -228,7 +229,7 @@ public interface IUploader extends HasJsData, HasWidgets {
    * It is called even the process is canceled or finishes with error 
    * 
    * @param handler
-   * @return
+   * @return HandlerRegistration
    */
   public HandlerRegistration addOnFinishUploadHandler(IUploader.OnFinishUploaderHandler handler);
   
@@ -243,9 +244,24 @@ public interface IUploader extends HasJsData, HasWidgets {
   /**
    * Return the status of the upload process.
    * 
-   * @return
+   * @return Status
    */
   public Status getStatus();
+  
+  /**
+   * Configure the prefix for the attribute name of the file input.
+   *  
+   * By default the name of this attribute is GWTU-X where X is generated 
+   * randomly. If you set this property the prefix GWTU will be changed by
+   * your customized prefix, but not the random suffix.
+   * 
+   * It's useful when you have different uploaders in your client application and 
+   * you want detect the origin of your file in the server side, inspecting the
+   * property org.apache.commons.fileupload.FileItem#getName(); 
+   *   
+   * @param prefix
+   */
+  public void setFileInputPrefix(String prefix);
 
 	
 }

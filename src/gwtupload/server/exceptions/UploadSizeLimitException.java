@@ -1,10 +1,17 @@
-package gwtupload.server;
+package gwtupload.server.exceptions;
 
-class UploadSizelimitException extends RuntimeException {
+/**
+ * Exception thrown when the recuest's length exceeds the maximum.  
+ * 
+ * @author Manolo Carrasco Moñino
+ *
+ */
+
+public class UploadSizeLimitException extends RuntimeException {
   private static final long serialVersionUID = 1L;
   int actualSize;
   int maxSize;
-  public UploadSizelimitException(long max, long actual) {
+  public UploadSizeLimitException(long max, long actual) {
     super();
     actualSize = (int)(actual / 1024);
     maxSize = (int)(max / 1024);
