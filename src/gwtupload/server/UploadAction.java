@@ -22,6 +22,7 @@ import gwtupload.server.exceptions.UploadCanceledException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.ServletException;
@@ -79,7 +80,7 @@ public class UploadAction extends UploadServlet {
    *         In the case of error
    * 
    */
-  public String executeAction(HttpServletRequest request, Vector<FileItem> sessionFiles) throws UploadActionException {
+  public String executeAction(HttpServletRequest request, List<FileItem> sessionFiles) throws UploadActionException {
     return null;
   }
 

@@ -20,7 +20,7 @@ import gwtupload.server.UploadAction;
 import gwtupload.server.exceptions.UploadActionException;
 
 import java.io.File;
-import java.util.Vector;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -43,7 +43,7 @@ public class SampleUploadServlet extends UploadAction {
    * Override executeAction to save the received files in a custom place
    */
   @Override
-  public String executeAction(HttpServletRequest request, Vector<FileItem> sessionFiles) throws UploadActionException {
+  public String executeAction(HttpServletRequest request, List<FileItem> sessionFiles) throws UploadActionException {
     for (FileItem item : sessionFiles) {
       if (false == item.isFormField()) {
         try {
