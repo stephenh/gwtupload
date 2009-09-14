@@ -92,7 +92,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
   protected static final String FINISHED_OK = "<finished>OK</finished>";
 
-	protected static final String CANCELLED_TRUE = "<cancelled>true</cancelled>";
+	protected static final String CANCELED_TRUE = "<canceled>true</canceled>";
 
   protected static final String ERROR_ITEM_NOT_FOUND = "<error>item not found</error>";
 
@@ -118,7 +118,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 	private static final String ATTR_ERROR = "ERROR";
 
-	private static final String TAG_CANCELLED = "cancelled";
+	private static final String TAG_CANCELED = "canceled";
 
 	protected static Logger logger = Logger.getLogger(UploadServlet.class);
 
@@ -153,9 +153,9 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			getUploadedFile(request, response);
 		} else if (request.getParameter(PARAM_CANCEL) != null) {
 			cancelUpload(request);
-    	renderXmlResponse(request, response, CANCELLED_TRUE);
+    	renderXmlResponse(request, response, CANCELED_TRUE);
     } else if (request.getParameter(PARAM_REMOVE) != null) {
-      deleteUploadedFile(request, response);
+      removeUploadedFile(request, response);
 		} else {
 			String message = "";
 			Map<String, String> status = getUploadStatus(request, request.getParameter(PARAM_FILENAME));
@@ -183,7 +183,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			error = parsePostRequest(request, response);
 			renderXmlResponse(request, response, error != null && error.length() > 0 ? "<error>" + error + "</error>" : FINISHED_OK);
     } catch (UploadCanceledException e) {
-    	renderXmlResponse(request, response, CANCELLED_TRUE);
+    	renderXmlResponse(request, response, CANCELED_TRUE);
     } catch(Exception e) {
 			logger.error(request.getSession().getId() + " UPLOAD servlet Exception: " + e.getMessage() + "\n" + stackTraceToString(e));
 			error = "\nError receiving the file: \n" + e.getMessage();
@@ -260,16 +260,6 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			return error;
 		}
 
-		// We can do this before parsing the request, but normally sending an exception doesn't close the socket 
-		// and the client continues sending files until the form is completely submitted.
-		// So doing it here, the user sees the upload progress.
-		if (request.getContentLength() > maxSize) {
-			error = "\nThe request was rejected because the size of the request (" + request.getContentLength() / 1024 + " kB.)"
-			      + "\nexceeds the limit allowed by the server (" + maxSize / 1024 + " kB.)";
-			logger.error(session.getId() + " UPLOAD " + error);
-			return error;
-		}
-
 		// Put received files in session
 		if (sessionFiles == null && uploadedItems.size() > 0) {
 			sessionFiles = new Vector<FileItem>();
@@ -336,8 +326,8 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		if (listener != null) {
 			if (listener.hasBeenCancelled()) {
 			  if (listener.getException() instanceof UploadCanceledException) {
-	        ret.put(TAG_CANCELLED, "true");
-	        ret.put(TAG_FINISHED, TAG_CANCELLED);
+	        ret.put(TAG_CANCELED, "true");
+	        ret.put(TAG_FINISHED, TAG_CANCELED);
 	        logger.error(session.getId() + " UPLOAD status " + filename + " cancelled by the user after " + listener.getBytesRead() + "Bytes ");
 			  } else {
 		      ret.put(TAG_ERROR, listener.getException().getMessage());
@@ -422,7 +412,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 * @return FileItem
 	 * @throws IOException
 	 */
-	protected static FileItem deleteUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected static FileItem removeUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
 	  
     String parameter = request.getParameter(PARAM_REMOVE);
     FileItem item = findFileItem(getSessionItems(request), parameter);

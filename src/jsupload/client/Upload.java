@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
  * 
  * <h3>Features</h3>
  * <ul>
- * <li>Two kind of progress bar, the most advanced one shows upload speed, time remaining, sizes, progress</li>
+ * <li>Three kind of progress bar, the most advanced one shows upload speed, time remaining, sizes, progress</li>
  * <li>Single upload form: after uploading a file the form can be used again, but the user can not interact with the page</li>
  * <li>Multiple upload form: Each time the user selects a file it goes to the queue and the user</li>
  * <li>Configurable functions to be called on the onChange, onStart, onFinish events</li>
@@ -62,7 +62,8 @@ public class Upload implements Exportable {
 		this.jsProp = new JsProperties(prop);
 
 		boolean multiple = jsProp.getBoolean(Const.MULTIPLE);
-
+		ChismesUploadProgress status = null;
+		
 		if ("incubator".equals(jsProp.get(Const.TYPE))) {
 		  if (multiple)
 		    uploader = new MultiUploader(new IncubatorUploadProgress());
@@ -74,15 +75,10 @@ public class Upload implements Exportable {
       else
         uploader = new SingleUploader();
 		} else {
-      if (multiple)
-        uploader = new MultiUploader(new ChismesUploadProgress(false));
-      else
-        uploader = new SingleUploader(new ChismesUploadProgress(true));
+	    status = new ChismesUploadProgress(!multiple);
+	    uploader = multiple ? new MultiUploader(status) : new SingleUploader(status);; 
 		}
 		
-//		if (uploader instanceof SingleUploader) 
-//      ((SingleUploader)uploader).setText(jsProp.get(Const.SEND_MSG));
-
 		uploader.addOnStartUploadHandler(JsUtils.getOnStartUploaderHandler(jsProp.getClosure(Const.ON_START)));
     uploader.addOnChangeUploadHandler(JsUtils.getOnChangeUploaderHandler(jsProp.getClosure(Const.ON_CHANGE)));
     uploader.addOnFinishUploadHandler(JsUtils.getOnFinishUploaderHandler(jsProp.getClosure(Const.ON_FINISH)));
@@ -101,6 +97,12 @@ public class Upload implements Exportable {
 		}
 		
 		uploader.setI18Constants(new I18nConstants(jsProp, Const.REGIONAL));
+		if (status!=null) {
+		  status.setPercentMessage(jsProp.get(Const.TXT_PERCENT));
+      status.setHoursMessage(jsProp.get(Const.TXT_HOURS));
+      status.setMinutesMessage(jsProp.get(Const.TXT_MINUTES));
+      status.setSecondsMessage(jsProp.get(Const.TXT_SECONDS));
+		}
 
 	}
 	

@@ -113,7 +113,7 @@ public class UploadAction extends UploadServlet {
           return;
         }
       }  
-      super.deleteUploadedFile(request, response);
+      super.removeUploadedFile(request, response);
     } else {
       super.doGet(request, response);
     }

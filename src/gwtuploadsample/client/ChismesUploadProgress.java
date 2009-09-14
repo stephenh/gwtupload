@@ -35,7 +35,7 @@ public class ChismesUploadProgress extends BaseUploadStatus {
 
 	public int prgBarElements = 40;
 	public int prgBarOption = GWTCProgress.SHOW_NUMBERS | GWTCProgress.SHOW_TEXT;
-	public String prgBarText = "{0}% {1}/{2} KB. ({3} KB/s)";
+	private String prgBarText = "{0}% {1}/{2} KB. ({3} KB/s)";
 
 	GWTCAlert alert = new GWTCAlert();
 
@@ -45,11 +45,30 @@ public class ChismesUploadProgress extends BaseUploadStatus {
 	public ChismesUploadProgress(boolean asDialog) {
 		this.asDialog = asDialog;
 		prg = new GWTCProgress(asDialog ? 60 : 20, asDialog ? GWTCProgress.SHOW_AS_DIALOG | GWTCProgress.SHOW_TIME_REMAINING | prgBarOption : prgBarOption);
-		prg.setPercentMessage(prgBarText);
-		prg.setTotalMessage(prgBarText);
 		setProgressWidget(prg);
 		prg.setVisible(true);
+    setPercentMessage(prgBarText);
 	}
+	
+  public void setHoursMessage(String message) {
+    if (message != null)
+      prg.setHoursMessage(message);
+  }
+  
+  public void setMinutesMessage (String message) {
+    if (message != null)
+      prg.setMinutesMessage(message);
+  }
+  
+  public void setSecondsMessage (String message) {
+    if (message != null)
+      prg.setSecondsMessage(message);
+  }
+  
+  public void setPercentMessage (String message) {
+    if (message != null)
+      prg.setPercentMessage(message);
+  }
 
 	@Override
 	public Widget getWidget() {

@@ -48,6 +48,7 @@ use Digest::MD5;
 use File::Path;
 use strict;
 use warnings;
+use Data::Dumper;
 
 my $idname   = "CGISESSID";
 my $tmp_dir  = "/tmp/uploader";
@@ -64,14 +65,20 @@ my $user_dir = "$tmp_dir/$sid/";
 # Controller:
 #   POST is used for uploading.
 #   GET is used to get the upload progress or get the content of the uploaded item.
-my $method = $ENV{'REQUEST_METHOD'} || 'POST';
+my $method = $ENV{'REQUEST_METHOD'} || 'GET';
 my $cgi;
 if ( $method =~ /POST/i ) {
     doPost();
 } else {
     $cgi = new CGI;
+    print STDERR ">>>> " . Dumper($cgi->param);
     if ( $cgi->param('show') ) {
         writeItemContent( $cgi->param('show') );
+    } elsif ( $cgi->param('remove') ) {
+        removeItem( $cgi->param('remove') );
+    } elsif ( $cgi->param('cancel') ) {
+        cancelProcess();
+        writeResponse("<canceled>true</canceled>");
     } else {
         writeResponse( getProgress() );
     }
@@ -167,7 +174,7 @@ sub writeResponse {
                             -type   => 'text/plain' );
     }
     print "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
-      . "<response>\n$msg</response>";
+      . "\n<response>\n$msg</response>\n";
     exit;
 }
 
@@ -175,6 +182,7 @@ sub writeResponse {
 sub updateProgress {
     my ( $done, $total ) = @_;
     if (-f "$user_dir/cancel") {
+        writeResponse("<canceled>true<canceled><finished>canceled</finished>");
         exit;
     }
     open( F, ">$user_dir/progress" );
@@ -182,8 +190,18 @@ sub updateProgress {
     close(F);
 }
 
+sub cancelProcess {
+    open( F, ">$user_dir/cancel" );
+    print F "cancel";
+    close(F);
+}
+
 ## read the upload progress from the status file
 sub getProgress {
+    if ( -f "$user_dir/cancel" ) {
+        unlink ("$user_dir/cancel");
+        return "<canceled>true<canceled><finished>canceled</finished>";
+    }
     my ( $done, $total, $percent ) = ( 0, 0, 0 );
     if ( open( F, "$user_dir/progress" ) ) {
         my $l = <F>;
@@ -197,7 +215,7 @@ sub getProgress {
         "<percent>$percent</percent>"
       . "<currentBytes>$done</currentBytes>"
       . "<totalBytes>$total</totalBytes>";
-    $ret .= "<finished>ok</finished>" if ( $done >= $total );
+    $ret .= "<finished>ok</finished>" if ( $percent >= 100 );
     return $ret;
 }
 
@@ -223,6 +241,17 @@ sub writeItemContent {
             writeResponse("<item name='$item'>$value</item>");
         }
     } else {
-        writeResponse("<error>unable to find file</error>");
+        writeResponse("<error>item not found</error>");
+    }
+}
+
+sub removeItem {
+    my $item = shift;
+    if (-f "$user_dir/$item.info") {
+        unlink ("$user_dir/$item.info");
+        unlink ("$user_dir/$item.bin");
+        writeResponse("<deleted>true</deleted>");
+    } else {
+        writeResponse("<error>item not found</error>");
     }
 }

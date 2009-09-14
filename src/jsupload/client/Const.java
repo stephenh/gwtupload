@@ -35,11 +35,6 @@ public class Const implements Exportable {
     protected static final String CLASS_NAME = "className"; //[""] Add an optional classname to the container
     
     protected static final String TOTAL_MSG = "totalMsg"; //["{0}% {1}/{2} "] Set the message to show when the process has finished
-    protected static final String PERCENT_MSG = "percentMsg"; //["{0}%"] Set the message used to format the progress in percent units. 
-    protected static final String SECONDS_MSG = "secondsMsg"; //["Time remaining: {0} Seconds"] Set the message used to format the time remaining text below the progress bar in seconds.
-    protected static final String MINUTES_MSG = "minutesMsg"; //["Time remaining: {0} Minutes"]Set the message used to format the time remaining text below the progress bar in minutes
-    protected static final String SEND_MSG = "sendMsg"; //["Send"] Text for the submit button in simple uploaders     
-    protected static final String HOURS_MSG = "hoursMsg"; //["Time remaining: {0} Hours"]Set the message used to format the time remaining text below the progress bar in hours
     protected static final String ELEMENTS = "elements"; //[20] number of bars to show in the progress bar
     protected static final String NUMBERS = "numbers"; //[true] show numeric information of the progress
     protected static final String TIME_REMAINING = "timeRemaining"; //[false] show time remaining
@@ -70,5 +65,10 @@ public class Const implements Exportable {
     protected static final String TXT_QUEUED = "uploadStatusQueued"; //(Upload)["Queued"] 
     protected static final String TXT_SUBMITING = "uploadStatusSubmitting"; //(Upload)["Submiting form..."] 
     protected static final String TXT_SUCCESS = "uploadStatusSuccess"; //(Upload)["Done"]
+    
+    protected static final String TXT_PERCENT = "progressPercentMsg"; //(Upload)["{0}%"] Set the message used to format the progress in percent units. 
+    protected static final String TXT_SECONDS = "progressSecondsMsg"; //(Upload)["Time remaining: {0} Seconds"] Set the message used to format the time remaining text below the progress bar in seconds.
+    protected static final String TXT_MINUTES = "progressMinutesMsg"; //(Upload)["Time remaining: {0} Minutes"] Set the message used to format the time remaining text below the progress bar in minutes
+    protected static final String TXT_HOURS = "progressHoursMsg"; //(Upload)["Time remaining: {0} Hours"] Set the message used to format the time remaining text below the progress bar in hours
     
 }
