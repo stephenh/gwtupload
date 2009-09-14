@@ -99,6 +99,8 @@ public class Upload implements Exportable {
 			String[] extensions = jsProp.get(Const.VALID_EXTENSIONS).split("[, ;:]+");
 			uploader.setValidExtensions(extensions);
 		}
+		
+		uploader.setI18Constants(new I18nConstants(jsProp, Const.REGIONAL));
 
 	}
 	
@@ -127,10 +129,11 @@ public class Upload implements Exportable {
 	
 	/**
 	 * returns a javascript structure with this information: 
-	 *    data.url      // The url to get the uploaded file from the server
-   *    data.name     // The name of the input form element
-   *    data.filename // The name of the file selected by the user
-   *    data.response // The server response
+	 *    uploader.data().url      // The url to get the uploaded file from the server
+   *    uploader.data().name     // The name of the input form element
+   *    uploader.data().filename // The name of the file selected by the user
+   *    uploader.data().response // The server response
+   *    uploader.data().status   // The upload status (UNITIALIZED, QUEUED, INPROGRESS, SUCCESS, ERROR, CANCELING, CANCELED, SUBMITING)
 	 */
 	public JavaScriptObject data() {
 	  return uploader.getData();

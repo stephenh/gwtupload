@@ -91,7 +91,7 @@ public interface IUploader extends HasJsData, HasWidgets {
   public interface UploaderConstants extends UploadStatusConstants {
     @DefaultStringValue("There is already an active upload, try later.")
     public String uploaderActiveUpload();
-    @DefaultStringValue("This file was already uploaded")
+    @DefaultStringValue("This file was already uploaded.")
     public String uploaderAlreadyDone();
     @DefaultStringValue("Invalid file.\nOnly these types are allowed:\n")
     public String uploaderInvalidExtension();

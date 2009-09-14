@@ -42,6 +42,7 @@ $date =~ s/[\r\n]+//g;
 $txt .= "*Date:* _${date}_\n\n";
 $txt .= "This documentation has been generated automatically parsing comments in java files, if you realise any error, please report it\n\n";
 $txt =~ s/,(\s*\/\/[^\n]*\n\s*\})/$1/sg;
+$txt =~ s/,(\s*\n\s*\})/$1/sg;
 
 print $txt;
 exit;
@@ -73,12 +74,13 @@ sub processConst {
    }
    if ( /(protected|private)\s+.*String.*\s+(T[XI]T_[A-Z]+).*\s+=\s+"([^\"]+).*$/ ) {
       my ($nam, $def) = ($3);
-      if ($com eq '' && /\/\/\s*\((.+)\)\s*\[(.+)\]\s*(.*)$/) {
+      if ($com eq '' && /\/\/\s*\((.+)\)\s*\[(.+)\]\s*(.*)\s*$/) {
           $def = $2;
           $com = $3;
           my $c = $1;
-          foreach (split(/[ ,]+/, $c)) { 
-            $c{const}{$_}{regional} .= "        $nam = $def, // $com\n";
+          foreach (split(/[ ,]+/, $c)) {
+            $com = "// $com" if ($com ne '');
+            $c{const}{$_}{regional} .= "        $nam: $def, $com\n";
           }
       }
       $com = "";
@@ -252,7 +254,7 @@ sub printMethod {
       if ($ret ne 'void') {
          my $vname = lc($ret);
          $vname = "date" if ($vname eq 'javascriptobject' && $func !~ /data/i);
-         $rets = "var " . $vname . " = ";
+         $rets = "var a_" . $vname . " = ";
       }
      if ($com =~ /\n/) {
         $com = "/* $com */"

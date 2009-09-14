@@ -29,7 +29,16 @@
           multiple: true, 
           auto: true,
           type: "basic",
-          onFinish: loadImage
+          onFinish: loadImage,
+          regional: {
+	          uploadStatusCanceling: "a",
+	          uploadStatusCanceled: "b",
+	          uploadStatusError: "c",
+	          uploadStatusInProgress: "d",
+	          uploadStatusQueued:"e",
+	          uploadStatusSubmitting: "f",
+	          uploadStatusSuccess: "g"
+          }
         });
       
         new jsu.Upload({

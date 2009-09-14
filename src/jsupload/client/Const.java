@@ -55,21 +55,20 @@ public class Const implements Exportable {
     protected static final String ON_LOAD = "onLoad"; //[null] Javascript method called after the browser has loaded the image
     protected static final String URL = "url"; //[null] web address for the image
     
+    protected static final String TXT_ACTIVE_UPLOAD = "uploaderActiveUpload"; //(Upload)["There is already an active upload, try later."]  
+    protected static final String TXT_ALREADY_DONE = "uploaderAlreadyDone"; //(Upload)["This file was already uploaded."]  
+    protected static final String TXT_INVALID_EXTENSION = "uploaderInvalidExtension"; //(Upload)["Invalid file.\nOnly these types are allowed:\n"] 
+    protected static final String TXT_TIMEOUT = "uploaderTimeout"; //(Upload)["Timeout sending the file:\n perhups your browser does not send files correctly,\n your session has expired,\n or there was a server error.\nPlease try again."] 
+    protected static final String TXT_SERVER_ERROR = "uploaderServerError"; //(Upload)["Invalid server response. Have you configured correctly your application in the server side?"] 
+    protected static final String TXT_SERVER_UNAVAILABLE = "uploaderServerUnavailable"; //(Upload)["Unable to contact with the server: "] 
+    protected static final String TXT_SEND = "uploaderSend"; //(Upload)["Send"] 
+    protected static final String TXT_CANCEL = "uploadLabelCancel"; //(Upload)[null] 
+    protected static final String TXT_CANCELING = "uploadStatusCanceling"; //(Upload)["Canceling"] 
+    protected static final String TXT_CANCELED = "uploadStatusCanceled"; //(Upload)["Canceled"] 
+    protected static final String TXT_ERROR = "uploadStatusError"; //(Upload)["Error"] 
+    protected static final String TXT_INPROGRESS = "uploadStatusInProgress"; //(Upload)["Sending..."] 
+    protected static final String TXT_QUEUED = "uploadStatusQueued"; //(Upload)["Queued"] 
+    protected static final String TXT_SUBMITING = "uploadStatusSubmitting"; //(Upload)["Submiting form..."] 
+    protected static final String TXT_SUCCESS = "uploadStatusSuccess"; //(Upload)["Done"]
     
-    
-    protected static final String TXT_STATUS_QUEUED = "Queued"; //(Upload) ["Queued"] Status text when the file is in queue
-    protected static final String TXT_STATUS_INPROGRESS = "InProgress"; //(Upload) ["In progress"] Status text when the file is being transfered
-    protected static final String TXT_STATUS_FINISHED = "Finished"; //(Upload) ["Finished"] Status text when the file has been sent
-    protected static final String TXT_STATUS_ERROR = "Error"; //(Upload) ["Error"] Status text when the upload was not success
-    protected static final String TXT_STATUS_CANCELING = "Canceling"; //(Upload) ["Canceling"] Status text when the file is being canceled
-    protected static final String TXT_STATUS_CANCELLED = "Canceled"; //(Upload) ["Canceled"] Status text when the file has been canceled
-    protected static final String TXT_STATUS_SUBMITTING = "Submitting"; //(Upload) ["Submitting"] Status text when the form is being submitted
-
-//    uploaderActiveUpload=Se esta enviando un archivo al servidor, intenteló mas tarde.
-//    uploaderAlreadyDone=Este archivo ya fué enviado.
-//    uploaderInvalidExtension=Sólo está permitido enviar estos tipos de archivo:\n
-//    uploaderTimeout=Se ha sobrepasado el tiempo de espera al enviar el archivo.\n Es posible que su navegador no envíe correctamente archivos,\n o quizás ocurrió un error en el servidor\nPor favor intenteló mas tarde
-//    uploaderServerError=El servidor ha enviado una respuesta incorrecta.\n Compruebe que la aplicación en el servidor está bien configurada.
-//    uploaderServerUnavailable=Ha sido imposible conectar con el servidor de la aplicación.
-//    uploaderSend=Enviar
 }
