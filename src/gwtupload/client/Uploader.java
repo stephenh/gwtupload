@@ -870,7 +870,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
    * @see gwtupload.client.IUploader#getFileName()
    */
   public String getFileName() {
-    return getFileName();
+    return fileInput.getFilename();
   }
 
   /* (non-Javadoc)

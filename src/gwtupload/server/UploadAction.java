@@ -104,7 +104,7 @@ public class UploadAction extends UploadServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException  {
     String parameter = request.getParameter(PARAM_REMOVE);
     if (parameter != null) {
-      FileItem item = findFileItem(getSessionItems(request), parameter);
+      FileItem item = findFileItem(getSessionFileItems(request), parameter);
       if (item != null) {
         try {
           removeItem(request, item);
@@ -130,11 +130,11 @@ public class UploadAction extends UploadServlet {
 
       if (error == null) {
         // This call is going to be removed in a new release
-        error = doAction((Vector<FileItem>)getSessionItems(request));
+        error = doAction((Vector<FileItem>)getSessionFileItems(request));
 
         if (error == null)
           // Call to the user code 
-          message = executeAction(request, getSessionItems(request));
+          message = executeAction(request, getSessionFileItems(request));
       }
       
     } catch (UploadCanceledException e) {
@@ -162,8 +162,6 @@ public class UploadAction extends UploadServlet {
     } else {
       renderXmlResponse(request, response, "OK");
     }
-
-    // removeSessionFiles(request);
   }
 
   private void writeMessage(HttpServletResponse response, String message) throws IOException {
@@ -199,7 +197,5 @@ public class UploadAction extends UploadServlet {
     FileItem item = findFileItem(sessionFiles, parameter);
     return item == null ? null : item.getInputStream();
   }
-
-
 
 }

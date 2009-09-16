@@ -222,7 +222,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			}
 		}
 
-		Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionItems(request);
+		Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionFileItems(request);
 		logger.debug(session.getId() + " UPLOAD servlet procesing request " + request.getContentLength() + " < " + maxSize);
 
 		// Create the factory used for uploading files,
@@ -351,12 +351,12 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			ret.put(TAG_FINISHED, TAG_ERROR);
 			logger.error(session.getId() + " UPLOAD status " + filename + " finished with error: " + session.getAttribute(ATTR_ERROR));
 			session.removeAttribute(ATTR_ERROR);
-		} else if (getSessionItems(request) != null) {
+		} else if (getSessionFileItems(request) != null) {
 			if (filename == null) {
 				ret.put(TAG_FINISHED, "ok");
 				logger.debug(session.getId() + " UPLOAD status filename=null finished with files: " + session.getAttribute(ATTR_FILES));
 			} else {
-				Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionItems(request);
+				Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionFileItems(request);
 				for (FileItem file : sessionFiles) {
 					if (file.isFormField() == false && file.getFieldName().equals(filename)) {
 						ret.put(TAG_FINISHED, "ok");
@@ -415,9 +415,9 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	protected static FileItem removeUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
 	  
     String parameter = request.getParameter(PARAM_REMOVE);
-    FileItem item = findFileItem(getSessionItems(request), parameter);
+    FileItem item = findFileItem(getSessionFileItems(request), parameter);
     if (item != null) {
-      getSessionItems(request).remove(item);
+      getSessionFileItems(request).remove(item);
       renderXmlResponse(request, response, DELETED_TRUE);
       logger.debug(request.getSession().getId() + " UPLOAD, deleted File: " + parameter + " " + item.getName() + " " + item.getSize());
     } else {
@@ -527,11 +527,19 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	
 	
 	/**
-	 * Removes all FileItems stored in session and files' temporary data
 	 * 
-	 * @param request
+	 * @deprecated, use removeSessionFileItems
 	 */
 	public static void removeSessionFiles(HttpServletRequest request) {
+	  removeSessionFileItems(request);
+  }
+	
+  /**
+   * Removes all FileItems stored in session and files' temporary data
+   * 
+   * @param request
+   */
+  public static void removeSessionFileItems(HttpServletRequest request) {
     @SuppressWarnings("unchecked")
     Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
     if (sessionFiles != null)
@@ -541,6 +549,14 @@ public class UploadServlet extends HttpServlet implements Servlet {
     request.getSession().removeAttribute(ATTR_FILES);
   }
 
+  /**
+   * 
+   * @deprecated, use getSessionFileItems
+   */
+  public static List<FileItem> getSessionItemss(HttpServletRequest request) {
+    return getSessionFileItems(request);
+  }
+
 	/**
 	 * Return the list of FileItems stored in session.
 	 * 
@@ -548,7 +564,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 * @return FileItems stored in session
 	 */
   @SuppressWarnings("unchecked")
-  public static List<FileItem> getSessionItems(HttpServletRequest request) {
+  public static List<FileItem> getSessionFileItems(HttpServletRequest request) {
 	  return  (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
 	}
 }
