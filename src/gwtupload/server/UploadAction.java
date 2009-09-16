@@ -153,7 +153,7 @@ public class UploadAction extends UploadServlet {
       renderXmlResponse(request, response, "<" + TAG_ERROR + ">" + error + "</" + TAG_ERROR + ">");
       if (listener != null)
         listener.setException(new RuntimeException(error));
-      removeSessionFiles(request);
+      UploadServlet.removeSessionFiles(request);
       return;
     }
 
@@ -198,16 +198,6 @@ public class UploadAction extends UploadServlet {
   public static InputStream getFileStream(Vector<FileItem> sessionFiles, String parameter) throws IOException {
     FileItem item = findFileItem(sessionFiles, parameter);
     return item == null ? null : item.getInputStream();
-  }
-  
-  public static void removeSessionFiles(HttpServletRequest request) {
-    @SuppressWarnings("unchecked")
-    Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
-    if (sessionFiles != null)
-      for (FileItem fileItem : sessionFiles)
-        if (fileItem != null && !fileItem.isFormField())
-          fileItem.delete();
-    request.getSession().removeAttribute(ATTR_FILES);
   }
 
 

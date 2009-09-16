@@ -524,7 +524,30 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		}};
 	}
 	
-	@SuppressWarnings("unchecked")
+	
+	
+	/**
+	 * Removes all FileItems stored in session and files' temporary data
+	 * 
+	 * @param request
+	 */
+	public static void removeSessionFiles(HttpServletRequest request) {
+    @SuppressWarnings("unchecked")
+    Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
+    if (sessionFiles != null)
+      for (FileItem fileItem : sessionFiles)
+        if (fileItem != null && !fileItem.isFormField())
+          fileItem.delete();
+    request.getSession().removeAttribute(ATTR_FILES);
+  }
+
+	/**
+	 * Return the list of FileItems stored in session.
+	 * 
+	 * @param request
+	 * @return FileItems stored in session
+	 */
+  @SuppressWarnings("unchecked")
   public static List<FileItem> getSessionItems(HttpServletRequest request) {
 	  return  (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
 	}

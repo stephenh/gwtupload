@@ -121,7 +121,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private boolean successful = false;
 	private boolean hasSession = false;
 	private boolean avoidRepeatedFiles = false;
-	private String fileName = "";
 	private String[] validExtensions = null;
 	private String validExtensionsMsg = "";
 	
@@ -229,9 +228,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private final ChangeHandler onFileInputChanged = new ChangeHandler() {
 		public void onChange(ChangeEvent event) {
 			if (autoSubmit && validateExtension(fileInput.getFilename())) {
-				fileName = fileInput.getFilename();
-				if (fileName.length() > 0) {
-					statusWidget.setFileName(Utils.basename(fileName));
+				if (getFileName().length() > 0) {
+					statusWidget.setFileName(Utils.basename(getFileName()));
 					automaticUploadTimer.scheduleRepeating(DEFAULT_AUTOUPLOAD_DELAY);
 				}
 			}
@@ -275,7 +273,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     public void onResponseReceived(Request request, Response response) {
       statusWidget.setVisible(false);
       statusWidget.getWidget().removeFromParent();
-      fileDone.remove(fileName);
+      fileDone.remove(getFileName());
     }
   };
 	
@@ -349,7 +347,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       statusWidget.setProgress(transferredKB, totalKB);
       return;
     } else {
-      GWT.log("incorrect response: " + fileName + " " + responseTxt, null);
+      GWT.log("incorrect response: " + getFileName() + " " + responseTxt, null);
     }
     
     if (  now() - lastData >  MAX_TIME_WITHOUT_RESPONSE) {
@@ -380,19 +378,18 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				return;
 			}
 
-			if (fileInput.getFilename().length() > 0) {
-				fileName = fileInput.getFilename();
-				statusWidget.setFileName(Utils.basename(fileName));
+			if (getFileName().length() > 0) {
+				statusWidget.setFileName(Utils.basename(getFileName()));
 			}
 
-			if (fileDone.contains(fileName)) {
+			if (fileDone.contains(getFileName())) {
 				successful = true;
 				event.cancel();
 				uploadFinished();
 				return;
 			}
 
-			if (fileName.length() == 0 || !validateExtension(fileName)) {
+			if (getFileName().length() == 0 || !validateExtension(getFileName())) {
 				event.cancel();
 				return;
 			}
@@ -506,7 +503,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		
 		if (successful) {
 			if (avoidRepeatedFiles) {
-				if (fileDone.contains(fileName)) {
+				if (fileDone.contains(getFileName())) {
 					if (autoSubmit) {
 						statusWidget.setVisible(false);
 					} else {
@@ -514,7 +511,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 						statusWidget.setError(i18nStrs.uploaderAlreadyDone());
 					}
 				} else {
-					fileDone.add(fileName);
+					fileDone.add(getFileName());
 				}
 			}
 			statusWidget.setStatus(IUploadStatus.Status.SUCCESS);
@@ -873,7 +870,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
    * @see gwtupload.client.IUploader#getFileName()
    */
   public String getFileName() {
-    return fileName.length() > 0 ? fileName : null;
+    return getFileName();
   }
 
   /* (non-Javadoc)
@@ -897,7 +894,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     this.uploadForm.reset();
     updateStatusTimer.finish();
     uploading = cancelled = finished = successful = false;
-    fileName = "";
     serverResponse = null;
   }
 

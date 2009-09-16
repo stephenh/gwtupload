@@ -186,7 +186,7 @@ public interface IUploader extends HasJsData, HasWidgets {
 	
 	/**
 	 * Returns the name of the file selected by the user
-	 * or null when the user has not selected any one.
+	 * or an empty string when the user has not selected any one.
 	 * 
 	 */
 	public String getFileName();
