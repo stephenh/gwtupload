@@ -98,7 +98,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private static final int DEFAULT_AUTOUPLOAD_DELAY = 600;
 	private static final int DEFAULT_TIMEOUT = 6000;
 	private static final int MAX_TIME_WITHOUT_RESPONSE = 10000;
-	private static final String DEFAULT_SERVLET = "servlet.gupld";
+	public static final String DEFAULT_SERVLET_PATH = "servlet.gupld";
 	private static final int UPDATE_INTERVAL = 1500;
 	
 	public final static String PARAMETER_FILENAME = "filename";
@@ -179,7 +179,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
     uploadForm.setMethod(FormPanel.METHOD_POST);
     uploadForm.add(fileInput);
-    uploadForm.setAction(DEFAULT_SERVLET);
+    uploadForm.setAction(DEFAULT_SERVLET_PATH);
     uploadForm.addSubmitHandler(onSubmitFormHandler);
     uploadForm.addSubmitCompleteHandler(onSubmitCompleteHandler);
 
@@ -766,8 +766,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				return;
 			waitingForResponse = true;
 			// Using a reusable builder makes IE fail because it caches the response
-			// So it's better to change the request path sending an aditiona random paramter
-			RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, getServletPath() + "?filename=" + fileInput.getName() + "&c=" + requestsCounter++);
+			// So it's better to change the request path sending an additional random parameter
+			RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("filename=" + fileInput.getName() , "c=" + requestsCounter++));
 			reqBuilder.setTimeoutMillis(DEFAULT_TIMEOUT);
 			reqBuilder.sendRequest("random=" + Math.random(), onStatusReceivedCallback);
 		} catch (RequestException e) {
@@ -791,20 +791,29 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 */
 	private void sendAjaxRequestToValidateSession() throws RequestException {
 		// Using a reusable builder makes IE fail
-		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, getServletPath() + "?new_session=true");
+		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("new_session=true"));
 		reqBuilder.setTimeoutMillis(DEFAULT_TIMEOUT);
 		reqBuilder.sendRequest("create_session", onSessionReceivedCallback);
 	}
 
 	private void sendAjaxRequestToCancelCurrentUpload() throws RequestException {
-		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, getServletPath() + "?cancel=true");
+		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("cancel=true"));
 		reqBuilder.sendRequest("cancel_upload", onCancelReceivedCallback);
 	}
 
 	private void sendAjaxRequestToDeleteUploadedFile() throws RequestException {
-    RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, getServletPath() + "?remove=" + getInputName());
+    RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("remove=" + getInputName()));
     reqBuilder.sendRequest("remove_file", onDeleteFileCallback);
   }
+	
+	private String composeURL(String... params){
+	  String ret = getServletPath();
+	  if (!ret.contains("?"))
+	    ret += "?";
+	  for(String par: params) 
+	    ret += "&" + par;
+	  return ret;
+	}
 
 	/* (non-Javadoc)
    * @see gwtupload.client.IUploader#addOnStartUploadHandler(gwtupload.client.IUploader.OnStartUploaderHandler)
