@@ -38,17 +38,12 @@ public class UploadListener implements ProgressListener {
   
   private RuntimeException exception = null;
 
-
-  private volatile long bytesRead = 0L, contentLength = 0L;
-  private volatile int item = 0;
+  private long bytesRead = 0L, contentLength = 0L;
+  private int item = 0;
 
   private static boolean slowUploads =  false;
 
-  private boolean cancelled = false;
-  
   private TimeoutWatchDog watcher;
-  
-  private long lastData = (new Date()).getTime();
   
   public UploadListener() {
      watcher = new TimeoutWatchDog(this);
@@ -63,18 +58,18 @@ public class UploadListener implements ProgressListener {
     UploadListener.slowUploads = slowUploads;
   }
   
-
   /**
    * This method is called each time the server receives a block of bytes.
    */
   public void update(long done, long total, int item) {
+    bytesRead = done;
+    contentLength = total;
+    
   	if (hasBeenCancelled()) {
-  		throw exception;
-  	}
-
-  	if (isFrozen(done)) {
-      logger.info("The recepcion seems frozen, data received: " + done);
-  	  exception = new UploadTimeoutException();
+  	  String eName = exception.getClass().getName().replaceAll("^.+\\.", "");
+      logger.info("The upload has been canceled after " + 
+                   bytesRead + " bytes received, raising an exception (" 
+                   + eName + ") to close the socket");
       throw exception; 
   	}
 
@@ -83,9 +78,7 @@ public class UploadListener implements ProgressListener {
         Thread.sleep(200);
       } catch (Exception e) {}
     }
-    
-    bytesRead = done;
-    contentLength = total;
+  	
     this.item = item;
   }
 
@@ -109,20 +102,6 @@ public class UploadListener implements ProgressListener {
     return exception != null;
   }
 
-  public boolean isFrozen() {
-    return isFrozen(bytesRead);
-  }
-  
-  private boolean isFrozen(long done) {
-    long now = (new Date()).getTime();
-    if (done > bytesRead) {
-      lastData = now;
-    } else if (!cancelled && now - lastData > MAX_TIME_WITHOUT_DATA) { 
-      return true; 
-    }
-    return false;
-  }
-  
   public void setException(RuntimeException e) {
     exception = e;
   }
@@ -133,6 +112,8 @@ public class UploadListener implements ProgressListener {
   
   class TimeoutWatchDog extends Thread {
     UploadListener listener;
+    private long lastData = (new Date()).getTime();
+    private long lastBytesRead = 0L;
     
     public TimeoutWatchDog(UploadListener l) {
       listener = l;
@@ -140,6 +121,17 @@ public class UploadListener implements ProgressListener {
     
     public void cancel() {
       listener=null;
+    }
+
+    private boolean isFrozen() {
+      long now = (new Date()).getTime();
+      if (bytesRead > lastBytesRead) {
+        lastData = now;
+        lastBytesRead = bytesRead;
+      } else if (now - lastData > MAX_TIME_WITHOUT_DATA) { 
+        return true; 
+      }
+      return false;
     }
     
     @Override
@@ -151,12 +143,16 @@ public class UploadListener implements ProgressListener {
           logger.error("TimeoutWatchDog: sleep Exception: " + e.getMessage());
         }
         
-        if (listener.getBytesRead() > 0 && listener.getPercent() >= 100) {
+        if (listener.getBytesRead() > 0 && listener.getPercent() >= 100 && listener.hasBeenCancelled()) {
           logger.debug("TimeoutWatchDog: upload process has finished, stoping watcher");
           listener = null;
         } else {
-          listener.update(listener.getBytesRead(), listener.getContentLength(), listener.getItem());
-          run();
+          if (isFrozen()) {
+            logger.info("The recepcion seems frozen after " + listener.getBytesRead() + " bytes received");
+            exception = new UploadTimeoutException();
+          } else {
+            run();
+          }
         }
       }
     }

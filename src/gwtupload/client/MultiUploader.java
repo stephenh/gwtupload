@@ -89,7 +89,7 @@ public class MultiUploader extends Composite implements IUploader {
     public void onFinish(IUploader uploader) {
       if (uploader.getStatus() != Status.SUCCESS) {
         fileCount --;
-        if (currentUploader.getStatus() != Status.UNITIALIZED)
+        if (currentUploader.getStatus() != Status.UNINITIALIZED)
           newUploaderInstance(); 
       }
     }
@@ -258,7 +258,7 @@ public class MultiUploader extends Composite implements IUploader {
    */
   public Status getStatus() {
     Status ret = currentUploader.getStatus();
-    if (ret == Status.UNITIALIZED && lastUploader != null) {
+    if (ret == Status.UNINITIALIZED && lastUploader != null) {
       ret = lastUploader.getStatus();
     }
     return ret;

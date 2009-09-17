@@ -213,7 +213,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		    Thread.sleep(1500);
       } catch (Exception e) {
       }
-			if (listener.hasBeenCancelled() || listener.isFrozen() || listener.getPercent() >= 100) {
+			if (listener.hasBeenCancelled() || listener.getPercent() >= 100) {
 				session.removeAttribute(ATTR_LISTENER);
 			} else {
 				error = "The request has been rejected because the server is already receiving another file.";
@@ -328,7 +328,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			  if (listener.getException() instanceof UploadCanceledException) {
 	        ret.put(TAG_CANCELED, "true");
 	        ret.put(TAG_FINISHED, TAG_CANCELED);
-	        logger.error(session.getId() + " UPLOAD status " + filename + " cancelled by the user after " + listener.getBytesRead() + "Bytes ");
+	        logger.error(session.getId() + " UPLOAD status " + filename + " cancelled by the user after " + listener.getBytesRead() + " Bytes");
 			  } else {
 		      ret.put(TAG_ERROR, listener.getException().getMessage());
 		      ret.put(TAG_FINISHED, TAG_ERROR);
@@ -553,7 +553,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
    * 
    * @deprecated, use getSessionFileItems
    */
-  public static List<FileItem> getSessionItemss(HttpServletRequest request) {
+  public static List<FileItem> getSessionItems(HttpServletRequest request) {
     return getSessionFileItems(request);
   }
 

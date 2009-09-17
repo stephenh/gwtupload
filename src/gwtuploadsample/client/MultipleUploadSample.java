@@ -52,7 +52,7 @@ public class MultipleUploadSample implements EntryPoint {
     defaultUploader.addOnFinishUploadHandler(onFinishUploaderHandler);
     defaultUploader.setMaximumFiles(2);
     defaultUploader.setFileInputPrefix("default");
-    // You and add customized parameters to servlet call which you can handle it in the server 
+    // You can add customized parameters to servlet call 
     defaultUploader.setServletPath(Uploader.DEFAULT_SERVLET_PATH + "?foo=bar");
 
     MultiUploader incubatorUploader = new MultiUploader(new IncubatorUploadProgress());

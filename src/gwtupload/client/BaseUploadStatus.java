@@ -74,7 +74,7 @@ public class BaseUploadStatus implements IUploadStatus {
   }
 
 
-  private IUploadStatus.Status status = Status.UNITIALIZED;
+  private IUploadStatus.Status status = Status.UNINITIALIZED;
 	private Widget prg = null;
   private boolean hasCancelActions = false;
   

@@ -86,7 +86,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   
 	private static final String TAG_PERCENT = "percent";
   private static final String TAG_FINISHED = "finished";
-  private static final String TAG_CANCELLED = "cancelled";
+  private static final String TAG_CANCELED = "canceled";
   private static final String TAG_WAIT = "wait";
   private static final String TAG_TOTAL_BYTES = "totalBytes";
   private static final String TAG_CURRENT_BYTES = "currentBytes";
@@ -306,12 +306,12 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				return;
 			
 			String responseTxt = response.getText();
-			parseResponse(responseTxt);
+			parseAjaxResponse(responseTxt);
 		}
 
 	};
 
-	private void parseResponse(String responseTxt) {
+	private void parseAjaxResponse(String responseTxt) {
     String error = null;
     Document doc = null;
     if (false && ! responseTxt.toLowerCase().matches(".*<response>.*")) {
@@ -331,7 +331,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       cancelUpload(error);
       return;
     } else if (Utils.getXmlNodeValue(doc, TAG_WAIT) != null) {
-    } else if (Utils.getXmlNodeValue(doc, TAG_CANCELLED) != null) {
+    } else if (Utils.getXmlNodeValue(doc, TAG_CANCELED) != null) {
       successful = false;
       cancelled = true;
       uploadFinished();
