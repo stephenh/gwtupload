@@ -30,8 +30,8 @@ import com.google.gwt.core.client.GWT;
 public class JsUpload implements EntryPoint {
 
   /**  
-   * This method is called as soon as the browser loads the page.
-   * Then the classes and methods are available to be used from javascript.
+   * This method is called as soon as the browser loads the page and
+   * classes and methods are available to be used from javascript.
    * Eventually the javascript method jsuOnLoad is called if it exists.
    */
   public void onModuleLoad() {

@@ -217,7 +217,7 @@ sub printConstructor {
    next if ($d eq '' || $d =~ /^\s+$/);
    if ($d =~ /regional/i) {
      $ret .=  "   " . $const{const}{$d}{nam} . ": {     // " . $const{const}{$d}{com} . "\n" . $const{const}{$name}{regional} . "   },\n"
-   } else {
+   } elsif ($const{const}{$d}{nam}) {
      $ret .=  "   " . $const{const}{$d}{nam} . ": " . $const{const}{$d}{def} . ",  // " . $const{const}{$d}{com} . "\n";
    }
   }

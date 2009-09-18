@@ -1,94 +1,119 @@
 <html>
 <head>
-	<title>JsUpload Example, Manolo Carrasco, 2009</title>
-	<style type="text/css">
-	body {
+    <title>JsUpload demo, Manolo Carrasco, 2009</title>
+    <style type="text/css">
+    body {
         font-family:verdana,arial,helvetica,clean,sans-serif;
         font-size: 12px;
-	}
-	h1, .jsubox {
-	    margin-top: 10px;
-	    margin-left: auto;
-	    margin-right: auto;
-        width: 600px; 
-	}
+    }
+    h1, .jsubox, p {
+        margin-top: 5px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 450px; 
+    }
     .jsubox {
         border: 3px groove pink;
         padding: 5px; 
     }
-	</style>
+    .jsucode {
+      font-size: 10px;
+      background: #d4e4ff;
+      background: beige;
+      border: 1px solid #999999;
+      padding-top: 4px;
+      width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    </style>
 </head>
 <body>
    <script language="javascript" src="jsupload.JsUpload.nocache.js"></script>
-   <script language='javascript'>
+   <script id='jsexample'>
       // Method called after the JsUpload library has been loaded
       function jsuOnLoad() {
-        
         new jsu.Upload({
-          containerId: "uploader0",
-          multiple: true, 
-          auto: true,
-          type: "basic",
-          onFinish: loadImage,
-          regional: {
-	          uploadStatusSuccess: "Uploaded"
-          }
-        });
-      
-        new jsu.Upload({
+          type: "incubator",
           containerId: "uploader1",
           multiple: true, 
           auto: true,
-          type: "incubator",
           onFinish: loadImage
         });
-
+        
         new jsu.Upload({
-          containerId: "uploader2",
+           containerId: "uploader2",
+           multiple: true, 
+           auto: true,
+           onFinish: loadImage
+        });
+        
+        new jsu.Upload({
+          type: "basic",
+          containerId: "uploader3",
           multiple: true, 
           auto: true,
-          onStart: function(data) {
-            //do nothing
-          },
-          onFinish: loadImage
-        });
-
-        new jsu.Upload({
-          containerId: "uploader3",
+          onChange: null,
+          onStart: null,
           onFinish: loadImage,
-          sendMsg: "Upload image",	
-          type: "basic"
+          maxFiles: 4,
+          action: 'servlet.upld',
+          regional: {
+              uploadStatusSuccess: "Saved in the server",
+              uploadStatusError:   "Unable to save"
+          }
         });
 
         new jsu.Upload({
+          type: "basic",
           containerId: "uploader4",
+          onFinish: loadImage,
+          sendMsg: "Upload image"    
+        });
+
+        new jsu.Upload({
+          containerId: "uploader5",
           onFinish: loadImage,
           sendMsg: "Upload image",  
           validExtensions: ".jpg, .gif, .png"
         });
         
-      }
-      
-      // Method that shows a picture using the class PreloadImage
-      // The image is not shown until it has been sucessfully downloaded
-      function loadImage(upl_data) {
-         if (upl_data && upl_data.url) {
-            var image = new jsu.PreloadImage({
-              url: upl_data.url,
-              containerId: "photos",    
-              onLoad: function(img_data) {
-                image.setSize(100, -1);
-              }
-            });
-         }
+        // Method to show a picture using the class PreloadImage
+        // The image is not shown until it has been sucessfully downloaded
+        function loadImage(upl_data) {
+           if (upl_data && upl_data.url) {
+              var image = new jsu.PreloadImage({
+                url: upl_data.url,
+                containerId: "photos",    
+                onLoad: function(img_data) {
+                  image.setSize(100, -1);
+                }
+              });
+           }
+        }
       }
    </script>
-   <h1>Examples using the <i>JsUpload</i> library</h1>
-   <div id="uploader0" class="jsubox">jsu.Upload: auto=true, multiple=true, type=basic<br><br></div>
-   <div id="uploader1" class="jsubox">jsu.Upload: auto=true, multiple=true, type=incubator<br><br></div>
-   <div id="uploader2" class="jsubox">jsu.Upload: auto=true, multiple=true, type=chismes<br><br></div>
-   <div id="uploader3" class="jsubox">jsu.Upload: auto=false, multiple=false, dialog=true, type=basic<br><br></div>
-   <div id="uploader4" class="jsubox">jsu.Upload: auto=false, multiple=false, dialog=true, type=chismes, validExtensions=".jpg, .gif, .png"<br><br></div>
+   <h1><i>JsUpload</i> examples</h1>
+   <p>
+    JsUpload is the exported version of the <a target="_blank" href='http://code.google.com/p/gwtupload'>GwtUpload</a> library. <br/>
+    Because it is pure javascript, any user can utilize the uploaders inserting only a few lines of code in the page.<br/>
+    Take a look to the <a target="_blank" href='http://code.google.com/p/gwtupload/wiki/JsUpload_Documentation'>API</a> documentation to see all the available options. 
+   </p>
+   <div id="uploader1" class="jsubox"><br><br></div>
+   <div id="uploader2" class="jsubox"><br><br></div>
+   <div id="uploader3" class="jsubox"><br><br></div>
+   <div id="uploader4" class="jsubox"><br><br></div>
+   <div id="uploader5" class="jsubox"><br><br></div>
    <div id="photos" class="jsubox"> <br></div>
+   <script>
+       // Hack to insert each example in a div
+       var jscode = document.getElementById("jsexample").innerHTML;
+       var jsparts = jscode.split(/new\s*jsu.Upload/);
+       for (i=1; i<jsparts.length; i++) {
+         var div = document.getElementById("uploader" + i);
+         var code = "        new jsu.Upload" + jsparts[i].replace(/\n/img,'ç').replace(/(}\);).*$/im,'$1').replace(/ç/g,"\n");
+         div.innerHTML = '<pre class="jsucode">' + code + '</pre>';
+       }
+   </script>
  </body>
 </html>

@@ -10,4 +10,7 @@ package gwtupload.server.exceptions;
 
 public class UploadTimeoutException extends RuntimeException {
   private static final long serialVersionUID = 1L;
+  public UploadTimeoutException(String msg) {
+    super(msg);
+  }
 }

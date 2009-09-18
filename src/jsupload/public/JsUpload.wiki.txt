@@ -23,12 +23,12 @@ _The library has been developed using java and exported to javascript using gwt-
    });
    }}}
    * Java: You can use the servlet provided with gwtupload.jar and setup it in WEB-INF/web.xml file.
-   * Rails: I'm planning to create a rails plugin soon.
-   * Others: You can use the provided cgi script and use the files/information left in the temporary folder. Use an ajax request to inform your application that the upload process has finished. 
+   * Rails: I'm planning to create a rails plugin soon, in the meanwhile you can use the cgi script provided.
+   * Others: Install the provided cgi script which leaves the files and information in a temporary folder. Them, use an ajax request to inform your application that the upload process has finished. 
    {{{
    uploader = new jsu.Upload({
       onFinish: function(data) {
-        [call to your application]
+        [call to your application, read the cookie set by the cgi uploader to know where are the uploaded files]
       } 
    });
    }}}

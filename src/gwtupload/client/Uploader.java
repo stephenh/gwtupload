@@ -97,7 +97,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private static final int DEFAULT_FILEINPUT_SIZE = 40;
 	private static final int DEFAULT_AUTOUPLOAD_DELAY = 600;
 	private static final int DEFAULT_TIMEOUT = 6000;
-	private static final int MAX_TIME_WITHOUT_RESPONSE = 10000;
+	private static final int MAX_TIME_WITHOUT_RESPONSE = 20000;
 	public static final String DEFAULT_SERVLET_PATH = "servlet.gupld";
 	private static final int UPDATE_INTERVAL = 1500;
 	
@@ -207,7 +207,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				this.cancel();
 				statusWidget.setStatus(IUploadStatus.Status.SUBMITING);
 				
-				// Most browsers don't submit files if fileInput is hidden or has a size of 0 for securituy reasons. 
+				// For security reasons, most browsers don't submit files if fileInput is hidden or has a size of 0 for security reasons. 
 				// so, before sending the form, it is necessary to show the fileInput.
 				// then, onSubmit handler will hide the fileInput again
 				setFileInputSize(1);
@@ -224,21 +224,23 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 			}
 		}
 	};
+	
+	private String basename = null;
 
 	private final ChangeHandler onFileInputChanged = new ChangeHandler() {
 		public void onChange(ChangeEvent event) {
-			if (autoSubmit && validateExtension(fileInput.getFilename())) {
-				if (getFileName().length() > 0) {
-					statusWidget.setFileName(Utils.basename(getFileName()));
+      basename = Utils.basename(getFileName());
+      statusWidget.setFileName(basename);
+			if (autoSubmit && validateExtension(basename) && basename.length() > 0) {
 					automaticUploadTimer.scheduleRepeating(DEFAULT_AUTOUPLOAD_DELAY);
-				}
 			}
 			onChangeInput();
 		}
-
 	};
 
 	private boolean validateExtension(String filename) {
+	  if (filename == null || filename.length() == 0)
+	    return false;
 	  boolean valid = Utils.validateExtension(validExtensions, filename);
     if (!valid)
       statusWidget.setError(i18nStrs.uploaderInvalidExtension() + validExtensionsMsg);
@@ -366,7 +368,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 */
 	private SubmitHandler onSubmitFormHandler = new SubmitHandler() {
 		public void onSubmit(SubmitEvent event) {
-			if (!finished && uploading) {
+
+		  if (!finished && uploading) {
 				uploading = false;
 				statusWidget.setStatus(IUploadStatus.Status.CANCELED);
 				return;
@@ -378,10 +381,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				return;
 			}
 
-			if (getFileName().length() > 0) {
-				statusWidget.setFileName(Utils.basename(getFileName()));
-			}
-
 			if (fileDone.contains(getFileName())) {
 				successful = true;
 				event.cancel();
@@ -389,7 +388,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				return;
 			}
 
-			if (getFileName().length() == 0 || !validateExtension(getFileName())) {
+			if (basename == null || !validateExtension(basename)) {
 				event.cancel();
 				return;
 			}
@@ -574,7 +573,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 * It's useful to display uploaded images or generate links to uploaded files
 	 */
 	public String fileUrl() {
-		return getServletPath() + "?" + PARAMETER_SHOW + "=" + getInputName();
+		return composeURL(PARAMETER_SHOW + "=" + getInputName());
 	}
 
 	/**
@@ -894,7 +893,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     this.uploadForm.reset();
     updateStatusTimer.finish();
     uploading = cancelled = finished = successful = false;
-    serverResponse = null;
+    basename = serverResponse = null;
   }
 
   /* (non-Javadoc)

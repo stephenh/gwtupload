@@ -19,6 +19,7 @@ package gwtupload.server;
 import gwtupload.server.exceptions.UploadCanceledException;
 import gwtupload.server.exceptions.UploadException;
 import gwtupload.server.exceptions.UploadSizeLimitException;
+import gwtupload.server.exceptions.UploadTimeoutException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,6 +94,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
   protected static final String FINISHED_OK = "<finished>OK</finished>";
 
 	protected static final String CANCELED_TRUE = "<canceled>true</canceled>";
+  protected static final String ERROR_TIMEOUT = "<error>timeout receiving file</error>";
 
   protected static final String ERROR_ITEM_NOT_FOUND = "<error>item not found</error>";
 
@@ -141,7 +143,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		if (slow != null && "true".equalsIgnoreCase(slow))
 			UploadListener.setSlowUploads(true);
 
-		logger.debug("UPLOAD servlet init, maxSize=" + maxSize + ", slowUploads=" + slow);
+		logger.debug("UPLOAD-SERVLET initialisation: maxSize=" + maxSize + ", slowUploads=" + slow);
 	}
 
 	/**
@@ -160,9 +162,11 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			String message = "";
 			Map<String, String> status = getUploadStatus(request, request.getParameter(PARAM_FILENAME));
 			for (Entry<String, String> e : status.entrySet()) {
-			  String k = e.getKey();
-			  String v = e.getValue().replaceAll("</*pre>", "").replaceAll("&lt;", "<").replaceAll("&gt;", ">");;
-				message += "<" + k + ">" + v + "</" + k + ">\n";
+			  if (e.getValue() != null) {
+	        String k = e.getKey();
+	        String v = e.getValue().replaceAll("</*pre>", "").replaceAll("&lt;", "<").replaceAll("&gt;", ">");;
+	        message += "<" + k + ">" + v + "</" + k + ">\n";
+			  }
 			}
 			renderXmlResponse(request, response, message);
 		}
@@ -184,8 +188,10 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			renderXmlResponse(request, response, error != null && error.length() > 0 ? "<error>" + error + "</error>" : FINISHED_OK);
     } catch (UploadCanceledException e) {
     	renderXmlResponse(request, response, CANCELED_TRUE);
+    } catch (UploadTimeoutException e) {
+      renderXmlResponse(request, response, ERROR_TIMEOUT);
     } catch(Exception e) {
-			logger.error(request.getSession().getId() + " UPLOAD servlet Exception: " + e.getMessage() + "\n" + stackTraceToString(e));
+			logger.error("UPLOAD-SERVLET (" + request.getSession().getId() + ") Exception: " + e.getMessage() + "\n" + stackTraceToString(e));
 			error = "\nError receiving the file: \n" + e.getMessage();
 			renderXmlResponse(request, response, "<error>" + error + "</error>");
     }
@@ -204,7 +210,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		HttpSession session = request.getSession();
 		session.removeAttribute(ATTR_ERROR);
 
-		logger.debug(session.getId() + " UPLOAD new request  " + (session.getAttribute(ATTR_LISTENER) != null));
+		logger.debug("UPLOAD-SERVLET (" + session.getId() + ") new upload request received.");
 
 		String error = "";
 		UploadListener listener = (UploadListener)session.getAttribute(ATTR_LISTENER); 
@@ -217,13 +223,13 @@ public class UploadServlet extends HttpServlet implements Servlet {
 				session.removeAttribute(ATTR_LISTENER);
 			} else {
 				error = "The request has been rejected because the server is already receiving another file.";
-				logger.error(session.getId() + " UPLOAD " + error);
+				logger.error("UPLOAD-SERVLET (" + session.getId() + ") " + error);
 				return error;
 			}
 		}
 
 		Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionFileItems(request);
-		logger.debug(session.getId() + " UPLOAD servlet procesing request " + request.getContentLength() + " < " + maxSize);
+		logger.debug("UPLOAD-SERVLET (" + session.getId() + ") procesing a request with size: " + request.getContentLength() + " bytes.");
 
 		// Create the factory used for uploading files,
 		// set file upload progress listener, and put it into user session,
@@ -232,22 +238,26 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		ServletFileUpload uploader = new ServletFileUpload(factory);
 		listener = new UploadListener();
 		uploader.setProgressListener(listener);
-		logger.debug(session.getId() + " UPLOAD servlet putting listener in session");
+		logger.debug("UPLOAD-SERVLET (" + session.getId() + ") putting listener in session");
 		session.setAttribute(ATTR_LISTENER, listener);
 
 		// uploader.setFileSizeMax(maxSize);
 		uploader.setSizeMax(maxSize);
 
 		// Receive the files
-		logger.debug(session.getId() + " UPLOAD servlet parsing HTTP request ");
     List<FileItem> uploadedItems;
     try {
+      logger.debug("UPLOAD-SERVLET (" + session.getId() + ") parsing HTTP POST request ");
 	    uploadedItems = uploader.parseRequest(request);
-			logger.debug(session.getId() + " UPLOAD servlet servlet received items: " + uploadedItems.size());
+			logger.debug("UPLOAD-SERVLET (" + session.getId() + ") parsed request, " + uploadedItems.size() + " items received.");
     } catch (SizeLimitExceededException e) {
       RuntimeException ex = new UploadSizeLimitException(e.getPermittedSize(), e.getActualSize());
       listener.setException(ex);
       throw ex;
+    } catch (UploadCanceledException e) {
+      throw e;
+    } catch (UploadTimeoutException e) {
+      throw e;
     } catch (FileUploadException e) {
       RuntimeException ex = new UploadException(e);
       listener.setException(ex);
@@ -256,7 +266,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 
 		if (listener.hasBeenCancelled()) {
 			error = "\nThe request was cancelled by the user (" + request.getContentLength() / 1024 + " kB.)";
-			logger.error(session.getId() + " UPLOAD " + error);
+			logger.error("UPLOAD-SERVLET (" + session.getId() + ") " + error);
 			return error;
 		}
 
@@ -269,17 +279,21 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			if (fileItem.isFormField() || fileItem.getSize() > 0) {
 				sessionFiles.add(fileItem);
 			} else {
-				logger.error(session.getId() + " UPLOAD servlet error File empty: " + fileItem);
+				logger.error("UPLOAD-SERVLET (" + session.getId() + ") error File empty: " + fileItem);
 				error += "\nError, the reception of the file " + fileItem.getName()
 				      + " was unsuccesful.\nPlease verify that the file exists and you have enough permissions to read it";
 			}
 		}
 
 		if (sessionFiles != null && sessionFiles.size() > 0) {
-			logger.debug(session.getId() + " UPLOAD servlet puting FILES in SESSION " + sessionFiles.elementAt(0));
+		  String msg = "";
+		  for (FileItem i: sessionFiles) {
+		    msg += i.getFieldName() + " => " + i.getName() + "(" + i.getSize() + " bytes),";
+		  }
+			logger.debug("UPLOAD-SERVLET (" + session.getId() + ") puting items in session: " + msg);
 			session.setAttribute(ATTR_FILES, sessionFiles);
 		} else {
-			logger.error(session.getId() + " UPLOAD servlet error NO DATA received ");
+			logger.error("UPLOAD-SERVLET (" + session.getId() + ") error NO DATA received ");
 			error += "\nError, your browser has not sent any information.\nPlease try again or try it using another browser\n";
 		}
 		return error!=null && error.length() > 0 ? error : null;
@@ -313,7 +327,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		}
 	}
 
-	private static Map<String, String> getUploadStatus(HttpServletRequest request, String filename) {
+	private static Map<String, String> getUploadStatus(HttpServletRequest request, String fieldname) {
 	  
 	  HttpSession session = request.getSession();
 
@@ -328,18 +342,18 @@ public class UploadServlet extends HttpServlet implements Servlet {
 			  if (listener.getException() instanceof UploadCanceledException) {
 	        ret.put(TAG_CANCELED, "true");
 	        ret.put(TAG_FINISHED, TAG_CANCELED);
-	        logger.error(session.getId() + " UPLOAD status " + filename + " cancelled by the user after " + listener.getBytesRead() + " Bytes");
+	        logger.error("UPLOAD-SERVLET (" + session.getId() + ") getUploadStatus: " + fieldname + " cancelled by the user after " + listener.getBytesRead() + " Bytes");
 			  } else {
 		      ret.put(TAG_ERROR, listener.getException().getMessage());
 		      ret.put(TAG_FINISHED, TAG_ERROR);
-		      logger.error(session.getId() + " UPLOAD status " + filename + " finished with error: " + session.getAttribute(ATTR_ERROR));
+		      logger.error("UPLOAD-SERVLET (" + session.getId() + ") getUploadStatus: " + fieldname + " finished with error: " + session.getAttribute(ATTR_ERROR));
 		      session.removeAttribute(ATTR_ERROR);
 			  }
 			} else {
 				currentBytes = listener.getBytesRead();
 				totalBytes = listener.getContentLength();
 				percent = totalBytes != 0 ? currentBytes * 100 / totalBytes : 0;
-				logger.debug(session.getId() + " UPLOAD status " + filename + " " + currentBytes + "/" + totalBytes + " " + percent);
+				logger.debug("UPLOAD-SERVLET (" + session.getId() + ") getUploadStatus: " + fieldname + " " + currentBytes + "/" + totalBytes + " " + percent + "%");
 	      ret.put("percent", "" + percent);
 	      ret.put("currentBytes", "" + currentBytes);
 	      ret.put("totalBytes", "" + totalBytes);
@@ -349,24 +363,24 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		} else if (error != null) {
 			ret.put(TAG_ERROR, error);
 			ret.put(TAG_FINISHED, TAG_ERROR);
-			logger.error(session.getId() + " UPLOAD status " + filename + " finished with error: " + session.getAttribute(ATTR_ERROR));
+			logger.error("UPLOAD-SERVLET (" + session.getId() + ") getUploadStatus: " + fieldname + " finished with error: " + session.getAttribute(ATTR_ERROR));
 			session.removeAttribute(ATTR_ERROR);
 		} else if (getSessionFileItems(request) != null) {
-			if (filename == null) {
+			if (fieldname == null) {
 				ret.put(TAG_FINISHED, "ok");
-				logger.debug(session.getId() + " UPLOAD status filename=null finished with files: " + session.getAttribute(ATTR_FILES));
+				logger.debug("UPLOAD-SERVLET (" + session.getId() + ") getUploadStatus: " + request.getQueryString() + " finished with files: " + session.getAttribute(ATTR_FILES));
 			} else {
 				Vector<FileItem> sessionFiles = (Vector<FileItem>)getSessionFileItems(request);
 				for (FileItem file : sessionFiles) {
-					if (file.isFormField() == false && file.getFieldName().equals(filename)) {
+					if (file.isFormField() == false && file.getFieldName().equals(fieldname)) {
 						ret.put(TAG_FINISHED, "ok");
-						ret.put(PARAM_FILENAME, filename);
-						logger.debug(session.getId() + " UPLOAD status " + filename + " finished with files: " + session.getAttribute(ATTR_FILES));
+						ret.put(PARAM_FILENAME, fieldname);
+						logger.debug("UPLOAD-SERVLET (" + session.getId() + ") getUploadStatus: " + fieldname + " finished with files: " + session.getAttribute(ATTR_FILES));
 					}
 				}
 			}
 		} else {
-			logger.debug(session.getId() + " UPLOAD listener is null");
+			logger.debug("UPLOAD-SERVLET (" + session.getId() + ") getUploadStatus: no listener in session");
 			ret.put("wait", "listener is null");
 		}
 		if (ret.containsKey(TAG_FINISHED)) {
@@ -386,7 +400,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 */
 	public void getUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String parameter = request.getParameter(PARAM_SHOW);
-		logger.debug(request.getSession().getId() + " UPLOAD, getFileContent: " + parameter);
+		logger.debug("UPLOAD-SERVLET (" + request.getSession().getId() + ") getUploadedFile: " + parameter);
 		if (parameter != null) {
 			@SuppressWarnings("unchecked")
 			Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
@@ -395,6 +409,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
 				if (i == null) 
 					i = findItemByFileName(sessionFiles, parameter);
 				if (i != null && !i.isFormField()) {
+			    logger.debug("UPLOAD-SERVLET (" + request.getSession().getId() + ") getUploadedFile: " + parameter + " returning: " + i.getContentType() + ", " + i.getName() + ", " + i.getSize() + " bytes") ;
 					response.setContentType(i.getContentType());
 					copyFromInputToOutput(i, response.getOutputStream());
 					return;
@@ -419,10 +434,10 @@ public class UploadServlet extends HttpServlet implements Servlet {
     if (item != null) {
       getSessionFileItems(request).remove(item);
       renderXmlResponse(request, response, DELETED_TRUE);
-      logger.debug(request.getSession().getId() + " UPLOAD, deleted File: " + parameter + " " + item.getName() + " " + item.getSize());
+      logger.debug("UPLOAD-SERVLET (" + request.getSession().getId() + ") removeUploadedFile: " + parameter + " " + item.getName() + " " + item.getSize());
     } else {
       renderXmlResponse(request, response, ERROR_ITEM_NOT_FOUND);
-      logger.info(request.getSession().getId() + " UPLOAD, unable to delete file because it isn't in session: " + parameter);
+      logger.info("UPLOAD-SERVLET (" + request.getSession().getId() + ") removeUploadedFile: " + parameter + " unable to delete file because it isn't in session.");
     }
     
     return item;
@@ -524,25 +539,37 @@ public class UploadServlet extends HttpServlet implements Servlet {
 		}};
 	}
 	
-	
-	
 	/**
 	 * 
-	 * @deprecated, use removeSessionFileItems
+	 * @deprecated use removeSessionFileItems
 	 */
 	public static void removeSessionFiles(HttpServletRequest request) {
 	  removeSessionFileItems(request);
   }
 	
   /**
-   * Removes all FileItems stored in session and files' temporary data
+   * Removes all FileItems stored in session and the temporary data
    * 
    * @param request
    */
   public static void removeSessionFileItems(HttpServletRequest request) {
+    removeSessionFileItems(request, true);
+  }
+
+  /**
+   * Removes all FileItems stored in session, but in this case 
+   * the user can specify whether the temporary data is removed from disk.
+   * 
+   * @param request
+   * @param removeData, true: the file data is deleted.
+   *                    false: use it when you are referencing file items 
+   *                    instead of copying them.
+   */
+  public static void removeSessionFileItems(HttpServletRequest request, boolean removeData) {
+    logger.debug("UPLOAD-SERVLET (" + request.getSession().getId() + ") removeSessionFileItems: removeData=" + removeData) ;
     @SuppressWarnings("unchecked")
     Vector<FileItem> sessionFiles = (Vector<FileItem>) request.getSession().getAttribute(ATTR_FILES);
-    if (sessionFiles != null)
+    if (removeData && sessionFiles != null)
       for (FileItem fileItem : sessionFiles)
         if (fileItem != null && !fileItem.isFormField())
           fileItem.delete();
@@ -550,8 +577,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
   }
 
   /**
-   * 
-   * @deprecated, use getSessionFileItems
+   * @deprecated use getSessionFileItems
    */
   public static List<FileItem> getSessionItems(HttpServletRequest request) {
     return getSessionFileItems(request);

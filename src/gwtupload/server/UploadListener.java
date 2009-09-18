@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
 public class UploadListener implements ProgressListener {
 	
   static Logger logger = Logger.getLogger(ProgressListener.class);
-	private static final int MAX_TIME_WITHOUT_DATA = 15000;
+	private static final int MAX_TIME_WITHOUT_DATA = 20000;
   private static final int WATCHER_INTERVAL = 5000;
   
   private RuntimeException exception = null;
@@ -46,6 +46,7 @@ public class UploadListener implements ProgressListener {
   private TimeoutWatchDog watcher;
   
   public UploadListener() {
+    logger.info("UPLOAD-LISTENER created new instance."); 
      watcher = new TimeoutWatchDog(this);
      watcher.start();
   }
@@ -58,20 +59,30 @@ public class UploadListener implements ProgressListener {
     UploadListener.slowUploads = slowUploads;
   }
   
+  boolean exceptionTrhown = false;
+  
   /**
    * This method is called each time the server receives a block of bytes.
    */
   public void update(long done, long total, int item) {
+    if (exceptionTrhown)
+      return;
+    
     bytesRead = done;
     contentLength = total;
-    
-  	if (hasBeenCancelled()) {
+    if (hasBeenCancelled()) {
   	  String eName = exception.getClass().getName().replaceAll("^.+\\.", "");
-      logger.info("The upload has been canceled after " + 
+      logger.info("UPLOAD-LISTENER The upload has been canceled after " + 
                    bytesRead + " bytes received, raising an exception (" 
                    + eName + ") to close the socket");
+      exceptionTrhown = true;
+      watcher.cancel();
       throw exception; 
   	}
+
+    if (getPercent() >= 100) { 
+      watcher.cancel();
+    }
 
   	if (slowUploads) {
       try {
@@ -103,8 +114,10 @@ public class UploadListener implements ProgressListener {
   }
 
   public void setException(RuntimeException e) {
+    watcher.cancel();
     exception = e;
   }
+  
   public RuntimeException getException() {
     return exception;
   }
@@ -136,20 +149,19 @@ public class UploadListener implements ProgressListener {
     
     @Override
     public void run() {
+      try {
+        Thread.sleep(WATCHER_INTERVAL);
+      } catch (InterruptedException e) {
+        logger.error("UPLOAD-LISTENER TimeoutWatchDog: sleep Exception: " + e.getMessage());
+      }
       if (listener != null) {
-        try {
-          Thread.sleep(WATCHER_INTERVAL);
-        } catch (InterruptedException e) {
-          logger.error("TimeoutWatchDog: sleep Exception: " + e.getMessage());
-        }
-        
-        if (listener.getBytesRead() > 0 && listener.getPercent() >= 100 && listener.hasBeenCancelled()) {
-          logger.debug("TimeoutWatchDog: upload process has finished, stoping watcher");
+        if (listener.getBytesRead() > 0 && listener.getPercent() >= 100 || listener.hasBeenCancelled()) {
+          logger.debug("UPLOAD-LISTENER TimeoutWatchDog: upload process has finished, stoping watcher");
           listener = null;
         } else {
           if (isFrozen()) {
-            logger.info("The recepcion seems frozen after " + listener.getBytesRead() + " bytes received");
-            exception = new UploadTimeoutException();
+            logger.info("UPLOAD-LISTENER TimeoutWatchDog: the recepcion seems frozen:" + listener.getBytesRead() + "/" + listener.getContentLength() + " bytes (" + listener.getPercent() + "%) " );
+            exception = new UploadTimeoutException("No new data received after " + MAX_TIME_WITHOUT_DATA/1000 + " seconds");
           } else {
             run();
           }

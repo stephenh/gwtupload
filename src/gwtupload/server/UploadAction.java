@@ -153,7 +153,7 @@ public class UploadAction extends UploadServlet {
       renderXmlResponse(request, response, "<" + TAG_ERROR + ">" + error + "</" + TAG_ERROR + ">");
       if (listener != null)
         listener.setException(new RuntimeException(error));
-      UploadServlet.removeSessionFiles(request);
+      UploadServlet.removeSessionFileItems(request);
       return;
     }
 

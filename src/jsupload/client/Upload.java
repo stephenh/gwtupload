@@ -37,14 +37,16 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * @author Manolo Carrasco Moñino
  * 
- * Exportable version of the gwt Uploader.
+ * Exportable version of gwt Uploader.
  * 
  * <h3>Features</h3>
  * <ul>
  * <li>Three kind of progress bar, the most advanced one shows upload speed, time remaining, sizes, progress</li>
- * <li>Single upload form: after uploading a file the form can be used again, but the user can not interact with the page</li>
- * <li>Multiple upload form: Each time the user selects a file it goes to the queue and the user</li>
- * <li>Configurable functions to be called on the onChange, onStart, onFinish events</li>
+ * <li>Single upload form: while the file is being sent the modal dialog avoid the user to interact with the application, 
+ * Then the form can be used again for uploading more files.</li>
+ * <li>Multiple upload form: Each time the user selects a file it goes to the queue and the user can select more files.</li>
+ * <li>It can call configurable functions on the events of onChange, onStart and onFinish</li>
+ * <li>The user can cancel the current upload, can delete files in the queue or remove uploaded files</li>
  * </ul>
  *  
  */
@@ -77,6 +79,10 @@ public class Upload implements Exportable {
 		} else {
 	    status = new ChismesUploadProgress(!multiple);
 	    uploader = multiple ? new MultiUploader(status) : new SingleUploader(status);; 
+		}
+		
+		if (multiple) {
+		  ((MultiUploader)uploader).setMaximumFiles(jsProp.getInt(Const.MAX_FILES));
 		}
 		
 		uploader.addOnStartUploadHandler(JsUtils.getOnStartUploaderHandler(jsProp.getClosure(Const.ON_START)));
@@ -131,11 +137,11 @@ public class Upload implements Exportable {
 	
 	/**
 	 * returns a javascript structure with this information: 
-	 *    uploader.data().url      // The url to get the uploaded file from the server
-   *    uploader.data().name     // The name of the input form element
-   *    uploader.data().filename // The name of the file selected by the user
-   *    uploader.data().response // The server response
-   *    uploader.data().status   // The upload status (UNITIALIZED, QUEUED, INPROGRESS, SUCCESS, ERROR, CANCELING, CANCELED, SUBMITING)
+	 *    upload.data().url      // The url to get the uploaded file from the server
+   *    upload.data().name     // The name of the input form element
+   *    upload.data().filename // The name of the file selected by the user
+   *    upload.data().response // The server response
+   *    upload.data().status   // The upload status (UNINITIALIZED, QUEUED, INPROGRESS, SUCCESS, ERROR, CANCELING, CANCELED, SUBMITING)
 	 */
 	public JavaScriptObject data() {
 	  return uploader.getData();

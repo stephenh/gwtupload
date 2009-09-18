@@ -49,6 +49,7 @@ public class Const implements Exportable {
     protected static final String TYPE = "type"; //["chismes"] Type of progress bar, valid options are "basic", "chismes" or "incubator"
     protected static final String ON_LOAD = "onLoad"; //[null] Javascript method called after the browser has loaded the image
     protected static final String URL = "url"; //[null] web address for the image
+    protected static final String MAX_FILES = "maxFiles"; //[0] the maximum number of files which the user can send to the server. 0 means unlimited. Only successful uploads are counted. 
     
     protected static final String TXT_ACTIVE_UPLOAD = "uploaderActiveUpload"; //(Upload)["There is already an active upload, try later."]  
     protected static final String TXT_ALREADY_DONE = "uploaderAlreadyDone"; //(Upload)["This file was already uploaded."]  

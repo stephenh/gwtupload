@@ -74,6 +74,9 @@ public interface IUploader extends HasJsData, HasWidgets {
     }
 
     public static boolean validateExtension(String validExtensions[], String fileName) {
+      if (fileName == null || fileName.length() == 0)
+        return false;
+      
     	boolean valid = validExtensions == null || validExtensions.length == 0 ? true : false;
     	for (int i = 0; valid == false && i < validExtensions.length; i++) {
     		if (validExtensions[i] != null && fileName.toLowerCase().matches(validExtensions[i])){
