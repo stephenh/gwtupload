@@ -51,6 +51,8 @@ public interface IUploadStatus extends HasProgress {
     public String uploadStatusCanceling();
     @DefaultStringValue("Canceled")
     public String uploadStatusCanceled();
+    @DefaultStringValue("Deleted")
+    public String uploadStatusDeleted();
     @DefaultStringValue("Submitting form ...")
     public String uploadStatusSubmitting();
     
@@ -60,17 +62,24 @@ public interface IUploadStatus extends HasProgress {
   }    
   
   /**
-   * Handler for called when the user clicks on the cancel button
+   * Handler called when the user clicks on the cancel button
    */
   public interface UploadCancelHandler extends EventHandler {
     void onCancel();
   }
 
   /**
+   * Handler called when the status changes
+   */
+  public interface UploadStatusChangedHandler extends EventHandler {
+    void onStatusChanged(IUploadStatus statusWiget);
+  }
+
+  /**
    * Enumeration of possible status values
    */
   public static enum Status {
-    UNINITIALIZED, QUEUED, INPROGRESS, SUCCESS, ERROR, CANCELING, CANCELED, SUBMITING
+    UNINITIALIZED, QUEUED, INPROGRESS, SUCCESS, ERROR, CANCELING, CANCELED, SUBMITING, DELETED
   }
 
   /**
@@ -126,6 +135,12 @@ public interface IUploadStatus extends HasProgress {
    * @param handler
    */
   public void addCancelHandler(UploadCancelHandler handler);
+  
+  /**
+   * Set the handler which will be fired when the status changes
+   * @param handler
+   */
+  public void addStatusChangedHandler(UploadStatusChangedHandler handler);
   
   /**
    * Set the configuration for the cancel action.

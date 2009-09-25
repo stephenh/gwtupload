@@ -36,6 +36,9 @@ import com.google.gwt.xml.client.NodeList;
  */
 public interface IUploader extends HasJsData, HasWidgets {
   
+  /**
+   * Utility class for uploader classes 
+   */
   final public static class Utils {
     public static int getPercent(int done, int total){
       return (total > 0 ? done * 100 / total : 0);
@@ -49,7 +52,7 @@ public interface IUploader extends HasJsData, HasWidgets {
     }
 
     /**
-     * return the content text of a tag in a xml document. 
+     * return the text content of a tag in a xml document. 
      */
     public static String getXmlNodeValue(Document doc, String tag) {
       if (doc == null)
@@ -73,6 +76,14 @@ public interface IUploader extends HasJsData, HasWidgets {
     	return ret.length() == 0 ? null : ret;
     }
 
+    /**
+     * Return true in the case of the filename has an extension included in the 
+     * validExtensions array. It isn't case sensitive.
+     * 
+     * @param validExtensions an array with allowed extensions. ie: .jpg, .mpg ..
+     * @param fileName
+     * @return
+     */
     public static boolean validateExtension(String validExtensions[], String fileName) {
       if (fileName == null || fileName.length() == 0)
         return false;
@@ -115,11 +126,9 @@ public interface IUploader extends HasJsData, HasWidgets {
     void onStart(IUploader uploader);
   }
 
-
   public interface OnChangeUploaderHandler extends EventHandler {
     void onChange(IUploader uploader);
   }
-
 
   public interface OnFinishUploaderHandler extends EventHandler {
     void onFinish(IUploader uploader);

@@ -14,8 +14,8 @@ _The library has been developed using java and exported to javascript using gwt-
 = Setup instructions =
 
  # Download last version of the library: jsupload-x.x.x.zip and uncompress it in a folder.
- # In the server path you have to install one of the provided server programs to receive the files:
-   * CGI: put the jsupload.cgi.pl (included in jsupload-x.x.x.zip) into the cgi-bin folder of your web server, and set the action parameter in your javascript code.
+ # In the server side you have to install one of the provided server programs to receive the files:
+   * CGI: put the jsupload.cgi.pl (included in jsupload-x.x.x.zip) into the cgi-bin folder of your web server, and set the action parameter in your javascript code pointing to it.
    {{{
    uploader = new jsu.Upload({
       action: "/cgi-bin/jsupload.cgi.pl" 

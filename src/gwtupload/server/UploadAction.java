@@ -42,7 +42,7 @@ import org.apache.commons.fileupload.FileItem;
  * @author Manolo Carrasco Moñino
  *
  */
-public class UploadAction extends UploadServlet {
+public abstract class UploadAction extends UploadServlet {
   private static final long serialVersionUID = -6790246163691420791L;
 
   /**
@@ -148,7 +148,7 @@ public class UploadAction extends UploadServlet {
       error = "\nReception error: \n" + e.getMessage();
     }
 
-    UploadListener listener = (UploadListener) request.getSession().getAttribute(ATTR_LISTENER);
+    IUploadListener listener = getCurrentListener(request);
     if (error != null) {
       renderXmlResponse(request, response, "<" + TAG_ERROR + ">" + error + "</" + TAG_ERROR + ">");
       if (listener != null)

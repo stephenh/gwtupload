@@ -49,7 +49,7 @@ public class Const implements Exportable {
     protected static final String TYPE = "type"; //["chismes"] Type of progress bar, valid options are "basic", "chismes" or "incubator"
     protected static final String ON_LOAD = "onLoad"; //[null] Javascript method called after the browser has loaded the image
     protected static final String URL = "url"; //[null] web address for the image
-    protected static final String MAX_FILES = "maxFiles"; //[0] the maximum number of files which the user can send to the server. 0 means unlimited. Only successful uploads are counted. 
+    protected static final String MAX_FILES = "maxFiles"; //[0] Only used if multiple=true. The maximum number of files which the user can send to the server. 0 means unlimited. Only successful uploads are counted. 
     
     protected static final String TXT_ACTIVE_UPLOAD = "uploaderActiveUpload"; //(Upload)["There is already an active upload, try later."]  
     protected static final String TXT_ALREADY_DONE = "uploaderAlreadyDone"; //(Upload)["This file was already uploaded."]  
@@ -66,6 +66,7 @@ public class Const implements Exportable {
     protected static final String TXT_QUEUED = "uploadStatusQueued"; //(Upload)["Queued"] 
     protected static final String TXT_SUBMITING = "uploadStatusSubmitting"; //(Upload)["Submiting form..."] 
     protected static final String TXT_SUCCESS = "uploadStatusSuccess"; //(Upload)["Done"]
+    protected static final String TXT_DELETED = "uploadStatusDeleted"; //(Upload)["Deleted"]
     
     protected static final String TXT_PERCENT = "progressPercentMsg"; //(Upload)["{0}%"] Set the message used to format the progress in percent units. 
     protected static final String TXT_SECONDS = "progressSecondsMsg"; //(Upload)["Time remaining: {0} Seconds"] Set the message used to format the time remaining text below the progress bar in seconds.

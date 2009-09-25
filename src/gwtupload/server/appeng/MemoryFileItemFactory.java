@@ -17,11 +17,11 @@
 package gwtupload.server.appeng;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.fileupload.FileItem;
@@ -37,88 +37,123 @@ import org.apache.commons.fileupload.FileItemFactory;
  * @author Manolo Carrasco Moñino
  * 
  */
-public class MemoryFileItemFactory implements FileItemFactory {
+public class MemoryFileItemFactory implements FileItemFactory, Serializable {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
+  int requestSize = 4096 * 1024;
+  
+  public MemoryFileItemFactory() {
+  }
 
-	public FileItem createItem(final String fieldName, final String contentType, final boolean isFormField, final String fileName) {
-		return new FileItem() {
+  public MemoryFileItemFactory(int requestSize) {
+    this.requestSize = requestSize;
+  }
 
-			String fname;
-			String ctype;
-			boolean formfield;
-			String name;
+  public class SerializableByteArrayOutputStream extends OutputStream implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
+    
+    private byte[] buff = new byte[requestSize];
+    private int size = 0;
 
-			ByteArrayOutputStream data = new ByteArrayOutputStream();
+    @Override
+    public void write(int b) throws IOException {
+      buff[size++]=(byte)b;
+    }
+    
+    public void reset() {
+      size = 0;
+    }
+    
+    public byte[] get() {
+      return buff;
+    }
+    
+    public int size() {
+      return size;
+    }
 
-			private static final long serialVersionUID = 1L;
-			{
-				ctype = contentType;
-				fname = fieldName;
-				name = fileName;
-				formfield = isFormField;
-			};
+  }
 
-			public void delete() {
-				data.reset();
-			}
 
-			public byte[] get() {
-				return data.toByteArray();
-			}
+  public FileItem createItem(final String fieldName, final String contentType, final boolean isFormField, final String fileName) {
+    return new FileItem() {
 
-			public InputStream getInputStream() throws IOException {
-				return new ByteArrayInputStream(get());
-			}
+      String fname;
+      String ctype;
+      boolean formfield;
+      String name;
 
-			public OutputStream getOutputStream() throws IOException {
-				return data;
-			}
+      SerializableByteArrayOutputStream data = new SerializableByteArrayOutputStream();
 
-			public String getContentType() {
-				return ctype;
-			}
+      private static final long serialVersionUID = 1L;
+      {
+        ctype = contentType;
+        fname = fieldName;
+        name = fileName;
+        formfield = isFormField;
+      };
 
-			public String getFieldName() {
-				return fname;
-			}
+      public void delete() {
+        data.reset();
+      }
 
-			public String getName() {
-				return name;
-			}
+      public byte[] get() {
+        return data.get();
+      }
 
-			public long getSize() {
-				return data.size();
-			}
+      public InputStream getInputStream() throws IOException {
+        return new ByteArrayInputStream(get());
+      }
 
-			public String getString() {
-				return data.toString();
-			}
+      public OutputStream getOutputStream() throws IOException {
+        return data;
+      }
 
-			public String getString(String arg0) throws UnsupportedEncodingException {
-				return data.toString(arg0);
-			}
+      public String getContentType() {
+        return ctype;
+      }
 
-			public boolean isFormField() {
-				return formfield;
-			}
+      public String getFieldName() {
+        return fname;
+      }
 
-			public boolean isInMemory() {
-				return true;
-			}
+      public String getName() {
+        return name;
+      }
 
-			public void setFieldName(String arg0) {
-				fname = arg0;
-			}
+      public long getSize() {
+        return data.size();
+      }
 
-			public void setFormField(boolean arg0) {
-				formfield = arg0;
-			}
+      public String getString() {
+        return data.toString();
+      }
 
-			public void write(File arg0) throws Exception {
-				throw new UnsupportedOperationException("App-engine doesn't support write files");
-			}
+      public String getString(String arg0) throws UnsupportedEncodingException {
+        return new String(get(), arg0);
+      }
 
-		};
-	}
+      public boolean isFormField() {
+        return formfield;
+      }
+
+      public boolean isInMemory() {
+        return true;
+      }
+
+      public void setFieldName(String arg0) {
+        fname = arg0;
+      }
+
+      public void setFormField(boolean arg0) {
+        formfield = arg0;
+      }
+
+      public void write(File arg0) throws Exception {
+        throw new UnsupportedOperationException("App-engine doesn't support write to files");
+      }
+
+    };
+  }
 }

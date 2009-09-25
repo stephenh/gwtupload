@@ -16,26 +16,67 @@
  */
 package gwtupload.server.appeng;
 
-import gwtupload.server.UploadServlet;
+import gwtupload.server.UploadAction;
+import gwtupload.server.exceptions.UploadActionException;
 
+import java.io.IOException;
+import java.util.List;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 
 /**
  * <p>
- * Upload servlet for the GwtUpload library deployed in Google App-engine.
+ * Upload servlet for the GwtUpload library's examples deployed in Google App-engine.
  * </p>
  * 
- * Due that App-engine doesn't support writing to file-system this servlet stores fileitems in memory.
+ * <h4>Limitations in App-engine:</h4>
+ * <ul>
+ *  <li>It doesn't support writing to file-system, so this servlet stores fileitems in memory using MemoryFileItemFactory</li>
+ *  <li>The request size is limited to 512 KB, so this servlet has maxSize set to 512 </li>
+ *  <li>The request size is limited to 512 KB </li>
+ *  <li>The limit size for session objects is 1024 KB, so received files are removed after the client ask for it</li> 
+ * </ul>
  * 
  * @author Manolo Carrasco Moñino
  * 
  */
-public class AppEngineUploadServlet extends UploadServlet {
+public class AppEngineUploadServlet extends UploadAction {
 
   private static final long serialVersionUID = 1L;
 
-	@Override
-	protected FileItemFactory getFileItemFactory() {
-		return new MemoryFileItemFactory();
-	}
+  @Override
+  public void init(ServletConfig config) throws ServletException {
+    super.init(config);
+    uploadDelay = 300;
+    maxSize = (512 * 1024);
+  }
+  
+  @Override
+  public void checkRequest(HttpServletRequest request) {
+    super.checkRequest(request);
+    if (request.getContentLength() > (511 * 1024))
+      throw new RuntimeException("Google appengine doesn't allow requests with a size greater than 512 Kbytes");
+  }
+
+  @Override
+  protected FileItemFactory getFileItemFactory(int requestSize) {
+    return new MemoryFileItemFactory(requestSize);
+  }
+
+  @Override
+  public String executeAction(HttpServletRequest request, List<FileItem> sessionFiles) throws UploadActionException {
+    return null;
+  }
+
+  @Override
+  public void getUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    super.getUploadedFile(request, response);
+    super.removeSessionFileItems(request);
+  }
 }

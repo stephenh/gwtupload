@@ -19,6 +19,7 @@ package gwtupload.client;
 import gwtupload.client.IUploadStatus.Status;
 
 import java.util.Iterator;
+import java.util.Vector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -56,8 +57,8 @@ public class MultiUploader extends Composite implements IUploader {
 	private Uploader lastUploader = null;
 	private IUploadStatus statusWidget = null;
 	
-	private int fileCount = 0;
 	private int maximumFiles = 0;
+	private Vector<Uploader> uploaders = new Vector<Uploader>();
 
 	/**
    * If no status gadget is provided, it uses a basic one.
@@ -85,32 +86,43 @@ public class MultiUploader extends Composite implements IUploader {
     }
   };
 
-  IUploader.OnFinishUploaderHandler finishHandler = new IUploader.OnFinishUploaderHandler(){
-    public void onFinish(IUploader uploader) {
-      if (uploader.getStatus() != Status.SUCCESS) {
-        fileCount --;
-        if (currentUploader.getStatus() != Status.UNINITIALIZED)
-          newUploaderInstance(); 
+  IUploadStatus.UploadStatusChangedHandler statusChangeHandler = new IUploadStatus.UploadStatusChangedHandler() {
+    public void onStatusChanged(IUploadStatus statusWidget) {
+      if (statusWidget.getStatus() != Status.INPROGRESS) {
+        newUploaderInstance();
       }
     }
   };
+  
+  private int countValidFiles() {
+    int ret = 0;
+    for (Uploader u: uploaders) 
+      if (u.getStatus() == Status.SUCCESS || u.getStatus() == Status.INPROGRESS || u.getStatus() == Status.QUEUED || u.getStatus() == Status.SUBMITING )
+        ret ++;
+    return ret;
+  }
 	
   private void newUploaderInstance() {
-    if (maximumFiles > 0 && fileCount >= maximumFiles) {
+    
+    if (maximumFiles > 0 && countValidFiles() >= maximumFiles) {
+      System.out.println("Reached maximum number of files in MultiUploader widget:" + maximumFiles);
       GWT.log("Reached maximum number of files in MultiUploader widget:" + maximumFiles, null);
       return;
     }
-    fileCount ++;
     
     if (currentUploader != null) {
-      // Save the last uploader, create a new statusWidget and fire onChange event
+      if (currentUploader.getStatus() == Status.UNINITIALIZED)
+        return;
+      // Save the last uploader, create a new statusWidget and fire onStart events
       lastUploader = currentUploader;
       statusWidget = lastUploader.getStatusWidget().newInstance();
       if (onStartHandler != null)
         onStartHandler.onStart(lastUploader);
     }
+    
     // Create a new uploader
     currentUploader = new Uploader(true);
+    uploaders.add(currentUploader);
     currentUploader.setStatusWidget(statusWidget);
     currentUploader.setValidExtensions(validExtensions);
     currentUploader.setServletPath(servletPath);
@@ -120,17 +132,16 @@ public class MultiUploader extends Composite implements IUploader {
     currentUploader.addOnStartUploadHandler(startHandler);
     if (onChangeHandler != null)
       currentUploader.addOnChangeUploadHandler(onChangeHandler);
-    currentUploader.addOnFinishUploadHandler(finishHandler);
     if (onFinishHandler != null)
       currentUploader.addOnFinishUploadHandler(onFinishHandler);
     currentUploader.setFileInputPrefix(fileInputPrefix);
-    
+    statusWidget.addStatusChangedHandler(statusChangeHandler);
+    // add the new uploader to the panel
     multiUploaderPanel.add(currentUploader);
     
     if (lastUploader == null)
       lastUploader = currentUploader;
   }
-
 
 	public void setStatusWidget(IUploadStatus status) {
 		currentUploader.setStatusWidget(status);
@@ -193,6 +204,7 @@ public class MultiUploader extends Composite implements IUploader {
 	 * @see com.google.gwt.user.client.ui.HasWidgets#clear()
 	 */
   public void clear() {
+    
 		currentUploader.clear();
   }
 
@@ -292,9 +304,8 @@ public class MultiUploader extends Composite implements IUploader {
   }
 	
   /**
-   * Set the maximum number of files that could be uploaded to the server.
-   * Only success uploads are counted, so in the case of canceled files or
-   * erroneous uploads, the user could select new files.
+   * Set the maximum number of files that can be uploaded to the server.
+   * Only success uploads are counted and not canceled or erroneous files.
    * 
    * @param max
    */

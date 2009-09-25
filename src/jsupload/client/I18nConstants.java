@@ -71,5 +71,9 @@ public class I18nConstants implements UploaderConstants{
   public String uploadStatusSuccess() {
     return firstValue(strs.get(Const.TXT_SUCCESS), defaultStrs.uploadStatusSuccess());
   }
+
+  public String uploadStatusDeleted() {
+    return firstValue(strs.get(Const.TXT_DELETED), defaultStrs.uploadStatusDeleted());
+  }
   
 }

@@ -79,8 +79,8 @@ public class BaseUploadStatus implements IUploadStatus {
   private boolean hasCancelActions = false;
   
   private UploadStatusConstants i18nStrs = GWT.create(UploadStatusConstants.class);
-  
   private Set<CancelBehavior> cancelCfg = DEFAULT_CANCEL_CFG;
+  private UploadStatusChangedHandler onUploadStatusChangedHandler = null;
 
 	/**
 	 * Main panel, attach it to the document using getWidget()
@@ -201,8 +201,7 @@ public class BaseUploadStatus implements IUploadStatus {
    * @see gwtupload.client.IUploadStatus#setStatus(int)
    */
   public void setStatus(Status stat) {
-    status = stat;
-    String statusName = status.toString().toLowerCase();
+    String statusName = stat.toString().toLowerCase();
     statusLabel.removeStyleDependentName(statusName);
     statusLabel.addStyleDependentName(statusName);
     switch(stat){
@@ -219,7 +218,7 @@ public class BaseUploadStatus implements IUploadStatus {
         break;
       case SUCCESS:
         updateStatusPanel(false, i18nStrs.uploadStatusSuccess());
-        if (!cancelCfg.contains(CancelBehavior.REMOVE_REMOTE))
+        if (!cancelCfg.contains(CancelBehavior.REMOVE_REMOTE)) 
           cancelLabel.setVisible(false);
         break;
       case CANCELING:
@@ -227,13 +226,22 @@ public class BaseUploadStatus implements IUploadStatus {
         break;
       case CANCELED:
         updateStatusPanel(false, i18nStrs.uploadStatusCanceled());
-        if (cancelCfg.contains(CancelBehavior.REMOVE_CANCELLED_FROM_LIST))
-          this.setVisible(false);
+        if (cancelCfg.contains(CancelBehavior.REMOVE_CANCELLED_FROM_LIST)) 
+          getWidget().removeFromParent();
         break;
       case ERROR:
         updateStatusPanel(false, i18nStrs.uploadStatusError());
         break;
+      case DELETED:
+        updateStatusPanel(false, i18nStrs.uploadStatusDeleted());
+        getWidget().removeFromParent();
+        break;
     }
+    if (status != stat && onUploadStatusChangedHandler != null) {
+      status = stat;
+      onUploadStatusChangedHandler.onStatusChanged(this);
+    }
+    status = stat;
   }
 
 	/*
@@ -265,6 +273,13 @@ public class BaseUploadStatus implements IUploadStatus {
         handler.onCancel();
       }
     });
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploadStatus#addStatusChangedHandler(gwtupload.client.IUploadStatus.UploadStatusChangedHandler)
+   */
+  public void addStatusChangedHandler(final UploadStatusChangedHandler handler) {
+    onUploadStatusChangedHandler = handler;
   }
 
   /* (non-Javadoc)

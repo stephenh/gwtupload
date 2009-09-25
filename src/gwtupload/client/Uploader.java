@@ -61,12 +61,12 @@ import com.google.gwt.xml.client.XMLParser;
  *         <ul>
  *         <li>Renders a form with an input file for sending the file, and a hidden iframe where is received the server response</li>  
  *         <li>The user can add more elements to the form</li>
- *         <li>It asks the server for the upload progress continously until the submit process has finished.</li>
+ *         <li>It asks the server for the upload progress continuously until the submit process has finished.</li>
  *         <li>It expects xml responses instead of gwt-rpc, so the server part can be implemented in any language</li>
  *         <li>It uses a progress interface so it is easy to use customized progress bars</li>
  *         <li>By default it renders a basic progress bar</li>
  *         <li>It can be configured to automatic submit after the user has selected the file</li>
- *         <li>If you need a custimized uploader, you can overrite these these class</li>
+ *         <li>If you need a customized uploader, you can overwrite these these class</li>
  *         <li>It uses a queue that avoid submit more than a file at the same time</li>
  *         </ul>
  * 
@@ -96,10 +96,10 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	
 	private static final int DEFAULT_FILEINPUT_SIZE = 40;
 	private static final int DEFAULT_AUTOUPLOAD_DELAY = 600;
-	private static final int DEFAULT_TIMEOUT = 6000;
-	private static final int MAX_TIME_WITHOUT_RESPONSE = 20000;
+	private static final int DEFAULT_TIMEOUT = 10000;
+	private static final int MAX_TIME_WITHOUT_RESPONSE = 60000;
 	public static final String DEFAULT_SERVLET_PATH = "servlet.gupld";
-	private static final int UPDATE_INTERVAL = 1500;
+	private static final int UPDATE_INTERVAL = 3000;
 	
 	public final static String PARAMETER_FILENAME = "filename";
 	public final static String PARAMETER_SHOW = "show";
@@ -269,12 +269,12 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 
 	private final RequestCallback onDeleteFileCallback = new RequestCallback() {
     public void onError(Request request, Throwable exception) {
+      statusWidget.setStatus(Status.DELETED);
       GWT.log("onCancelReceivedCallback onError: ", exception);
     }
 
     public void onResponseReceived(Request request, Response response) {
-      statusWidget.setVisible(false);
-      statusWidget.getWidget().removeFromParent();
+      statusWidget.setStatus(Status.DELETED);
       fileDone.remove(getFileName());
     }
   };
@@ -461,10 +461,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
           sendAjaxRequestToDeleteUploadedFile();
         } catch (Exception e) {
         }
-      } else {
-        statusWidget.setVisible(false);
-        statusWidget.getWidget().removeFromParent();
-      }
+      } else
+        statusWidget.setStatus(Status.DELETED);
 	    return;
 	  }
 	    
@@ -793,6 +791,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	}
 
 	private void sendAjaxRequestToCancelCurrentUpload() throws RequestException {
+	  System.out.println("Sending cancel ....");
 		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("cancel=true"));
 		reqBuilder.sendRequest("cancel_upload", onCancelReceivedCallback);
 	}
