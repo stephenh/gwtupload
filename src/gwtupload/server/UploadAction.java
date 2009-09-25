@@ -142,10 +142,10 @@ public abstract class UploadAction extends UploadServlet {
       return;
     } catch (UploadActionException e) {
       logger.info("ExecuteUploadActionException:" + e);
-      error = "\nReception error: \n" + e.getMessage();
+      error =  e.getMessage();
     } catch (Exception e) {
       logger.info("Exception:" + e);
-      error = "\nReception error: \n" + e.getMessage();
+      error = e.getMessage();
     }
 
     IUploadListener listener = getCurrentListener(request);

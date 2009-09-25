@@ -44,6 +44,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadBase.SizeLimitExceededException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.log4j.Logger;
 
@@ -564,12 +565,22 @@ public class UploadServlet extends HttpServlet implements Servlet {
 	 * @return FileItemFactory
 	 */
 	protected FileItemFactory getFileItemFactory(int requestSize) {
-		// This is the default factory which will create files in disk 
-	  // if the file's size greater than the threshold
-	  return new MemoryFileItemFactory(requestSize);
-//		return new 	DiskFileItemFactory(){{
-//			setSizeThreshold(8192000);
-//		}};
+    try {
+      // Just a trick to detect if the application is running in appengine
+      Thread t = new Thread() {
+      };
+      t.run();
+      // This is the default factory which will create files in disk 
+      // if the file's size greater than the threshold
+      return new  DiskFileItemFactory(){{
+        logger.info("Using disk item factory");
+        setSizeThreshold(8192000);
+      }};
+    } catch (Exception e) {
+      logger.info("Using memory item factory");
+      // Factory for google appengine
+      return new MemoryFileItemFactory(requestSize);
+    }
 	}
 
 	/**

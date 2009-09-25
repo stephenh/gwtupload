@@ -64,10 +64,10 @@ public class AppEngineUploadServlet extends UploadAction {
       throw new RuntimeException("Google appengine doesn't allow requests with a size greater than 512 Kbytes");
   }
 
-  @Override
-  protected FileItemFactory getFileItemFactory(int requestSize) {
-    return new MemoryFileItemFactory(requestSize);
-  }
+//  @Override
+//  protected FileItemFactory getFileItemFactory(int requestSize) {
+//    return new MemoryFileItemFactory(requestSize);
+//  }
 
   @Override
   public String executeAction(HttpServletRequest request, List<FileItem> sessionFiles) throws UploadActionException {
