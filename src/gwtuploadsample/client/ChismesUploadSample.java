@@ -20,6 +20,7 @@ import gwtupload.client.IUploader;
 import gwtupload.client.MultiUploader;
 import gwtupload.client.PreloadedImage;
 import gwtupload.client.SingleUploader;
+import gwtupload.client.Uploader;
 import gwtupload.client.IUploadStatus.Status;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
 
@@ -108,6 +109,8 @@ public class ChismesUploadSample implements EntryPoint {
 		uploader.setValidExtensions(validExtensions);
 		multiUploadBox.add(uploader);
 		tabPanel.add(multiUploadBox, i18nStrs.multiUploadTabText());
+    uploader.setServletPath(Uploader.DEFAULT_SERVLET_PATH + Window.Location.getQueryString());
+
 
 		// FIXME: GWTCButton here doesn't handle onClick
 		SingleUploader simpleUploader = new SingleUploader(new ChismesUploadProgress(true));

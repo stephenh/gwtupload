@@ -32,7 +32,8 @@
 
 	<target name="javac" depends="libs" description="Compile java source">
 		<mkdir dir="war/WEB-INF/classes" />
-		<javac srcdir="src" includes="**" encoding="utf-8" destdir="war/WEB-INF/classes" source="1.5" target="1.5" nowarn="true" debug="true" debuglevel="lines,vars,source">
+		<javac srcdir="src" includes="**" encoding="utf-8" destdir="war/WEB-INF/classes" 
+                       source="1.5" target="1.5" nowarn="true" debug="true" debuglevel="lines,vars,source">
 			<classpath refid="project.class.path" />
 		</javac>
 		<copy todir="war/WEB-INF/classes">
@@ -43,19 +44,23 @@
 	<!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
 	<!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
 	<target name="gwtc" depends="javac" description="GWT compile to JavaScript">
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
+                      classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="gwtuploadsample.SingleUploadSample" />
 		</java>
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
+                      classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="gwtuploadsample.MultipleUploadSample" />
 		</java>
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
+                      classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="gwtuploadsample.ChismesUploadSample" />
 		</java>
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
+                      classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="jsupload.JsUpload" />
 			<arg value="-style" />
@@ -76,7 +81,7 @@
 		</java>
 	</target>
 
-	<target name="javadoc" description="Generates de Java documentation files for the basic library">
+	<target name="javadoc" description="Generate Java documentation files for the basic library">
 		<delete dir="${doc.dir}" />
 		<mkdir dir="${doc.dir}" />
 		<javadoc sourcepath="src" packagenames="gwtupload.*" destdir="${doc.dir}/library" 
@@ -99,12 +104,13 @@
 		</javadoc>
 	</target>
 
-	<target name="jar" description="Generates the jar distribution file">
+	<target name="jar" description="Generate jar distribution file">
 		<delete dir="${class.dir}" />
 		<delete file="${tmp.dir}.jar" />
 		<mkdir dir="${class.dir}" />
 		<javac srcdir="src" excludes="gwtuploadsample/**, jsupload/**" destdir="${class.dir}" 
-                       target="1.5" deprecation="on" debug="on" fork="true" encoding="UTF-8" debuglevel="lines,vars,source">
+                       target="1.5" deprecation="on" debug="on" fork="true" encoding="UTF-8" 
+                       debuglevel="lines,vars,source">
 			<classpath refid="project.class.path" />
 		</javac>
 		<copy todir="${class.dir}">
@@ -118,7 +124,8 @@
 		<jar jarfile="${jsproject}-${version}.zip" basedir="war/jsupload.JsUpload" />
 	</target>
 
-	<target name="zip" depends="jar, javadoc, war, js" description="Generates the distibution file that includes the source, license, docs, and jar">
+	<target name="zip" depends="jar, javadoc, war, js" 
+                description="Generate distibution file with sources, license, docs, and jar">
 		<delete file="${tmp.dir}.zip" />
 		<delete dir="${class.dir}"/>
 		<delete dir="${war.dir}"/>
@@ -138,7 +145,7 @@
 			<include name="${tmp.dir}.war" />
  			<include name="${jsproject}-${version}.zip" />
 			<include name="LICENSE" />
-            <include name="README.txt" />
+                        <include name="README.txt" />
 			<include name="build.xml" />
    		  </fileset>	
 		</copy>
@@ -165,6 +172,6 @@
 		<delete dir="war/gwtuploadsample.ChismesUploadSample" failonerror="false" />
 		<delete dir="war/gwtuploadsample.SingleUploadSample" failonerror="false" />
 		<delete dir="war/jsupload.JsUpload" failonerror="false" />
-		<delete dir="war/WEB-INF/lib" failonerror="false" />
+		<!-- <delete dir="war/WEB-INF/lib" failonerror="false" /> -->
 	</target>
 </project>

@@ -88,14 +88,16 @@ h2, p, ul {
   margin-bottom: 10px; 
 }
 
-
-.langPanel {
+.backPanel, .langPanel {
 	cursor: pointer;
 	margin-left: auto;
 	margin-right: 0px;
 }
-.langPanel div {
+
+.backPanel, .langPanel div {
 	padding: 10px;
 	color: blue;
 	font-size: 12px;
+    float: left;
+    text-decoration: underline;
 }

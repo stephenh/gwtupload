@@ -91,19 +91,22 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   private static final String TAG_TOTAL_BYTES = "totalBytes";
   private static final String TAG_CURRENT_BYTES = "currentBytes";
   
+  
   static HashSet<String> fileDone = new HashSet<String>();
 	static Vector<String> fileQueue = new Vector<String>();
 	
 	private static final int DEFAULT_FILEINPUT_SIZE = 40;
 	private static final int DEFAULT_AUTOUPLOAD_DELAY = 600;
-	private static final int DEFAULT_TIMEOUT = 10000;
-	private static final int MAX_TIME_WITHOUT_RESPONSE = 60000;
+	private static final int DEFAULT_AJAX_TIMEOUT = 10000;
+	private static final int DEFAULT_TIME_MAX_WITHOUT_RESPONSE = 60000;
+  private static final int DEFAULT_UPDATE_INTERVAL = 3000;
 	public static final String DEFAULT_SERVLET_PATH = "servlet.gupld";
-	private static final int UPDATE_INTERVAL = 3000;
 	
 	public final static String PARAMETER_FILENAME = "filename";
 	public final static String PARAMETER_SHOW = "show";
 
+  private static int uploadTimeout = DEFAULT_TIME_MAX_WITHOUT_RESPONSE;
+  private static int statusInterval = DEFAULT_UPDATE_INTERVAL;
 
 	protected static final String STYLE_BUTTON = "upld-button";
 	protected static final String STYLE_INPUT = "upld-input";
@@ -198,7 +201,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		setAutoSubmit(automaticUpload);
 	}
 
-	private final UpdateTimer updateStatusTimer = new UpdateTimer(this, UPDATE_INTERVAL);
+	private final UpdateTimer updateStatusTimer = new UpdateTimer(this, statusInterval);
 	
 	private final Timer automaticUploadTimer = new Timer() {
 		boolean firstTime = true;
@@ -263,7 +266,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		  GWT.log("onCancelReceivedCallback onError: " , exception);
 		}
 		public void onResponseReceived(Request request, Response response) {
-			updateStatusTimer.scheduleRepeating(3000);
+		  if (getStatus() == Status.CANCELING)
+		    updateStatusTimer.scheduleRepeating(3000);
 		}
 	};
 
@@ -352,9 +356,13 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       GWT.log("incorrect response: " + getFileName() + " " + responseTxt, null);
     }
     
-    if (  now() - lastData >  MAX_TIME_WITHOUT_RESPONSE) {
+    if (  now() - lastData >  uploadTimeout) {
       successful = false;
       cancelUpload(i18nStrs.uploaderTimeout());
+      try {
+        sendAjaxRequestToCancelCurrentUpload();
+      } catch (Exception e) {
+      }
     }
   }
 
@@ -762,7 +770,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 			// Using a reusable builder makes IE fail because it caches the response
 			// So it's better to change the request path sending an additional random parameter
 			RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("filename=" + fileInput.getName() , "c=" + requestsCounter++));
-			reqBuilder.setTimeoutMillis(DEFAULT_TIMEOUT);
+			reqBuilder.setTimeoutMillis(DEFAULT_AJAX_TIMEOUT);
 			reqBuilder.sendRequest("random=" + Math.random(), onStatusReceivedCallback);
 		} catch (RequestException e) {
 			e.printStackTrace();
@@ -786,12 +794,11 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private void sendAjaxRequestToValidateSession() throws RequestException {
 		// Using a reusable builder makes IE fail
 		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("new_session=true"));
-		reqBuilder.setTimeoutMillis(DEFAULT_TIMEOUT);
+		reqBuilder.setTimeoutMillis(DEFAULT_AJAX_TIMEOUT);
 		reqBuilder.sendRequest("create_session", onSessionReceivedCallback);
 	}
 
 	private void sendAjaxRequestToCancelCurrentUpload() throws RequestException {
-	  System.out.println("Sending cancel ....");
 		RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("cancel=true"));
 		reqBuilder.sendRequest("cancel_upload", onCancelReceivedCallback);
 	}
@@ -902,5 +909,24 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     fileInputPrefix = prefix;
     assignNewNameToFileInput();
   }
-	
+
+  /**
+   * Configure the maximal time without a valid response from the server.
+   * When this period is reached, the upload process is cancelled.
+   * 
+   * @param uploadTimeout
+   */
+  public static void setUploadTimeout(int uploadTimeout) {
+    Uploader.uploadTimeout = uploadTimeout;
+  }
+
+  /**
+   * Configure the frequency to send status requests to the server
+   * 
+   * @param statusInterval
+   */
+  public static void setStatusInterval(int statusInterval) {
+    Uploader.statusInterval = statusInterval;
+  }
+
 }

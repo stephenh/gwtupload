@@ -148,7 +148,7 @@ public abstract class UploadAction extends UploadServlet {
       error = e.getMessage();
     }
 
-    IUploadListener listener = getCurrentListener(request);
+    AbstractUploadListener listener = getCurrentListener(request);
     if (error != null) {
       renderXmlResponse(request, response, "<" + TAG_ERROR + ">" + error + "</" + TAG_ERROR + ">");
       if (listener != null)
@@ -158,13 +158,13 @@ public abstract class UploadAction extends UploadServlet {
     }
 
     if (message != null) {
-      writeMessage(response, message);
+      renderHtmlMessage(response, message);
     } else {
       renderXmlResponse(request, response, "OK");
     }
   }
 
-  private void writeMessage(HttpServletResponse response, String message) throws IOException {
+  private void renderHtmlMessage(HttpServletResponse response, String message) throws IOException {
     response.setContentType("text/html");
     PrintWriter out = response.getWriter();
     out.print(message);
