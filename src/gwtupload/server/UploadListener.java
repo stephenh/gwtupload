@@ -108,7 +108,6 @@ public class UploadListener extends AbstractUploadListener {
   /**
    * Default constructor.
    * 
-   * @param slow
    */
   public UploadListener(int sleepMilliseconds, int requestSize) {
     super(sleepMilliseconds, requestSize);

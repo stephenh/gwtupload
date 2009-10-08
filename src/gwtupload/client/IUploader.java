@@ -82,7 +82,7 @@ public interface IUploader extends HasJsData, HasWidgets {
      * 
      * @param validExtensions an array with allowed extensions. ie: .jpg, .mpg ..
      * @param fileName
-     * @return
+     * @return true in the case of valid filename
      */
     public static boolean validateExtension(String validExtensions[], String fileName) {
       if (fileName == null || fileName.length() == 0)

@@ -617,7 +617,8 @@ public class UploadServlet extends HttpServlet implements Servlet {
    * the user can specify whether the temporary data is removed from disk.
    * 
    * @param request
-   * @param removeData, true: the file data is deleted.
+   * @param removeData 
+   *                    true: the file data is deleted.
    *                    false: use it when you are referencing file items 
    *                    instead of copying them.
    */
@@ -693,7 +694,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
    * Create a new listener for this session
    * 
    * @param request
-   * @return
+   * @return the appropriate listener 
    */
   protected AbstractUploadListener createNewListener(HttpServletRequest request) {
     if (isAppEngine())
@@ -706,7 +707,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
    * Get the listener active in this session
    * 
    * @param request
-   * @return
+   * @return the listener active
    */
   protected AbstractUploadListener getCurrentListener(HttpServletRequest request) {
     if (isAppEngine())

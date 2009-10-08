@@ -44,7 +44,6 @@ import com.google.appengine.api.memcache.stdimpl.GCacheFactory;
  * is limited to 512 KB., and cache storage size to 1024 KB per object.
  * 
  * @author Manolo Carrasco Moñino
- * @param <T>
  * 
  */
 public class MemCacheFileItemFactory implements FileItemFactory, Serializable {

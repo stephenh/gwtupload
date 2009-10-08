@@ -101,7 +101,6 @@ public abstract class AbstractUploadListener implements ProgressListener, Serial
   /**
    * Get the exception
    * 
-   * @return
    */
   public RuntimeException getException() {
     return exception;
@@ -149,7 +148,6 @@ public abstract class AbstractUploadListener implements ProgressListener, Serial
   /**
    * Set the exception which cancels the upload
    * 
-   * @param exception
    */
   public void setException(RuntimeException e) {
     exception = e;
