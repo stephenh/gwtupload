@@ -134,6 +134,14 @@ public interface IUploader extends HasJsData, HasWidgets {
     void onFinish(IUploader uploader);
   }
 
+  public interface OnStatusChangedHandler extends EventHandler {
+    void onStatusChanged(IUploader uploader);
+  }
+
+  public interface OnCancelUploaderHandler extends EventHandler {
+    void onCancel(IUploader uploader);
+  }
+
   /**
 	 * Changes the status widget used to show the progress.
 	 * @param status
@@ -229,7 +237,7 @@ public interface IUploader extends HasJsData, HasWidgets {
   public HandlerRegistration addOnStartUploadHandler(IUploader.OnStartUploaderHandler handler);
   
   /**
-   * Sets the handler that is called when the user selects a file
+   * Add a handler that is called when the user selects a file
    * 
    * @param handler
    * @return HandlerRegistration
@@ -237,7 +245,7 @@ public interface IUploader extends HasJsData, HasWidgets {
   public HandlerRegistration addOnChangeUploadHandler(IUploader.OnChangeUploaderHandler handler);
 
   /**
-   * Sets the handler that will be called when the upload process finishes.
+   * Add a handler that will be called when the upload process finishes.
    * It is called even the process is canceled or finishes with error 
    * 
    * @param handler
@@ -245,6 +253,21 @@ public interface IUploader extends HasJsData, HasWidgets {
    */
   public HandlerRegistration addOnFinishUploadHandler(IUploader.OnFinishUploaderHandler handler);
   
+  /**
+   * Add a handler that will be called when the status changes
+   * 
+   * @param handler
+   * @return HandlerRegistration
+   */
+  public HandlerRegistration addOnStatusChangedHandler(IUploader.OnStatusChangedHandler handler);
+
+  /**
+   * Add a handler that will be called when the upload is canceled by the user
+   * 
+   * @param handler
+   * @return HandlerRegistration
+   */
+  public HandlerRegistration addOnCancelUploadHandler(IUploader.OnCancelUploaderHandler handler);
   
   /**
    * Internationalize the Uploader widget

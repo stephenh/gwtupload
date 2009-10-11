@@ -24,16 +24,27 @@ public class TestUpload {
   
 
   private void emulateUpload(final AbstractUploadListener listener) {
+    AbstractUploadListener.DEFAULT_SAVE_INTERVAL = 100;
     Thread t = new Thread() {
       public void run() {
           listener.update(0, 100, 1);
-          msleep(500);
+          msleep(AbstractUploadListener.DEFAULT_SAVE_INTERVAL);
           listener.update(50, 100, 1);
-          msleep(500);
+          msleep(AbstractUploadListener.DEFAULT_SAVE_INTERVAL);
           listener.update(100, 100, 1);
       }
     };
     t.start();
+  }
+
+  private void assertUpload(AbstractUploadListener listener) {
+    msleep(AbstractUploadListener.DEFAULT_SAVE_INTERVAL/2);
+    Assert.assertEquals(0, listener.getBytesRead());
+    Assert.assertEquals(100, listener.getContentLength());
+    msleep(AbstractUploadListener.DEFAULT_SAVE_INTERVAL);
+    Assert.assertEquals(50, listener.getBytesRead());
+    msleep(AbstractUploadListener.DEFAULT_SAVE_INTERVAL);
+    Assert.assertEquals(100, listener.getBytesRead());
   }
   
   private void msleep(int millis) {
@@ -83,29 +94,6 @@ public class TestUpload {
   }
   
   @Test
-  public void testMemoryUploadListener() throws Exception {
-    HttpServletRequest request = new MockHttpRequest();
-    UploadServlet.setThreadLocalRequest(request);
-    
-    Assert.assertNotNull(UploadServlet.getThreadLocalRequest());
-    Assert.assertNotNull(UploadServlet.getThreadLocalRequest().getSession());
-    Assert.assertNotNull(UploadServlet.getThreadLocalRequest().getSession().getId());
-    String sessionId = UploadServlet.getThreadLocalRequest().getSession().getId();
-    AbstractUploadListener l1 = new MemoryUploadListener(0, 0);
-    emulateUpload(l1);
-    
-    AbstractUploadListener l2 = MemoryUploadListener.current(sessionId);
-    Assert.assertEquals(0, l2.getBytesRead());
-    Assert.assertEquals(100, l2.getContentLength());
-    msleep(501);
-    Assert.assertEquals(50, l2.getBytesRead());
-    msleep(501);
-    Assert.assertEquals(100, l2.getBytesRead());
-    l1.remove();
-    Assert.assertNull(MemoryUploadListener.current(sessionId));
-  }
-  
-  @Test
   public void testUploadListenerHasToBeSerializable() throws IOException, ClassNotFoundException {
 
     AbstractUploadListener listenerA = new UploadListener(300, 100);
@@ -121,5 +109,44 @@ public class TestUpload {
     
     Assert.assertNotNull(listenerB.getException());
   }
+  
+  @Test
+  public void testUploadListener() throws Exception {
+    HttpServletRequest request = new MockHttpRequest();
+    UploadServlet.setThreadLocalRequest(request);
+    
+    Assert.assertNotNull(UploadServlet.getThreadLocalRequest());
+    Assert.assertNotNull(UploadServlet.getThreadLocalRequest().getSession());
+    Assert.assertNotNull(UploadServlet.getThreadLocalRequest().getSession().getId());
+    String sessionId = UploadServlet.getThreadLocalRequest().getSession().getId();
+    AbstractUploadListener l1 = new UploadListener(0, 0);
+    
+    emulateUpload(l1);
+    assertUpload(UploadListener.current(sessionId));
+    
+    l1.remove();
+    Assert.assertNull(UploadListener.current(sessionId));
+  }
+
+  @Test
+  public void testMemoryUploadListener() throws Exception {
+    HttpServletRequest request = new MockHttpRequest();
+    UploadServlet.setThreadLocalRequest(request);
+    
+    Assert.assertNotNull(UploadServlet.getThreadLocalRequest());
+    Assert.assertNotNull(UploadServlet.getThreadLocalRequest().getSession());
+    Assert.assertNotNull(UploadServlet.getThreadLocalRequest().getSession().getId());
+    String sessionId = UploadServlet.getThreadLocalRequest().getSession().getId();
+    AbstractUploadListener l1 = new MemoryUploadListener(0, 0);
+    emulateUpload(l1);
+    
+    emulateUpload(l1);
+    assertUpload(MemoryUploadListener.current(sessionId));
+    
+    l1.remove();
+    Assert.assertNull(UploadListener.current(sessionId));
+  }
+  
+  
 
 }

@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
  */
 public abstract class AbstractUploadListener implements ProgressListener, Serializable {
   
-  protected static final int DEFAULT_SAVE_INTERVAL = 3000;
+  protected static int DEFAULT_SAVE_INTERVAL = 3000;
 
   protected static final long serialVersionUID = -6431275569719042836L;
 

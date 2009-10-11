@@ -35,26 +35,26 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class PreloadedImage extends Image implements HasJsData {
 
   /**
+   * Handler called when the image load raises an error
+   */
+  public interface OnErrorPreloadedImageHandler extends EventHandler {
+    void onError(PreloadedImage image);
+  }
+  
+  /**
    * Handler called when the image is loaded successfully
    */
   public interface OnLoadPreloadedImageHandler extends EventHandler {
     void onLoad(PreloadedImage image);
   }
   
-  /**
-   * Handler called when the image load raises an error
-   */
-  public interface OnErrorPreloadedImageHandler extends EventHandler {
-    void onError(PreloadedImage image);
-  }
-
-  
 	private HandlerRegistration errHandler = null;
 	private HandlerRegistration loadHandler = null;
-	private int realWidth = 0, realHeight = 0;
-	private PreloadedImage _this;
-	private String containerId;
-	
+	private String uniqId =null;
+  private String name = null;
+  private int realWidth = 0, realHeight = 0;
+  private PreloadedImage _this;
+  private String containerId;
 	private OnLoadPreloadedImageHandler onLoad = null;
 	private OnErrorPreloadedImageHandler onError = null;
 	
@@ -69,7 +69,7 @@ public class PreloadedImage extends Image implements HasJsData {
 			  onError.onError(_this);
 		}
 	};
-
+	
 	private LoadHandler imgLoadListener = new LoadHandler() {
 		public void onLoad(LoadEvent event) {
 			loadHandler.removeHandler();
@@ -87,7 +87,34 @@ public class PreloadedImage extends Image implements HasJsData {
 			
 		}
 	};
-
+	
+	/**
+	 * Constructor
+	 */
+	public PreloadedImage() {
+		_this = this;
+		loadHandler = super.addLoadHandler(imgLoadListener);
+    errHandler = super.addErrorHandler(imgErrorListener);
+	}
+	
+  /**
+   * Constructor
+   * 
+   * @param url
+   *               The image url
+   * @param uniqId
+   *               A unique id that identifies this image
+   * @param name
+   *               The name for this image
+   * @param onLoad
+   *               handler to be executed in the case of success loading
+   */
+  public PreloadedImage(String url, String uniqId, String name, OnLoadPreloadedImageHandler onLoad) {
+    this(url, onLoad);
+    this.uniqId = uniqId;
+    this.name = name;
+  }
+	
 	/**
 	 * Constructor
 	 * 
@@ -101,50 +128,28 @@ public class PreloadedImage extends Image implements HasJsData {
 		setOnloadHandler(onLoad);
 		setUrl(url);
 	}
-
-	/**
-	 * Constructor
-	 */
-	public PreloadedImage() {
-		_this = this;
-		loadHandler = super.addLoadHandler(imgLoadListener);
-    errHandler = super.addErrorHandler(imgErrorListener);
-	}
-
-	/**
-	 * Set the handler to be called when the image has been sucessfuly loaded
-	 * @param onLoad
-	 */
-	public void setOnloadHandler(OnLoadPreloadedImageHandler onLoad) {
-	  this.onLoad = onLoad;
-	}
-
-	/**
-	 * Set the handler to be called in the case of error
-	 * 
-	 * @param onError
-	 */
-	public void setOnErrorHandler(OnErrorPreloadedImageHandler onError) {
-	  this.onError = onError;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.google.gwt.user.client.ui.Image#setUrl(java.lang.String)
-	 */
-	public void setUrl(String url) {
-		super.setUrl(url);
-		RootPanel.get().add(this);
-		setVisible(false);
-	}
 	
+	/* (non-Javadoc)
+	 * @see gwtupload.client.HasJsData#getData()
+	 */
+	public JavaScriptObject getData() {
+		return null;
+	}
 
 	/**
-	 * Set the element's id where the image will be attached.
-	 * 
-	 * @param id of the DOM element
+	 * get the name of this image 
 	 */
-	public void setContainerId(String id) {
-		containerId = id;
+	public String getName() {
+        return name;
+      }
+
+	/**
+	 * Get the real size of the image. 
+	 * It is calculated when the image loads
+	 * 
+	 */
+	public int getRealHeight() {
+		return realHeight;
 	}
 
 	/**
@@ -157,19 +162,54 @@ public class PreloadedImage extends Image implements HasJsData {
 	}
 
 	/**
-	 * Get the real size of the image. 
-	 * It is calculated when the image loads
-	 * 
+	 * Get the uniqId assigned to this image
 	 */
-	public int getRealHeight() {
-		return realHeight;
+	public String getUniqId() {
+    return uniqId;
+  }
+
+	/**
+	 * Set the element's id where the image will be attached.
+	 * 
+	 * @param id of the DOM element
+	 */
+	public void setContainerId(String id) {
+		containerId = id;
 	}
 
-	/* (non-Javadoc)
-	 * @see gwtupload.client.HasJsData#getData()
+	public void setName(String name) {
+        this.name = name;
+      }
+	
+
+	/**
+	 * Set the handler to be called in the case of error
+	 * 
+	 * @param onError
 	 */
-	public JavaScriptObject getData() {
-		return null;
+	public void setOnErrorHandler(OnErrorPreloadedImageHandler onError) {
+	  this.onError = onError;
+	}
+
+	/**
+	 * Set the handler to be called when the image has been sucessfuly loaded
+	 * @param onLoad
+	 */
+	public void setOnloadHandler(OnLoadPreloadedImageHandler onLoad) {
+	  this.onLoad = onLoad;
+	}
+
+	public void setUniqId(String uniqId) {
+        this.uniqId = uniqId;
+      }
+
+	/* (non-Javadoc)
+	 * @see com.google.gwt.user.client.ui.Image#setUrl(java.lang.String)
+	 */
+	public void setUrl(String url) {
+		super.setUrl(url);
+		RootPanel.get().add(this);
+		setVisible(false);
 	}
 
 }

@@ -91,7 +91,27 @@ public abstract class UploadAction extends UploadServlet {
    * Override this method to customize the behavior
    * 
    * @param request
-   * @param item    file item to be removed
+   * @param fieldName    The name of the filename input
+   * 
+   * @throws UploadActionException
+   *         In the case of an error, the exception message is returned to 
+   *         the client and the item is not deleted from session 
+   *         
+   */
+  public void removeItem(HttpServletRequest request, String fieldName)  throws UploadActionException {
+  }
+  
+  /**
+   * This method is called when a received file is requested to be removed and
+   * is in the collection of items stored in session. 
+   * If the item does't exist in session this method is not called
+   * 
+   * After it, the item is removed from the session items collection.
+   * 
+   * Override this method to customize the behavior
+   * 
+   * @param request
+   * @param item    The item in session
    * 
    * @throws UploadActionException
    *         In the case of an error, the exception message is returned to 
@@ -104,15 +124,15 @@ public abstract class UploadAction extends UploadServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException  {
     String parameter = request.getParameter(PARAM_REMOVE);
     if (parameter != null) {
-      FileItem item = findFileItem(getSessionFileItems(request), parameter);
-      if (item != null) {
-        try {
+      try {
+        removeItem(request, parameter);
+        FileItem item = super.findFileItem(getSessionFileItems(request), parameter);
+        if (item != null)
           removeItem(request, item);
-        } catch (Exception e) {
-          renderXmlResponse(request, response, "<error>" + e.getMessage() + "<error>");
-          return;
-        }
-      }  
+      } catch (Exception e) {
+        renderXmlResponse(request, response, "<error>" + e.getMessage() + "<error>");
+        return;
+      }
       super.removeUploadedFile(request, response);
     } else {
       super.doGet(request, response);

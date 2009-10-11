@@ -20,9 +20,13 @@ import gwtupload.server.UploadAction;
 import gwtupload.server.exceptions.UploadActionException;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Hashtable;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 
@@ -37,38 +41,61 @@ import org.apache.commons.fileupload.FileItem;
  *
  */
 public class SampleUploadServlet extends UploadAction {
-  
+
+  /**
+   * Maintain a list with received files and their content types 
+   */
+  Hashtable<String, File> receivedFiles = new Hashtable<String, File>();
+  Hashtable<String, String> receivedContentTypes = new Hashtable<String, String>();
 
   /**
    * Override executeAction to save the received files in a custom place
+   * and delete this items from session.  
    */
   @Override
   public String executeAction(HttpServletRequest request, List<FileItem> sessionFiles) throws UploadActionException {
     for (FileItem item : sessionFiles) {
       if (false == item.isFormField()) {
         try {
-          item.write(getLocalFile(item.getName()));
+          File file = File.createTempFile("upload-", ".bin", new File("/tmp"));
+          item.write(file);
+          receivedFiles.put(item.getFieldName(), file);
+          receivedContentTypes.put(item.getFieldName(), item.getContentType());
         } catch (Exception e) {
           throw new UploadActionException(e.getMessage());
         }
       }
+      removeSessionFileItems(request);
     }
     return null;
   }
   
   /**
-   * Remove a file when the user sends a request
+   * Remove a file when the user sends a delete request
    */
   @Override
-  public void removeItem(HttpServletRequest request, FileItem item)  throws UploadActionException {
-    getLocalFile(item.getName()).delete();
-  }
-
-
-  private static File getLocalFile(String remoteName) {
-    String basename = (new File(remoteName)).getName();
-    return new File("/tmp/gwtupld-" + basename);
+  public void removeItem(HttpServletRequest request, String fieldName)  throws UploadActionException {
+    File file = receivedFiles.get(fieldName);
+    receivedFiles.remove(fieldName);
+    receivedContentTypes.remove(fieldName);
+    if (file != null)  file.delete();
   }
   
+  /**
+   * Get the content of an uploaded file
+   */
+  @Override
+  public void getUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    String fieldName = request.getParameter(PARAM_SHOW);
+    File f = receivedFiles.get(fieldName);
+    if (f != null) {
+      response.setContentType(receivedContentTypes.get(fieldName));
+      FileInputStream is = new FileInputStream(f);
+      copyFromInputStreamToOutputStream(is, response.getOutputStream());
+    } else {
+      renderXmlResponse(request, response, ERROR_ITEM_NOT_FOUND);
+   }
+  }
+
   private static final long serialVersionUID = 5246689163367051123L;
 }

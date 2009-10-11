@@ -20,9 +20,9 @@ import javax.servlet.http.HttpSessionContext;
 @SuppressWarnings({ "unchecked", "deprecation" })
 public class MockHttpRequest implements HttpServletRequest {
   HttpSession session;
-
+  
   public Object getAttribute(String name) {
-    return null;
+    return session.getAttribute(name);
   }
   public Enumeration getAttributeNames() {
     return null;
@@ -178,10 +178,10 @@ public class MockHttpRequest implements HttpServletRequest {
     return false;
   }
   public void removeAttribute(String name) {
-    
+    session.removeAttribute(name);
   }
   public void setAttribute(String name, Object o) {
-    
+    session.setAttribute(name, o);
   }
   public void setCharacterEncoding(String env) throws UnsupportedEncodingException {
     
@@ -196,7 +196,7 @@ class MockSession implements HttpSession {
   String id;
 
   public Object getAttribute(String name) {
-    return null;
+    return attributes.get(name);
   }
   public Enumeration getAttributeNames() {
     return null;

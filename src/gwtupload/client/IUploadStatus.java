@@ -21,6 +21,7 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -131,16 +132,16 @@ public interface IUploadStatus extends HasProgress {
   public void setVisible(boolean b);
   
   /**
-   * Set the handler which will be fired when the user clicks on the cancel button
+   * Add a new  handler which will be fired when the user clicks on the cancel button.
    * @param handler
    */
-  public void addCancelHandler(UploadCancelHandler handler);
+  public HandlerRegistration addCancelHandler(UploadCancelHandler handler);
   
   /**
-   * Set the handler which will be fired when the status changes
+   * Set the handler which will be fired when the status changes.
    * @param handler
    */
-  public void addStatusChangedHandler(UploadStatusChangedHandler handler);
+  public void setStatusChangedHandler(UploadStatusChangedHandler handler);
   
   /**
    * Set the configuration for the cancel action.

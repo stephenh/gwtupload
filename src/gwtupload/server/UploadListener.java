@@ -124,13 +124,18 @@ public class UploadListener extends AbstractUploadListener {
     saved = new Date();
   }
   
+  public static AbstractUploadListener current(String sessionId) {
+    return (AbstractUploadListener)session().getAttribute(ATTR_LISTENER);
+  }
+
+  
   /**
    *  Upload servlet saves the current request as a ThreadLocal,
    *  so it is accessible from any class.
    *  
    *  @return request of the current thread
    */
-  private HttpServletRequest request() {
+  private static HttpServletRequest request() {
     return UploadServlet.getThreadLocalRequest(); 
   }
 
@@ -147,7 +152,7 @@ public class UploadListener extends AbstractUploadListener {
   /**
    * @return current HttpSession
    */
-  private HttpSession session() {
+  private static HttpSession session() {
     return request() != null ? request().getSession() : null; 
   }
 

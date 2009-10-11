@@ -16,7 +16,6 @@
  */
 package gwtupload.server;
 
-import gwtupload.server.appengine.MemCacheUploadListener;
 import gwtupload.server.appengine.MemCacheFileItemFactory;
 import gwtupload.server.exceptions.UploadCanceledException;
 import gwtupload.server.exceptions.UploadException;
@@ -463,10 +462,9 @@ public class UploadServlet extends HttpServlet implements Servlet {
    * 
    * @param request
    * @param response
-   * @return the fileItem found in session or null
    * @throws IOException
    */
-  public FileItem getUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  public void getUploadedFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String parameter = request.getParameter(PARAM_SHOW);
     FileItem item = findFileItem(getSessionFileItems(request), parameter);
     if (item != null) {
@@ -478,9 +476,8 @@ public class UploadServlet extends HttpServlet implements Servlet {
       logger.info("UPLOAD-SERVLET (" + request.getSession().getId() + ") getUploadedFile: " + parameter + " file isn't in session.");
       renderXmlResponse(request, response, ERROR_ITEM_NOT_FOUND);
     }
-    return item;
   }
-
+  
   /**
    * Delete an uploaded file.
    * 
@@ -698,7 +695,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
    */
   protected AbstractUploadListener createNewListener(HttpServletRequest request) {
     if (isAppEngine())
-      return new MemCacheUploadListener(uploadDelay, request.getContentLength());
+      return new MemoryUploadListener(uploadDelay, request.getContentLength());
     else
       return new UploadListener(uploadDelay, request.getContentLength());
   }
@@ -711,7 +708,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
    */
   protected AbstractUploadListener getCurrentListener(HttpServletRequest request) {
     if (isAppEngine())
-      return MemCacheUploadListener.current(request.getSession().getId());
+      return MemoryUploadListener.current(request.getSession().getId());
     else
       return UploadListener.current(request);
   }

@@ -42,25 +42,41 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class MultiUploader extends Composite implements IUploader {
 
-	private FlowPanel multiUploaderPanel = new FlowPanel();
-	boolean avoidRepeat = true;
-	private String[] validExtensions = null;
-	private String servletPath = null;
-	private UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
-	private String fileInputPrefix = "GWTMU";
-	
-  private IUploader.OnStartUploaderHandler onStartHandler = null;
+  private boolean avoidRepeat = true;
+  private Uploader currentUploader = null;
+  private String fileInputPrefix = "GWTMU";
+  private UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
+  private Uploader lastUploader = null;
+  private int maximumFiles = 0;
+
+  private FlowPanel multiUploaderPanel = new FlowPanel();
   private IUploader.OnChangeUploaderHandler onChangeHandler = null;
   private IUploader.OnFinishUploaderHandler onFinishHandler = null;
+  private IUploader.OnStartUploaderHandler onStartHandler = null;
+  private IUploader.OnCancelUploaderHandler onCancelHandler = null;
+  private IUploader.OnStatusChangedHandler onStatusChangedHandler = null;
+  
+  private String servletPath = null;
+  IUploader.OnStartUploaderHandler startHandler = new IUploader.OnStartUploaderHandler() {
+    public void onStart(IUploader uploader) {
+      newUploaderInstance();
+    }
+  };
 
-	private Uploader currentUploader = null;
-	private Uploader lastUploader = null;
-	private IUploadStatus statusWidget = null;
-	
-	private int maximumFiles = 0;
-	private Vector<Uploader> uploaders = new Vector<Uploader>();
+  IUploader.OnStatusChangedHandler statusChangeHandler = new IUploader.OnStatusChangedHandler() {
+    public void onStatusChanged(IUploader uploader) {
+      if (statusWidget.getStatus() != Status.INPROGRESS)
+        newUploaderInstance();
+    }
+  };
+  
+  private IUploadStatus statusWidget = null;
 
-	/**
+  private Vector<Uploader> uploaders = new Vector<Uploader>();
+
+  private String[] validExtensions = null;
+
+  /**
    * If no status gadget is provided, it uses a basic one.
    */
   public MultiUploader() {
@@ -79,154 +95,12 @@ public class MultiUploader extends Composite implements IUploader {
     setStyleName("upld-multiple");
     newUploaderInstance();
   }
-  
-  IUploader.OnStartUploaderHandler startHandler = new IUploader.OnStartUploaderHandler(){
-    public void onStart(IUploader uploader) {
-      newUploaderInstance();
-    }
-  };
-
-  IUploadStatus.UploadStatusChangedHandler statusChangeHandler = new IUploadStatus.UploadStatusChangedHandler() {
-    public void onStatusChanged(IUploadStatus statusWidget) {
-      if (statusWidget.getStatus() != Status.INPROGRESS) {
-        newUploaderInstance();
-      }
-    }
-  };
-  
-  private int countValidFiles() {
-    int ret = 0;
-    for (Uploader u: uploaders) 
-      if (u.getStatus() == Status.SUCCESS || u.getStatus() == Status.INPROGRESS || u.getStatus() == Status.QUEUED || u.getStatus() == Status.SUBMITING )
-        ret ++;
-    return ret;
-  }
-	
-  private void newUploaderInstance() {
-    
-    if (maximumFiles > 0 && countValidFiles() >= maximumFiles) {
-      System.out.println("Reached maximum number of files in MultiUploader widget:" + maximumFiles);
-      GWT.log("Reached maximum number of files in MultiUploader widget:" + maximumFiles, null);
-      return;
-    }
-    
-    if (currentUploader != null) {
-      if (currentUploader.getStatus() == Status.UNINITIALIZED)
-        return;
-      // Save the last uploader, create a new statusWidget and fire onStart events
-      lastUploader = currentUploader;
-      statusWidget = lastUploader.getStatusWidget().newInstance();
-      if (onStartHandler != null)
-        onStartHandler.onStart(lastUploader);
-    }
-    
-    // Create a new uploader
-    currentUploader = new Uploader(true);
-    uploaders.add(currentUploader);
-    currentUploader.setStatusWidget(statusWidget);
-    currentUploader.setValidExtensions(validExtensions);
-    currentUploader.setServletPath(servletPath);
-    currentUploader.avoidRepeatFiles(avoidRepeat);
-    currentUploader.setI18Constants(i18nStrs);
-    // Set the handlers
-    currentUploader.addOnStartUploadHandler(startHandler);
-    if (onChangeHandler != null)
-      currentUploader.addOnChangeUploadHandler(onChangeHandler);
-    if (onFinishHandler != null)
-      currentUploader.addOnFinishUploadHandler(onFinishHandler);
-    currentUploader.setFileInputPrefix(fileInputPrefix);
-    statusWidget.addStatusChangedHandler(statusChangeHandler);
-    // add the new uploader to the panel
-    multiUploaderPanel.add(currentUploader);
-    
-    if (lastUploader == null)
-      lastUploader = currentUploader;
-  }
-
-	public void setStatusWidget(IUploadStatus status) {
-		currentUploader.setStatusWidget(status);
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#setValidExtensions(java.lang.String[])
-	 */
-	public void setValidExtensions(String[] ext) {
-		validExtensions = ext;
-		currentUploader.setValidExtensions(ext);
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#setServletPath(java.lang.String)
-	 */
-	public void setServletPath(String path) {
-		servletPath = path;
-		currentUploader.setServletPath(path);
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#avoidRepeatFiles(boolean)
-	 */
-	public void avoidRepeatFiles(boolean avoidRepeatFiles) {
-		avoidRepeat = avoidRepeatFiles;
-		currentUploader.avoidRepeatFiles(avoidRepeat);
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.HasJsData#getData()
-	 */
-	public JavaScriptObject getData() {
-	  return lastUploader.getData();
-	}
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#fileUrl()
-	 */
-	public String fileUrl() {
-    return lastUploader.fileUrl();
-	}
-
-
-	/* (non-Javadoc)
-	 * @see gwtupload.client.IUploader#submit()
-	 */
-	public void submit() {
-		currentUploader.submit();
-	}
-
-	/* (non-Javadoc)
-	 * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
-	 */
-	public void add(Widget w) {
-		currentUploader.add(w);
-	}
-
-	/* (non-Javadoc)
-	 * @see com.google.gwt.user.client.ui.HasWidgets#clear()
-	 */
-  public void clear() {
-    
-		currentUploader.clear();
-  }
-
-	/* (non-Javadoc)
-	 * @see com.google.gwt.user.client.ui.HasWidgets#iterator()
-	 */
-  public Iterator<Widget> iterator() {
-		return currentUploader.iterator();
-  }
-
-	/* (non-Javadoc)
-	 * @see com.google.gwt.user.client.ui.HasWidgets#remove(com.google.gwt.user.client.ui.Widget)
-	 */
-  public boolean remove(Widget w) {
-		return currentUploader.remove(w);
-  }
 
   /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#cancel()
-   */
-  public void cancel() {
-       currentUploader.cancel();
+  * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
+  */
+  public void add(Widget w) {
+    currentUploader.add(w);
   }
 
   /* (non-Javadoc)
@@ -236,6 +110,15 @@ public class MultiUploader extends Composite implements IUploader {
     onChangeHandler = handler;
     return currentUploader.addOnChangeUploadHandler(handler);
   }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#addOnCancelUploadHandler(gwtupload.client.IUploader.OnCancelUploaderHandler)
+   */
+  public HandlerRegistration addOnCancelUploadHandler(OnCancelUploaderHandler handler) {
+    onCancelHandler = handler;
+    return currentUploader.addOnCancelUploadHandler(handler);
+  }
+
 
   /* (non-Javadoc)
    * @see gwtupload.client.IUploader#addOnFinishUploadHandler(gwtupload.client.Uploader.OnFinishUploaderHandler)
@@ -250,7 +133,7 @@ public class MultiUploader extends Composite implements IUploader {
    */
   public HandlerRegistration addOnStartUploadHandler(IUploader.OnStartUploaderHandler handler) {
     onStartHandler = handler;
-    return new HandlerRegistration(){
+    return new HandlerRegistration() {
       public void removeHandler() {
         onStartHandler = null;
       }
@@ -258,22 +141,55 @@ public class MultiUploader extends Composite implements IUploader {
   }
 
   /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#setI18Constants(gwtupload.client.I18nUploadConstants)
+   * @see gwtupload.client.IUploader#addOnStatusChangedHandler(gwtupload.client.IUploader.OnStatusChangedHandler)
    */
-  public void setI18Constants(UploaderConstants strs) {
-    i18nStrs = strs;
-    currentUploader.setI18Constants(i18nStrs);
+  public HandlerRegistration addOnStatusChangedHandler(OnStatusChangedHandler handler) {
+    onStatusChangedHandler = handler;
+    for (IUploader uploader : uploaders) {
+      uploader.addOnStatusChangedHandler(handler);
+    }
+    return new HandlerRegistration() {
+      public void removeHandler() {
+        onStatusChangedHandler = null;
+      }
+    };
   }
 
   /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#getStatus()
+   * @see gwtupload.client.IUploader#avoidRepeatFiles(boolean)
    */
-  public Status getStatus() {
-    Status ret = currentUploader.getStatus();
-    if (ret == Status.UNINITIALIZED && lastUploader != null) {
-      ret = lastUploader.getStatus();
-    }
-    return ret;
+  public void avoidRepeatFiles(boolean avoidRepeatFiles) {
+    avoidRepeat = avoidRepeatFiles;
+    currentUploader.avoidRepeatFiles(avoidRepeat);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#cancel()
+   */
+  public void cancel() {
+    currentUploader.cancel();
+  }
+
+  /* (non-Javadoc)
+ 	 * @see com.google.gwt.user.client.ui.HasWidgets#clear()
+ 	 */
+  public void clear() {
+
+    currentUploader.clear();
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#fileUrl()
+   */
+  public String fileUrl() {
+    return lastUploader.fileUrl();
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.HasJsData#getData()
+   */
+  public JavaScriptObject getData() {
+    return lastUploader.getData();
   }
 
   /* (non-Javadoc)
@@ -290,6 +206,27 @@ public class MultiUploader extends Composite implements IUploader {
     return lastUploader.getInputName();
   }
 
+  /**
+   * Return the maximum files that can be uploaded to the server
+   * 
+   */
+  public int getMaximumFiles() {
+    return maximumFiles;
+  }
+
+  /**
+   * Return the number of uploads that have a non erroneous status.
+   * It includes files which are queued or uploading. 
+   * 
+   */
+  public int getNonErroneousUploads() {
+    int ret = 0;
+    for (Uploader u : uploaders)
+      if (u.getStatus() == Status.SUCCESS || u.getStatus() == Status.INPROGRESS || u.getStatus() == Status.QUEUED || u.getStatus() == Status.SUBMITING)
+        ret++;
+    return ret;
+  }
+
   /* (non-Javadoc)
    * @see gwtupload.client.IUploader#getServerResponse()
    */
@@ -298,23 +235,108 @@ public class MultiUploader extends Composite implements IUploader {
   }
 
   /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#getStatus()
+   */
+  public Status getStatus() {
+    Status ret = currentUploader.getStatus();
+    if (ret == Status.UNINITIALIZED && lastUploader != null) {
+      ret = lastUploader.getStatus();
+    }
+    return ret;
+  }
+
+  /**
+   * Return the status of the uploader whose fieldName or fileName is equal to 
+   * the name passed as argument.
+   * 
+   * @param name
+   * @return the status of the uploader in the case of found or UNINITIALIZED 
+   */
+  public Status getStatus(String name) {
+    for (IUploader u : uploaders) {
+      if (u.getInputName().equals(name) || u.getFileName().equals(name))
+        return u.getStatus();
+    }
+    return Status.UNINITIALIZED;
+  }
+
+  /**
+   * Return the number of finished uploads with status success.
+   * 
+   */
+  public int getSuccessUploads() {
+    int ret = 0;
+    for (Uploader u : uploaders)
+      if (u.getStatus() == Status.SUCCESS)
+        ret++;
+    return ret;
+  }
+
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasWidgets#iterator()
+   */
+  public Iterator<Widget> iterator() {
+    return currentUploader.iterator();
+  }
+
+  private void newUploaderInstance() {
+
+    if (maximumFiles > 0 && getNonErroneousUploads() >= maximumFiles) {
+      System.out.println("Reached maximum number of files in MultiUploader widget:" + maximumFiles);
+      GWT.log("Reached maximum number of files in MultiUploader widget:" + maximumFiles, null);
+      return;
+    }
+
+    if (currentUploader != null) {
+      if (currentUploader.getStatus() == Status.UNINITIALIZED)
+        return;
+      // Save the last uploader, create a new statusWidget and fire onStart events
+      lastUploader = currentUploader;
+      statusWidget = lastUploader.getStatusWidget().newInstance();
+      if (onStartHandler != null)
+        onStartHandler.onStart(lastUploader);
+    }
+
+    // Create a new uploader
+    currentUploader = new Uploader(true);
+    uploaders.add(currentUploader);
+    currentUploader.setStatusWidget(statusWidget);
+    currentUploader.setValidExtensions(validExtensions);
+    currentUploader.setServletPath(servletPath);
+    currentUploader.avoidRepeatFiles(avoidRepeat);
+    currentUploader.setI18Constants(i18nStrs);
+    // Set the handlers
+    currentUploader.addOnStartUploadHandler(startHandler);
+    currentUploader.addOnStatusChangedHandler(statusChangeHandler);
+    
+    if (onChangeHandler != null)
+      currentUploader.addOnChangeUploadHandler(onChangeHandler);
+    if (onFinishHandler != null)
+      currentUploader.addOnFinishUploadHandler(onFinishHandler);
+    if (onStatusChangedHandler != null)
+      currentUploader.addOnStatusChangedHandler(onStatusChangedHandler);
+    if (onCancelHandler != null)
+      currentUploader.addOnCancelUploadHandler(onCancelHandler);
+    
+    currentUploader.setFileInputPrefix(fileInputPrefix);
+    // add the new uploader to the panel
+    multiUploaderPanel.add(currentUploader);
+
+    if (lastUploader == null)
+      lastUploader = currentUploader;
+  }
+
+  /* (non-Javadoc)
+   * @see com.google.gwt.user.client.ui.HasWidgets#remove(com.google.gwt.user.client.ui.Widget)
+   */
+  public boolean remove(Widget w) {
+    return currentUploader.remove(w);
+  }
+
+  /* (non-Javadoc)
    * @see gwtupload.client.IUploader#reset()
    */
   public void reset() {
-  }
-	
-  /**
-   * Set the maximum number of files that can be uploaded to the server.
-   * Only success uploads are counted and not canceled or erroneous files.
-   * 
-   * @param max
-   */
-  public void setMaximumFiles(int max) {
-    maximumFiles = max;
-  }
-
-  public int getMaximumFiles() {
-    return maximumFiles;
   }
 
   /* (non-Javadoc)
@@ -323,6 +345,57 @@ public class MultiUploader extends Composite implements IUploader {
   public void setFileInputPrefix(String prefix) {
     fileInputPrefix = prefix;
     currentUploader.setFileInputPrefix(prefix);
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#setI18Constants(gwtupload.client.I18nUploadConstants)
+   */
+  public void setI18Constants(UploaderConstants strs) {
+    i18nStrs = strs;
+    currentUploader.setI18Constants(i18nStrs);
+  }
+
+  /**
+   * Set the maximum number of files that can be uploaded to the server.
+   * Only success uploads are counted.
+   * 
+   * If you decrease this parameter, files already uploaded or in queue are
+   * not removed.
+   * 
+   * @param max
+   */
+  public void setMaximumFiles(int max) {
+    maximumFiles = max;
+  }
+
+  /* (non-Javadoc)
+  * @see gwtupload.client.IUploader#setServletPath(java.lang.String)
+  */
+  public void setServletPath(String path) {
+    servletPath = path;
+    currentUploader.setServletPath(path);
+  }
+
+  /* (non-Javadoc)
+  * @see gwtupload.client.IUploader#setStatusWidget(gwtupload.client.IUploadStatus)
+  */
+  public void setStatusWidget(IUploadStatus status) {
+    currentUploader.setStatusWidget(status);
+  }
+
+  /* (non-Javadoc)
+  * @see gwtupload.client.IUploader#setValidExtensions(java.lang.String[])
+  */
+  public void setValidExtensions(String[] ext) {
+    validExtensions = ext;
+    currentUploader.setValidExtensions(ext);
+  }
+
+  /* (non-Javadoc)
+  * @see gwtupload.client.IUploader#submit()
+  */
+  public void submit() {
+    currentUploader.submit();
   }
 
 }

@@ -17,7 +17,6 @@
 package gwtupload.client;
 
 import gwtupload.client.IUploadStatus.Status;
-import gwtupload.client.IUploadStatus.UploadCancelHandler;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -66,7 +65,6 @@ import com.google.gwt.xml.client.XMLParser;
  *         <li>It uses a progress interface so it is easy to use customized progress bars</li>
  *         <li>By default it renders a basic progress bar</li>
  *         <li>It can be configured to automatic submit after the user has selected the file</li>
- *         <li>If you need a customized uploader, you can overwrite these these class</li>
  *         <li>It uses a queue that avoid submit more than a file at the same time</li>
  *         </ul>
  * 
@@ -83,6 +81,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   private Vector<IUploader.OnStartUploaderHandler> onStartHandlers = new Vector<IUploader.OnStartUploaderHandler>();
   private Vector<IUploader.OnChangeUploaderHandler> onChangeHandlers = new Vector<IUploader.OnChangeUploaderHandler>();
   private Vector<IUploader.OnFinishUploaderHandler> onFinishHandlers = new Vector<IUploader.OnFinishUploaderHandler>();
+  private Vector<IUploader.OnStatusChangedHandler> onStatusChangeHandlers = new Vector<IUploader.OnStatusChangedHandler>();
   
 	private static final String TAG_PERCENT = "percent";
   private static final String TAG_FINISHED = "finished";
@@ -91,9 +90,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   private static final String TAG_TOTAL_BYTES = "totalBytes";
   private static final String TAG_CURRENT_BYTES = "currentBytes";
   
-  
-  static HashSet<String> fileDone = new HashSet<String>();
-	static Vector<String> fileQueue = new Vector<String>();
+  private static HashSet<String> fileDone = new HashSet<String>();
+	private static Vector<String> fileQueue = new Vector<String>();
 	
 	private static final int DEFAULT_FILEINPUT_SIZE = 40;
 	private static final int DEFAULT_AUTOUPLOAD_DELAY = 600;
@@ -114,7 +112,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	protected static final String STYLE_STATUS = "upld-status";
 	
 	private String fileInputPrefix = "GWTU";
-
+  private Uploader _this;
 	private boolean uploading = false;
 	private boolean cancelled = false;
 	private boolean autoSubmit = false;
@@ -172,8 +170,10 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       formElements.add(w);
     }
 	}
-
+	
 	public Uploader(FormPanel form) {
+	  _this = this;
+	  
 	  if (form == null)
 	    form = new FormFlowPanel();
 	  
@@ -210,9 +210,9 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				this.cancel();
 				statusWidget.setStatus(IUploadStatus.Status.SUBMITING);
 				
-				// For security reasons, most browsers don't submit files if fileInput is hidden or has a size of 0 for security reasons. 
-				// so, before sending the form, it is necessary to show the fileInput.
-				// then, onSubmit handler will hide the fileInput again
+				// For security reasons, most browsers don't submit files if fileInput is hidden or has a size of 0,
+				// so, before sending the form, it is necessary to show the fileInput,
+				// finally, onSubmit handler will hide the fileInput again
 				setFileInputSize(1);
 				fileInput.setHeight("1px");
 				fileInput.setWidth("1px");
@@ -442,11 +442,20 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     }
   };
   
-  private UploadCancelHandler cancelHandler = new UploadCancelHandler(){
+  private IUploadStatus.UploadCancelHandler cancelHandler = new IUploadStatus.UploadCancelHandler(){
     public void onCancel() {
       cancel();
     }
   };
+  
+  private IUploadStatus.UploadStatusChangedHandler statusChangedHandler = new IUploadStatus.UploadStatusChangedHandler(){
+    public void onStatusChanged(IUploadStatus statusWiget) {
+      for(IUploader.OnStatusChangedHandler handler: onStatusChangeHandlers) {
+        handler.onStatusChanged(_this);
+      }
+    }
+  };
+
 
 
 	/**
@@ -721,6 +730,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		statusWidget.getWidget().addStyleName(STYLE_STATUS);
 		statusWidget.setVisible(false);
     statusWidget.addCancelHandler(cancelHandler);
+    statusWidget.setStatusChangedHandler(statusChangedHandler);
+    
 	}
 
 
@@ -855,6 +866,32 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       }
     };
   }
+  
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#addOnStatusChangedHandler(gwtupload.client.IUploader.OnStatusChangedHandler)
+   */
+  public HandlerRegistration addOnStatusChangedHandler(final OnStatusChangedHandler handler) {
+    assert handler != null;
+    onStatusChangeHandlers.add(handler);
+    return new HandlerRegistration() {
+      public void removeHandler() {
+        onStatusChangeHandlers.remove(handler);
+      }
+    };
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#addOnCancelUploadHandler(gwtupload.client.IUploader.OnCancelUploaderHandler)
+   */
+  public HandlerRegistration addOnCancelUploadHandler(final OnCancelUploaderHandler handler) {
+    assert handler != null;
+    return statusWidget.addCancelHandler(new IUploadStatus.UploadCancelHandler() {
+      public void onCancel() {
+        handler.onCancel(_this);
+      }
+    });
+  }
+
 
   /* (non-Javadoc)
    * @see gwtupload.client.IUploader#setI18Constants(gwtupload.client.I18nUploadConstants)

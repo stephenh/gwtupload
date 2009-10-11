@@ -24,6 +24,8 @@ import gwtupload.client.Uploader;
 import gwtupload.client.IUploadStatus.Status;
 import gwtupload.client.PreloadedImage.OnLoadPreloadedImageHandler;
 
+import java.util.HashMap;
+
 import com.google.code.p.gwtchismes.client.GWTCBox;
 import com.google.code.p.gwtchismes.client.GWTCModalBox;
 import com.google.code.p.gwtchismes.client.GWTCPopupBox;
@@ -79,7 +81,9 @@ public class ChismesUploadSample implements EntryPoint {
 	private GWTCBox thumbnailsBox = new GWTCBox(GWTCBox.STYLE_GREY);
 	private FlowPanel thumbPanel = new FlowPanel();
 
-	private GWTCModalBox popupPanel = new GWTCModalBox(GWTCPopupBox.OPTION_ANIMATION | GWTCPopupBox.OPTION_ROUNDED_BLUE);;
+	private GWTCModalBox popupPanel = new GWTCModalBox(GWTCPopupBox.OPTION_ANIMATION | GWTCPopupBox.OPTION_ROUNDED_BLUE);
+	
+  private HashMap<String, Widget> loadedImages = new HashMap<String, Widget>();
 	
 	public void onModuleLoad() {
 
@@ -104,12 +108,13 @@ public class ChismesUploadSample implements EntryPoint {
 		mainPanel.setWidget(0, 0, tabPanel);
 
 		// FIXME: changing the order of these two lines makes onchange event fail.
-		MultiUploader uploader = new MultiUploader(new ChismesUploadProgress(false));
-		uploader.addOnFinishUploadHandler(onFinishHandler);
-		uploader.setValidExtensions(validExtensions);
-		multiUploadBox.add(uploader);
+		MultiUploader multiUploader = new MultiUploader(new ChismesUploadProgress(false));
+		multiUploader.addOnFinishUploadHandler(onFinishHandler);
+		multiUploader.addOnCancelUploadHandler(onStatusChangedHandler);
+		multiUploader.setValidExtensions(validExtensions);
+		multiUploadBox.add(multiUploader);
 		tabPanel.add(multiUploadBox, i18nStrs.multiUploadTabText());
-    uploader.setServletPath(Uploader.DEFAULT_SERVLET_PATH + Window.Location.getQueryString());
+    multiUploader.setServletPath(Uploader.DEFAULT_SERVLET_PATH + Window.Location.getQueryString());
 
 
 		// FIXME: GWTCButton here doesn't handle onClick
@@ -128,7 +133,17 @@ public class ChismesUploadSample implements EntryPoint {
 	private IUploader.OnFinishUploaderHandler onFinishHandler = new IUploader.OnFinishUploaderHandler() {
     public void onFinish(IUploader uploader) {
       if (uploader.getStatus() == Status.SUCCESS)
-        new PreloadedImage(uploader.fileUrl(), addToThumbPanelHandler);
+        new PreloadedImage(uploader.fileUrl(), uploader.getInputName(), uploader.getFileName(), addToThumbPanelHandler);
+    }
+	};
+	
+	private IUploader.OnCancelUploaderHandler onStatusChangedHandler = new IUploader.OnCancelUploaderHandler() {
+    public void onCancel(IUploader uploader) {
+      Widget w = loadedImages.get(uploader.getInputName());
+      if (w != null) {
+        w.removeFromParent();
+        loadedImages.remove(uploader.getInputName());
+      }
     }
 	};
 	
@@ -141,6 +156,7 @@ public class ChismesUploadSample implements EntryPoint {
       thumbPanel.add(imgbox);
       image.addClickHandler(imgClickListenerHandler);
       DOM.setStyleAttribute(image.getElement(), "cursor", "pointer");
+      loadedImages.put(image.getUniqId(), imgbox);
     }
 	};
 	
