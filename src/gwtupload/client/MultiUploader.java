@@ -234,15 +234,24 @@ public class MultiUploader extends Composite implements IUploader {
     return lastUploader.getServerResponse();
   }
 
-  /* (non-Javadoc)
-   * @see gwtupload.client.IUploader#getStatus()
+  /**
+   *  Return the status of the multiuploader.
+   *  
+   *   @return
+   *             Status.INPROGRESS    if there are items being sent or queued.
+   *             Status.UNINITIALIZED if the user has not selected any file
+   *             Status.DONE          if all items has been processed (SUCCESS or ERROR)
    */
   public Status getStatus() {
-    Status ret = currentUploader.getStatus();
-    if (ret == Status.UNINITIALIZED && lastUploader != null) {
-      ret = lastUploader.getStatus();
+    for (Uploader uploader: uploaders) {
+    	Status stat = uploader.getStatus();
+    	if (stat == Status.INPROGRESS || stat == Status.QUEUED || stat == Status.SUBMITING)
+    		return Status.INPROGRESS;
     }
-    return ret;
+    if (uploaders.size() <= 1)
+    	return Status.UNINITIALIZED;
+    else
+    	return Status.DONE;
   }
 
   /**
