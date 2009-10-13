@@ -297,7 +297,8 @@ public class MultiUploader extends Composite implements IUploader {
     }
 
     if (currentUploader != null) {
-      if (currentUploader.getStatus() == Status.UNINITIALIZED)
+      Status status = currentUploader.getStatus();
+      if (status == Status.UNINITIALIZED || status == Status.ERROR)
         return;
       // Save the last uploader, create a new statusWidget and fire onStart events
       lastUploader = currentUploader;
