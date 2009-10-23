@@ -88,6 +88,8 @@ public class Upload implements Exportable {
 		uploader.addOnStartUploadHandler(JsUtils.getOnStartUploaderHandler(jsProp.getClosure(Const.ON_START)));
     uploader.addOnChangeUploadHandler(JsUtils.getOnChangeUploaderHandler(jsProp.getClosure(Const.ON_CHANGE)));
     uploader.addOnFinishUploadHandler(JsUtils.getOnFinishUploaderHandler(jsProp.getClosure(Const.ON_FINISH)));
+    uploader.addOnCancelUploadHandler(JsUtils.getOnCancelUploaderHandler(jsProp.getClosure(Const.ON_CANCEL)));
+    uploader.addOnStatusChangedHandler(JsUtils.getStatusChangedHandler(jsProp.getClosure(Const.ON_STATUS)));
 		
 		Panel panel = RootPanel.get(jsProp.get(Const.CONT_ID, "NoId"));
 		if (panel == null)

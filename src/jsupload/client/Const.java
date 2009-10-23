@@ -45,6 +45,8 @@ public class Const implements Exportable {
     protected static final String ON_FINISH = "onFinish"; //[null] Javascript method called when the upload process finishes
     protected static final String ON_START = "onStart"; //[null] Javascript method called when the upload process starts
     protected static final String ON_CHANGE = "onChange"; //[null] Javascript method called when the upload process starts
+    protected static final String ON_CANCEL = "onCancel"; //[null] Javascript method called when the upload file is canceled, removed from the queue or from the server
+    protected static final String ON_STATUS = "onStatus"; //[null] Javascript method called when the upload file's status changes 
     protected static final String MULTIPLE = "multiple"; //[false] specify whether the uploader has a multiple behavior 
     protected static final String TYPE = "type"; //["chismes"] Type of progress bar, valid options are "basic", "chismes" or "incubator"
     protected static final String ON_LOAD = "onLoad"; //[null] Javascript method called after the browser has loaded the image

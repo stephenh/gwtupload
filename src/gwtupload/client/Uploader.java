@@ -16,6 +16,7 @@
  */
 package gwtupload.client;
 
+import gwtupload.client.IFileInput.FileInput;
 import gwtupload.client.IUploadStatus.Status;
 
 import java.util.Date;
@@ -34,10 +35,8 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.RequestTimeoutException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -93,7 +92,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   private static HashSet<String> fileDone = new HashSet<String>();
 	private static Vector<String> fileQueue = new Vector<String>();
 	
-	private static final int DEFAULT_FILEINPUT_SIZE = 40;
 	private static final int DEFAULT_AUTOUPLOAD_DELAY = 600;
 	private static final int DEFAULT_AJAX_TIMEOUT = 10000;
 	private static final int DEFAULT_TIME_MAX_WITHOUT_RESPONSE = 60000;
@@ -131,18 +129,10 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   protected UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
   private long lastData = now();
   
-	private final FileUpload fileInput = new FileUpload() {
-		{
-			addDomHandler(new ChangeHandler() {
-				public void onChange(ChangeEvent event) {
-					onFileInputChanged.onChange(null);
-				}
-			}, ChangeEvent.getType());
-		}
-	};
-	private FormPanel uploadForm;
+  private IFileInput fileInput;
+  private FormPanel uploadForm;
 	protected HorizontalPanel uploaderPanel;
-
+	
 	/**
 	 * Default constructor.
 	 * 
@@ -176,11 +166,11 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	  
 	  if (form == null)
 	    form = new FormFlowPanel();
+
 	  
     uploadForm = form;
     uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
     uploadForm.setMethod(FormPanel.METHOD_POST);
-    uploadForm.add(fileInput);
     uploadForm.setAction(DEFAULT_SERVLET_PATH);
     uploadForm.addSubmitHandler(onSubmitFormHandler);
     uploadForm.addSubmitCompleteHandler(onSubmitCompleteHandler);
@@ -189,8 +179,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     uploaderPanel.add(uploadForm);
     uploaderPanel.setStyleName(STYLE_MAIN);
 
-    assignNewNameToFileInput();
-    setFileInputSize(DEFAULT_FILEINPUT_SIZE);
+    setFileInput(new FileInput());
     setStatusWidget(statusWidget);
 
     super.initWidget(uploaderPanel);
@@ -200,6 +189,20 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		this();
 		setAutoSubmit(automaticUpload);
 	}
+
+	public void setFileInput(IFileInput input) {
+	  
+	  if (fileInput != null && fileInput.getWidget().isAttached())
+	    fileInput.getWidget().removeFromParent();
+	  
+    fileInput = input;
+    fileInput.addOnChangeHandler(onFileInputChanged);
+    assignNewNameToFileInput();
+    
+    uploadForm.add(fileInput.getWidget());
+
+  }
+
 
 	private final UpdateTimer updateStatusTimer = new UpdateTimer(this, statusInterval);
 	
@@ -214,8 +217,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 				// so, before sending the form, it is necessary to show the fileInput,
 				// finally, onSubmit handler will hide the fileInput again
 				setFileInputSize(1);
-				fileInput.setHeight("1px");
-				fileInput.setWidth("1px");
+				fileInput.setSize(1 + "px", 1 + "px");
 				fileInput.setVisible(true);
 				uploadForm.submit();
 			}
@@ -305,7 +307,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		}
 
 		public void onResponseReceived(Request request, Response response) {
-		  GWT.log(response.getText(), null);
 		  
 			waitingForResponse = false;
 			if (finished == true && !uploading)
@@ -597,7 +598,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 * Because native javascript needs it
 	 */
 	public JavaScriptObject getData() {
-		return getDataImpl(fileUrl(), getInputName(), getFileName(), getServerResponse(), getStatus().name());
+		return getDataImpl(fileUrl(), getInputName(), getFileName(), getServerResponse(), getStatus().toString());
 	}
 
 	private native JavaScriptObject getDataImpl(String url, String inputName, String fileName, String serverResponse, String status) /*-{
@@ -698,7 +699,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 * @param length
 	 */
 	public void setFileInputSize(int length) {
-		DOM.setElementAttribute(fileInput.getElement(), "size", "" + length);
+	  fileInput.setLength(length);
 	}
 
 	/**

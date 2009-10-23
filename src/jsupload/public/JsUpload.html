@@ -38,7 +38,17 @@
           containerId: "uploader1",
           multiple: true, 
           auto: true,
-          action: "/cgi-bin/jsupload.cgi.pl",
+          /* 
+           * Uncomment the next line to use the provided 
+           *  cgi-bin script written in perl
+           */ 
+          // action: "/cgi-bin/jsupload.cgi.pl",
+          
+          /* 
+           * Uncomment the next line to handle st 
+           *  cgi-bin script written in perl
+           */ 
+          // onStatus: function(data) { alert(data.status); },
           onFinish: loadImage
         });
         
@@ -60,8 +70,8 @@
           maxFiles: 4,
           action: 'servlet.upld',
           regional: {
-              uploadStatusSuccess: "Saved in the server",
-              uploadStatusError:   "Unable to save"
+              uploadStatusSuccess: "File saved in the server",
+              uploadStatusError:   "Unable to save the file."
           }
         });
 

@@ -120,6 +120,23 @@ class JsUtils {
             jsChange.onChange(image.getData());
       }
     };
-    
+  }
+
+  public final static IUploader.OnStatusChangedHandler getStatusChangedHandler(final JsChangeClosure jsChange) {
+    return new IUploader.OnStatusChangedHandler() {
+      public void onStatusChanged(IUploader u) {
+        if (jsChange != null);
+        jsChange.onChange(u.getData());
+      }
+    };
+  }
+
+  public final static IUploader.OnCancelUploaderHandler getOnCancelUploaderHandler(final JsChangeClosure jsChange) {
+    return new IUploader.OnCancelUploaderHandler() {
+      public void onCancel(IUploader u) {
+        if (jsChange != null);
+        jsChange.onChange(u.getData());
+      }
+    };
   }
 }
