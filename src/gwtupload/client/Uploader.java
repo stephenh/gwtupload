@@ -321,16 +321,13 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private void parseAjaxResponse(String responseTxt) {
     String error = null;
     Document doc = null;
-    if (false && ! responseTxt.toLowerCase().matches(".*<response>.*")) {
-       error = "Server sent ant invalid response: " + responseTxt;
-    } else {
-      try {
-        doc = XMLParser.parse(responseTxt);
-        error = Utils.getXmlNodeValue(doc, "error");
-      } catch (Exception e) {
-        if (responseTxt.toLowerCase().matches("error"))
-          error = i18nStrs.uploaderServerError() + "\nAction: " + getServletPath() + "\nException: " + e.getMessage() + responseTxt;
-      }
+
+    try {
+      doc = XMLParser.parse(responseTxt);
+      error = Utils.getXmlNodeValue(doc, "error");
+    } catch (Exception e) {
+      if (responseTxt.toLowerCase().matches("error"))
+        error = i18nStrs.uploaderServerError() + "\nAction: " + getServletPath() + "\nException: " + e.getMessage() + responseTxt;
     }
     
     if (error != null) {
@@ -357,7 +354,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       GWT.log("incorrect response: " + getFileName() + " " + responseTxt, null);
     }
     
-    if (  now() - lastData >  uploadTimeout) {
+    if (now() - lastData >  uploadTimeout) {
       successful = false;
       cancelUpload(i18nStrs.uploaderTimeout());
       try {

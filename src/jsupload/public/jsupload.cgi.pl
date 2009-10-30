@@ -57,10 +57,16 @@ my $max_size = 5000000;
 # Get the sessionId or create a new one
 # do not use CGI here, because we need to handle STDIN in order to update the progress status.
 my $sid = new Digest::MD5()->add( $$, time(), rand(time) )->hexdigest();
-if ( $ENV{'HTTP_COOKIE'} =~ /$idname="*([^";]+)/ ) {
+my $set_cookie = "";
+if ( $ENV{'HTTP_COOKIE'} && $ENV{'HTTP_COOKIE'} =~ /$idname="*([^";]+)/ ) {
     $sid = $1;
+} else {
+    $set_cookie = "Set-Cookie: CGISESSID=$sid; path=/\n"
 }
 my $user_dir = "$tmp_dir/$sid/";
+my $data_file = "$user_dir/data.$$";
+my $cancel_file = "$user_dir/cancel";
+my $progress_file = "$user_dir/progress";
 
 # Controller:
 #   POST is used for uploading.
@@ -71,22 +77,23 @@ if ( $method =~ /POST/i ) {
     doPost();
 } else {
     $cgi = new CGI;
-    print STDERR ">>>> " . Dumper($cgi->param);
     if ( $cgi->param('show') ) {
         writeItemContent( $cgi->param('show') );
+    } elsif ( $cgi->param('new_session') ) {
+        writeResponse("<session>ok</session>");
     } elsif ( $cgi->param('remove') ) {
         removeItem( $cgi->param('remove') );
     } elsif ( $cgi->param('cancel') ) {
         cancelProcess();
-        writeResponse("<canceled>true</canceled>");
     } else {
-        writeResponse( getProgress() );
+        getProgress();
     }
 }
 exit;
 
 ## This method receives the form content and stores each item in a temporary folder.
 sub doPost {
+    ## flush after a write
     $| = 1;
 
     ## Validate request size
@@ -103,17 +110,23 @@ sub doPost {
     }
 
     ## Receive the request, and update progress data
-    my $data_file = "$user_dir/data.$$";
-    open( P, ">$data_file" )
+    unlink($cancel_file) if (-f $cancel_file);
+    open( D, ">$data_file" )
       || writeResponse("<error>Can't open postfile: $user_dir/postdata $!</error>");
     my ( $n, $done, $line ) = ( 0, 0, "" );
     do {
+        if (-f $cancel_file) {
+           close(D);
+           unlink($progress_file);
+           unlink($data_file);
+           writeResponse("<canceled>true</canceled><finished>canceled</finished>", "bye");
+        }
         $done += $n;
         updateProgress( $done, $len );
-        print P $line;
+        print D $line;
         select( undef, undef, undef, 0.3 );
     } while ( ( $n = read( STDIN, $line, 4096 ) ) > 0 );
-    close(P);
+    close(D);
 
     ## Process received data
     my $msg = "OK\n";
@@ -161,46 +174,36 @@ sub saveFile {
 
 ## Write the server response for each request.
 ## This response is a simple xml response easy to handle in the browser side.
-## Set the session cookie to the client if it has not been setted yet.
+## Sets the cookie if it wasn't found before
+## Terminates the reception closing stdin and exits.
 sub writeResponse {
     my $msg = shift;
     close(STDIN);
-
-    $cgi = new CGI() unless($cgi);
-    if ( $cgi->cookie($idname) ) {
-        print $cgi->header( -type => 'text/plain' );
-    } else {
-        print $cgi->header( -cookie => $cgi->cookie( $idname => $sid ),
-                            -type   => 'text/plain' );
-    }
-    print "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
-      . "\n<response>\n$msg</response>\n";
+    print "Content-Type: text/plain\n$set_cookie\n"
+        . "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+        . "\n<response>\n$msg</response>\n";
     exit;
 }
 
 ## write the upload progress in the status file
 sub updateProgress {
     my ( $done, $total ) = @_;
-    if (-f "$user_dir/cancel") {
-        writeResponse("<canceled>true<canceled><finished>canceled</finished>");
-        exit;
-    }
-    open( F, ">$user_dir/progress" );
+    open( F, ">$progress_file" );
     print F "$done/$total";
     close(F);
 }
 
 sub cancelProcess {
-    open( F, ">$user_dir/cancel" );
+    open( F, ">$cancel_file" );
     print F "cancel";
     close(F);
+    writeResponse("<canceled>true</canceled>");
 }
 
 ## read the upload progress from the status file
 sub getProgress {
-    if ( -f "$user_dir/cancel" ) {
-        unlink ("$user_dir/cancel");
-        return "<canceled>true<canceled><finished>canceled</finished>";
+    if ( -f "$cancel_file" ) {
+        writeResponse("<canceled>true</canceled><finished>canceled</finished>");
     }
     my ( $done, $total, $percent ) = ( 0, 0, 0 );
     if ( open( F, "$user_dir/progress" ) ) {
@@ -216,7 +219,7 @@ sub getProgress {
       . "<currentBytes>$done</currentBytes>"
       . "<totalBytes>$total</totalBytes>";
     $ret .= "<finished>ok</finished>" if ( $percent >= 100 );
-    return $ret;
+    writeResponse($ret);
 }
 
 ## Generates the response when the client asks for an item
