@@ -408,4 +408,11 @@ public class MultiUploader extends Composite implements IUploader {
     currentUploader.submit();
   }
 
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#getBasename()
+   */
+  public String getBasename() {
+    return Utils.basename(getFileName());
+  }
+
 }

@@ -36,6 +36,7 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.RequestTimeoutException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
@@ -266,10 +267,18 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private final RequestCallback onCancelReceivedCallback = new RequestCallback() {
 		public void onError(Request request, Throwable exception) {
 		  GWT.log("onCancelReceivedCallback onError: " , exception);
+      statusWidget.setStatus(IUploadStatus.Status.CANCELED);
+      successful = false;
+      cancelled = true;
+      uploadFinished();
 		}
 		public void onResponseReceived(Request request, Response response) {
 		  if (getStatus() == Status.CANCELING)
 		    updateStatusTimer.scheduleRepeating(3000);
+      statusWidget.setStatus(IUploadStatus.Status.CANCELED);
+      successful = false;
+      cancelled = true;
+      uploadFinished();
 		}
 	};
 
@@ -294,16 +303,16 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	private final RequestCallback onStatusReceivedCallback = new RequestCallback() {
 		public void onError(Request request, Throwable exception) {
 			waitingForResponse = false;
-			if (!(exception instanceof RequestTimeoutException)) {
-		  		GWT.log("GWTUpload: onStatusReceivedCallback error: " + exception.getMessage(), exception);
-				updateStatusTimer.finish();
-				String message = removeHtmlTags(exception.getMessage());
-				message += "\n" + exception.getClass().getName();
-				message += "\n" + exception.toString();
-				statusWidget.setError(i18nStrs.uploaderServerUnavailable() + getServletPath() + "\n\n" + message);
+			if (exception instanceof RequestTimeoutException) {
+        GWT.log("GWTUpload: onStatusReceivedCallback timeout error, asking the server again.", null);
 			} else {
-		  		GWT.log("GWTUpload: onStatusReceivedCallback timeout error, asking the server again.", null);
-       }
+        GWT.log("GWTUpload: onStatusReceivedCallback error: " + exception.getMessage(), exception);
+        updateStatusTimer.finish();
+        String message = removeHtmlTags(exception.getMessage());
+        message += "\n" + exception.getClass().getName();
+        message += "\n" + exception.toString();
+        statusWidget.setError(i18nStrs.uploaderServerUnavailable() + getServletPath() + "\n\n" + message);
+      }
 		}
 
 		public void onResponseReceived(Request request, Response response) {
@@ -312,8 +321,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 			if (finished == true && !uploading)
 				return;
 			
-			String responseTxt = response.getText();
-			parseAjaxResponse(responseTxt);
+			parseAjaxResponse(response.getText());
 		}
 
 	};
@@ -507,6 +515,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 * - in the case of error talking with the server.
 	 */
 	private void uploadFinished() {
+	  try{
 		removeFromQueue();
 		finished = true;
 		uploading = false;
@@ -538,6 +547,9 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 			uploaderPanel.remove(uploadForm);
 		}
 		onFinishUpload();
+	  } catch (Exception e) {
+	    Window.alert(e.getMessage());
+	  }
 	}
 	
 	/**
@@ -595,14 +607,15 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	 * Because native javascript needs it
 	 */
 	public JavaScriptObject getData() {
-		return getDataImpl(fileUrl(), getInputName(), getFileName(), getServerResponse(), getStatus().toString());
+		return getDataImpl(fileUrl(), getInputName(), getFileName(), getBasename(), getServerResponse(), getStatus().toString());
 	}
 
-	private native JavaScriptObject getDataImpl(String url, String inputName, String fileName, String serverResponse, String status) /*-{
+	private native JavaScriptObject getDataImpl(String url, String inputName, String fileName, String basename, String serverResponse, String status) /*-{
 		return {
 		   url: url,
 		   name: inputName,
 		   filename: fileName,
+       basename: baseName,
 		   response: serverResponse,
 		   status:  status
 		};
@@ -962,6 +975,13 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
    */
   public static void setStatusInterval(int statusInterval) {
     Uploader.statusInterval = statusInterval;
+  }
+
+  /* (non-Javadoc)
+   * @see gwtupload.client.IUploader#getBasename()
+   */
+  public String getBasename() {
+    return Utils.basename(getFileName());
   }
 
 }
