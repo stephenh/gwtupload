@@ -355,7 +355,6 @@ public class UploadServlet extends HttpServlet implements Servlet {
       listener.setException(e);
       throw e;
     } catch (Exception e) {
-      logger.error("me cago en zp " + e.getMessage());
       logger.error("UPLOAD-SERVLET (" + request.getSession().getId() + ") Unexpected Exception -> " + e.getMessage() + "\n" + stackTraceToString(e));
       System.out.println(stackTraceToString(e));
       e.printStackTrace();
