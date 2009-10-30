@@ -268,17 +268,10 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		public void onError(Request request, Throwable exception) {
 		  GWT.log("onCancelReceivedCallback onError: " , exception);
       statusWidget.setStatus(IUploadStatus.Status.CANCELED);
-      successful = false;
-      cancelled = true;
-      uploadFinished();
 		}
 		public void onResponseReceived(Request request, Response response) {
-		  if (getStatus() == Status.CANCELING)
+		  if (getStatus() == Status.CANCELING) 
 		    updateStatusTimer.scheduleRepeating(3000);
-      statusWidget.setStatus(IUploadStatus.Status.CANCELED);
-      successful = false;
-      cancelled = true;
-      uploadFinished();
 		}
 	};
 
@@ -793,7 +786,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 			// So it's better to change the request path sending an additional random parameter
 			RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("filename=" + fileInput.getName() , "c=" + requestsCounter++));
 			reqBuilder.setTimeoutMillis(DEFAULT_AJAX_TIMEOUT);
-			reqBuilder.sendRequest("random=" + Math.random(), onStatusReceivedCallback);
+			reqBuilder.sendRequest("get_status", onStatusReceivedCallback);
 		} catch (RequestException e) {
 			e.printStackTrace();
 		}
@@ -836,6 +829,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 	    ret += "?";
 	  for(String par: params) 
 	    ret += "&" + par;
+	  ret += "&random=" + Math.random();
 	  return ret;
 	}
 
