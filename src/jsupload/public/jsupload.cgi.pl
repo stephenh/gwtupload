@@ -144,6 +144,7 @@ sub doPost {
                 $msg .= "<file><name>$key</name><value>$value</value>"
                   . "<size>$size</size><type>$type</type></file>\n";
             } else {
+                saveFile($key, $value, "text/plain");
                 $msg .= "<parameter><name>$key</name>"
                   . "<value>$value</value></parameter>\n";
             }
@@ -158,13 +159,15 @@ sub doPost {
 ## and one with the item information (original name and content-type)
 sub saveFile {
     my ( $key, $name, $type, $fd ) = @_;
-    $name =~ s/[^\w]/_/g;
-    my $bin_file = $user_dir . $key . ".bin";
-    open( BIN, ">$bin_file" ) || return;
-    while (<$fd>) {
-        print BIN $_;
+    #$name =~ s/[^\w]/_/g;
+    if ($fd) {
+       my $bin_file = $user_dir . $key . ".bin";
+       open( BIN, ">$bin_file" ) || return;
+       while (<$fd>) {
+         print BIN $_;
+       }
+       close(BIN);
     }
-    close(BIN);
     my $info_file = $user_dir . $key . ".info";
     open( INFO, ">$info_file" ) || return;
     print INFO "$name\n$type\n";
