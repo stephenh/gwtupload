@@ -603,7 +603,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 		return getDataImpl(fileUrl(), getInputName(), getFileName(), getBasename(), getServerResponse(), getStatus().toString());
 	}
 
-	private native JavaScriptObject getDataImpl(String url, String inputName, String fileName, String basename, String serverResponse, String status) /*-{
+	private native JavaScriptObject getDataImpl(String url, String inputName, String fileName, String baseName, String serverResponse, String status) /*-{
 		return {
 		   url: url,
 		   name: inputName,
