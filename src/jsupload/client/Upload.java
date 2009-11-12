@@ -106,10 +106,14 @@ public class Upload implements Exportable {
 		
 		uploader.setI18Constants(new I18nConstants(jsProp, Const.REGIONAL));
 		if (status!=null) {
-		  status.setPercentMessage(jsProp.get(Const.TXT_PERCENT));
-      status.setHoursMessage(jsProp.get(Const.TXT_HOURS));
-      status.setMinutesMessage(jsProp.get(Const.TXT_MINUTES));
-      status.setSecondsMessage(jsProp.get(Const.TXT_SECONDS));
+	    if (jsProp.defined(Const.TXT_PERCENT)) 
+	      status.setPercentMessage(jsProp.get(Const.TXT_PERCENT));
+      if (jsProp.defined(Const.TXT_HOURS)) 
+        status.setHoursMessage(jsProp.get(Const.TXT_HOURS));
+      if (jsProp.defined(Const.TXT_MINUTES)) 
+        status.setMinutesMessage(jsProp.get(Const.TXT_MINUTES));
+      if (jsProp.defined(Const.TXT_SECONDS)) 
+        status.setSecondsMessage(jsProp.get(Const.TXT_SECONDS));
 		}
 
 	}

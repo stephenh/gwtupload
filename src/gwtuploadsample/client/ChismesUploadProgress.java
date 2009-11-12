@@ -66,8 +66,10 @@ public class ChismesUploadProgress extends BaseUploadStatus {
   }
   
   public void setPercentMessage (String message) {
-    if (message != null)
+    if (message != null) {
       prg.setPercentMessage(message);
+      prg.setTotalMessage(message);
+    }
   }
 
 	@Override
