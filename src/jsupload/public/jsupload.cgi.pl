@@ -159,9 +159,9 @@ sub doPost {
 ## and one with the item information (original name and content-type)
 sub saveFile {
     my ( $key, $name, $type, $fd ) = @_;
-    #$name =~ s/[^\w]/_/g;
+    my $bin_file = "";
     if ($fd) {
-       my $bin_file = $user_dir . $key . ".bin";
+       $bin_file = $user_dir . $key . ".bin";
        open( BIN, ">$bin_file" ) || return;
        while (<$fd>) {
          print BIN $_;
