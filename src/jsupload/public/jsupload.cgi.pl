@@ -52,7 +52,7 @@ use Data::Dumper;
 
 my $idname   = "CGISESSID";
 my $tmp_dir  = "/tmp/uploader";
-my $max_size = 5000000;
+my $max_size = 2000000;
 
 # Get the sessionId or create a new one
 # do not use CGI here, because we need to handle STDIN in order to update the progress status.
@@ -66,6 +66,7 @@ if ( $ENV{'HTTP_COOKIE'} && $ENV{'HTTP_COOKIE'} =~ /$idname="*([^";]+)/ ) {
 my $user_dir = "$tmp_dir/$sid/";
 my $data_file = "$user_dir/data.$$";
 my $cancel_file = "$user_dir/cancel";
+my $error_file = "$user_dir/error";
 my $progress_file = "$user_dir/progress";
 
 # Controller:
@@ -96,12 +97,6 @@ sub doPost {
     ## flush after a write
     $| = 1;
 
-    ## Validate request size
-    my $len = $ENV{'CONTENT_LENGTH'} || 3000;
-    if ( $len && $len > $max_size ) {
-        writeResponse("<error>The maximum upload size has been exceeded</error>");
-    }
-
     ## Validate permissions
     if ( !-d "$user_dir" ) {
         mkpath( "$user_dir", 0, 0777 )
@@ -109,22 +104,33 @@ sub doPost {
         chmod( 0777, "$user_dir" );
     }
 
+    ## Validate request size
+    my $len = $ENV{'CONTENT_LENGTH'} || 3000;
+    print STDERR "Receiving $len ($max_size)\n";
+    if ( $len && $len > $max_size ) {
+        unlink($progress_file);
+        unlink($data_file);
+        my $maxKB = int ($max_size / 1024);
+	my $sizeKB = int ($len / 1024);
+	exitWithError("The maximum configured upload size ($maxKB KB.) has been exceeded ($sizeKB KB.) ");
+    }
+
     ## Receive the request, and update progress data
     unlink($cancel_file) if (-f $cancel_file);
-    open( D, ">$data_file" )
-      || writeResponse("<error>Can't open postfile: $user_dir/postdata $!</error>");
+    unlink($error_file) if (-f $error_file);
+    open( D, ">$data_file" ) || exitWithError("Can't open postfile: $user_dir/postdata $!</error>");
     my ( $n, $done, $line ) = ( 0, 0, "" );
     do {
         if (-f $cancel_file) {
            close(D);
            unlink($progress_file);
            unlink($data_file);
-           writeResponse("<canceled>true</canceled><finished>canceled</finished>", "bye");
+           writeResponse("<canceled>true</canceled><finished>canceled</finished>");
         }
         $done += $n;
         updateProgress( $done, $len );
         print D $line;
-        select( undef, undef, undef, 0.3 );
+        select( undef, undef, undef, 0.1 );
     } while ( ( $n = read( STDIN, $line, 4096 ) ) > 0 );
     close(D);
 
@@ -196,15 +202,29 @@ sub updateProgress {
     close(F);
 }
 
+sub exitWithError {
+    my $msg = shift || "Server Error $!";
+    open( F, ">$error_file" );
+    print F $msg;
+    close(F);
+    print STDERR "Upload Error: $msg\n";
+    writeResponse("<error>$msg</error>");
+}
+
 sub cancelProcess {
     open( F, ">$cancel_file" );
     print F "cancel";
     close(F);
+    print STDERR "Cancelled \n";
     writeResponse("<canceled>true</canceled>");
 }
 
 ## read the upload progress from the status file
 sub getProgress {
+    if ( -f "$error_file" ) {
+        my $error=`cat $error_file`;
+        writeResponse("<error>$error</error><finished>true</finished>");
+    }
     if ( -f "$cancel_file" ) {
         writeResponse("<canceled>true</canceled><finished>canceled</finished>");
     }
