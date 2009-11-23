@@ -63,6 +63,7 @@ if ( $ENV{'HTTP_COOKIE'} && $ENV{'HTTP_COOKIE'} =~ /$idname="*([^";]+)/ ) {
 } else {
     $set_cookie = "Set-Cookie: CGISESSID=$sid; path=/\n"
 }
+my $slow = 0;
 my $user_dir = "$tmp_dir/$sid/";
 my $data_file = "$user_dir/data.$$";
 my $cancel_file = "$user_dir/cancel";
@@ -130,8 +131,8 @@ sub doPost {
         $done += $n;
         updateProgress( $done, $len );
         print D $line;
-        select( undef, undef, undef, 0.1 );
-    } while ( ( $n = read( STDIN, $line, 4096 ) ) > 0 );
+        select( undef, undef, undef, 0.1 ) if ($slow);
+    } while ( ( $n = sysread( STDIN, $line, 4096 ) ) > 0 );
     close(D);
 
     ## Process received data

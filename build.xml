@@ -121,7 +121,12 @@
 	</target>
 	
 	<target name="js" depends="war" description="Generates JS library">
-		<jar jarfile="${jsproject}-${version}.zip" basedir="war/jsupload.JsUpload" />
+		<exec dir="." executable="perl">
+		 <arg line="-pi -e 's#(containerId: .*)$#$1 action: &quot;/cgi-bin/jsupload.cgi.pl&quot;, #g' war/jsupload.JsUpload/JsUpload.html" />
+		</exec>
+		<zip destfile="${jsproject}-${version}.zip" >
+                  <zipfileset dir="war/jsupload.JsUpload" prefix="jsupload" excludes="**/JsUpload.wiki.txt"/>
+                </zip>
 	</target>
 
 	<target name="zip" depends="jar, javadoc, war, js" 
