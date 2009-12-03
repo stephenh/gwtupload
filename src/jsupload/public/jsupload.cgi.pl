@@ -157,6 +157,7 @@ sub doPost {
             }
         }
     }
+    close(STDIN);
     unlink($data_file);
     writeResponse($msg);
 }

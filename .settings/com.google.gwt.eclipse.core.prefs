@@ -1,4 +1,4 @@
-#Sun Sep 13 09:50:25 CEST 2009
+#Thu Nov 12 11:30:15 CET 2009
 eclipse.preferences.version=1
 entryPointModules=gwtuploadsample.ChismesUploadSample|gwtuploadsample.SingleUploadSample|gwtuploadsample.MultipleUploadSample|jsupload.JsUpload
 filesCopiedToWebInfLib=gwt-servlet.jar
