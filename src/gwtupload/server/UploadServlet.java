@@ -229,6 +229,7 @@ public class UploadServlet extends HttpServlet implements Servlet {
    * 
    */
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    perThreadRequest.set(request);
     String error;
     try {
       error = parsePostRequest(request, response);
@@ -243,6 +244,8 @@ public class UploadServlet extends HttpServlet implements Servlet {
       logger.error("UPLOAD-SERVLET (" + request.getSession().getId() + ") Exception -> " + e.getMessage() + "\n" + stackTraceToString(e));
       error = e.getMessage();
       renderXmlResponse(request, response, "<" + TAG_ERROR + ">" + error + "</" + TAG_ERROR + ">");
+    } finally {
+      perThreadRequest.set(null);
     }
   }
 
@@ -268,8 +271,6 @@ public class UploadServlet extends HttpServlet implements Servlet {
    */
   @SuppressWarnings("unchecked")
   protected String parsePostRequest(HttpServletRequest request, HttpServletResponse response) {
-
-    perThreadRequest.set(request);
 
     try {
       String delay = request.getParameter("delay");
@@ -361,8 +362,6 @@ public class UploadServlet extends HttpServlet implements Servlet {
       RuntimeException ex = new UploadException(e);
       listener.setException(ex);
       throw ex;
-    } finally {
-      perThreadRequest.set(null);
     }
 
   }

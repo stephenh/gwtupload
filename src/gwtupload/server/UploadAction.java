@@ -140,10 +140,10 @@ public abstract class UploadAction extends UploadServlet {
   }
   
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-
     String error = null;
     String message = null;
 
+    perThreadRequest.set(request);
     try {
       // Receive the files and form elements, updating the progress status
       error = super.parsePostRequest(request, response);
@@ -166,6 +166,8 @@ public abstract class UploadAction extends UploadServlet {
     } catch (Exception e) {
       logger.info("Exception:" + e);
       error = e.getMessage();
+    } finally {
+      perThreadRequest.set(null);
     }
 
     AbstractUploadListener listener = getCurrentListener(request);
