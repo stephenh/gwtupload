@@ -942,6 +942,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     updateStatusTimer.finish();
     uploading = cancelled = finished = successful = false;
     basename = serverResponse = null;
+    fileDone = new HashSet<String>();
   }
 
   /* (non-Javadoc)

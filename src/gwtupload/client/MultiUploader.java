@@ -347,6 +347,11 @@ public class MultiUploader extends Composite implements IUploader {
    * @see gwtupload.client.IUploader#reset()
    */
   public void reset() {
+    currentUploader.reset();
+    currentUploader = null;
+    uploaders = new Vector<Uploader>();
+    multiUploaderPanel.clear();
+    newUploaderInstance();
   }
 
   /* (non-Javadoc)

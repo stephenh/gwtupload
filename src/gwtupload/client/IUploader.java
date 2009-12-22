@@ -222,7 +222,9 @@ public interface IUploader extends HasJsData, HasWidgets {
 	public void submit();
 
 	/**
-   * Reset form elements
+   * Reset form elements in single uploaders.
+   * Remove uploaded elements in multiple uploaders from the main panel.
+   * Reset the list of already uploaded files. 
    */
   public void reset();
 	
@@ -302,6 +304,6 @@ public interface IUploader extends HasJsData, HasWidgets {
    * @param prefix
    */
   public void setFileInputPrefix(String prefix);
-
+  
 	
 }
