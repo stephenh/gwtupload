@@ -2,7 +2,7 @@
 <project name="GWTUpload" default="build" basedir=".">
 	<property name="project" value="gwtupload" />
 	<property name="jsproject" value="jsupload" />
-	<property name="version" value="0.5.5" />
+	<property name="version" value="0.5.6" />
 
 	<property name="tmp.dir" value="${project}-${version}" />
 	<property name="jar.file" value="${project}-${version}.jar" />
@@ -58,13 +58,13 @@
                       classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="gwtuploadsample.ChismesUploadSample" />
+			<arg value="-style" />
+			<arg value="PRETTY" />
 		</java>
 		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
                       classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="jsupload.JsUpload" />
-			<arg value="-style" />
-			<arg value="PRETTY" />
 		</java>
 	</target>
 
