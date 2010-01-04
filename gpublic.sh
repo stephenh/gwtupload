@@ -19,13 +19,15 @@ then
     EDITOR=vi svn commit
 fi
 
-
-
-
 V=`grep "property name=\"version" build.xml | sed -e 's#^.*value="##' -e 's#".*$##'`
 [ -z "$V" ] && echo "Unable to get version from buld.xml" && exit
 
-svn copy $SVN_REPO/trunk/GWTUpload $SVN_REPO/tags/GWTUpload-$V -m "Tag for release $V" 2>&1
+echo "Checking if it is necessary create a new tag"
+svn info $SVN_REPO/tags/GWTUpload-$V
+if [ $? != 0 ]
+then
+   svn copy $SVN_REPO/trunk/GWTUpload $SVN_REPO/tags/GWTUpload-$V -m "Tag for release $V" 2>&1
+fi
 
 echo "Creating jsUpload wiki documentation"
 perl gjslib.pl > $W/JsUpload_Documentation.wiki
