@@ -129,6 +129,7 @@
                 </zip>
 	</target>
 
+
 	<target name="zip" depends="jar, javadoc, war, js" 
                 description="Generate distibution file with sources, license, docs, and jar">
 		<delete file="${tmp.dir}.zip" />

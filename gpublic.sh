@@ -2,6 +2,7 @@
 C=../GWTUpload-website
 M=../GWTUpload-mavenrepo
 W=../GWTUpload-wiki
+SVN_REPO=https://gwtupload.googlecode.com/svn/trunk/GWTUpload
 
 [ ! -d "$C" ] && echo "$C project don't exist" && exit
 [ ! -d "$M" ] && echo "$M project don't exist" && exit
@@ -9,9 +10,22 @@ W=../GWTUpload-wiki
 
 [ ! -f "build.xml" ] && echo "build.xml don't exist" && exit
 
+svn status build.xml *.sh src | grep "..."
+if [ $? = 0 ]
+then
+    echo -e "Changes detected, do you want to continue? (y/n) [y]  \c"
+    read t
+    [ -n "$t" -a "$t" != y ] && exit
+    EDITOR=vi svn commit
+fi
+
+
+
 
 V=`grep "property name=\"version" build.xml | sed -e 's#^.*value="##' -e 's#".*$##'`
 [ -z "$V" ] && echo "Unable to get version from buld.xml" && exit
+
+svn copy $SVN_REPO $SVN_REPO/../../tags/GWTUpload-$V -m "Tag for release $V" 2>&1
 
 echo "Creating jsUpload wiki documentation"
 perl gjslib.pl > $W/JsUpload_Documentation.wiki
