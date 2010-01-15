@@ -1,4 +1,22 @@
 
+---
+
+This is a fork of GWTUpload (http://code.google.com/p/gwtupload/) to remove the
+dependency on the server-side session.
+
+This means it can run in a clustered environment and share file upload
+information via a user-provided FileRepository implementation (that could be
+database-backed, cache-backed, etc.).
+
+The servlet side for the fork is nearly a complete rewrite, with functionality
+I didn't need taken out (e.g. multiple files, removing/clearing).
+
+The client side is mostly untouched, saved for removing the `hasSession` check
+and putting in an OnTokenRequestedHandler interface so that, when Send is clicked,
+an event can fire that can go get the next token id (e.g. random or database id)
+for use on the next upload.
+
+---
 
 
 CONTENTS:
