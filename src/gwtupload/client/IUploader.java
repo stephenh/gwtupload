@@ -142,6 +142,10 @@ public interface IUploader extends HasJsData, HasWidgets {
     void onCancel(IUploader uploader);
   }
 
+  public interface OnTokenRequestedHandler extends EventHandler {
+    void onRequested();
+  }
+
   /**
 	 * Changes the status widget used to show the progress.
 	 * @param status

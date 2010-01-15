@@ -2,7 +2,7 @@
 <project name="GWTUpload" default="build" basedir=".">
 	<property name="project" value="gwtupload" />
 	<property name="jsproject" value="jsupload" />
-	<property name="version" value="0.5.6" />
+	<property name="version" value="0.5.6-bizo" />
 
 	<property name="tmp.dir" value="${project}-${version}" />
 	<property name="jar.file" value="${project}-${version}.jar" />
@@ -12,7 +12,7 @@
 	<property name="lib.dir" value="${tmp.dir}/lib" />
 	<property name="src.dir" value="${tmp.dir}/src" />
 
-	<property name="gwt.sdk" location="/mirai/SOFT/j2ee/gwt/gwt-linux-1.7.0" />
+	<property name="gwt.sdk" location="/home/stephen/apps/gwt-2.0.0" />
 
 	<path id="project.class.path">
 		<pathelement location="war/WEB-INF/classes" />
@@ -32,8 +32,7 @@
 
 	<target name="javac" depends="libs" description="Compile java source">
 		<mkdir dir="war/WEB-INF/classes" />
-		<javac srcdir="src" includes="**" encoding="utf-8" destdir="war/WEB-INF/classes" 
-                       source="1.5" target="1.5" nowarn="true" debug="true" debuglevel="lines,vars,source">
+		<javac srcdir="src" includes="**" encoding="utf-8" destdir="war/WEB-INF/classes" source="1.5" target="1.5" nowarn="true" debug="true" debuglevel="lines,vars,source">
 			<classpath refid="project.class.path" />
 		</javac>
 		<copy todir="war/WEB-INF/classes">
@@ -44,28 +43,26 @@
 	<!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
 	<!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
 	<target name="gwtc" depends="javac" description="GWT compile to JavaScript">
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
-                      classpathref="project.class.path">
+		<!--
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="gwtuploadsample.SingleUploadSample" />
 		</java>
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
-                      classpathref="project.class.path">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="gwtuploadsample.MultipleUploadSample" />
 		</java>
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
-                      classpathref="project.class.path">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="gwtuploadsample.ChismesUploadSample" />
 			<arg value="-style" />
 			<arg value="PRETTY" />
 		</java>
-		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" 
-                      classpathref="project.class.path">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler" classpathref="project.class.path">
 			<jvmarg value="-Xmx256M" />
 			<arg value="jsupload.JsUpload" />
 		</java>
+-->
 	</target>
 
 	<target name="hosted" depends="javac" description="Run hosted mode">
@@ -130,8 +127,7 @@
 	</target>
 
 
-	<target name="zip" depends="jar, javadoc, war, js" 
-                description="Generate distibution file with sources, license, docs, and jar">
+	<target name="zip" depends="jar, javadoc" description="Generate distibution file with sources, license, docs, and jar">
 		<delete file="${tmp.dir}.zip" />
 		<delete dir="${class.dir}"/>
 		<delete dir="${war.dir}"/>

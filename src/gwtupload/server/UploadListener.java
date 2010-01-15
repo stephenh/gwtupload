@@ -16,169 +16,50 @@
  */
 package gwtupload.server;
 
-import gwtupload.server.exceptions.UploadTimeoutException;
-
-import java.io.Serializable;
 import java.util.Date;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import org.apache.commons.fileupload.ProgressListener;
 
-/**
- * This is a File Upload Listener that is used by Apache Commons File Upload to
- * monitor the progress of the uploaded file.
- * 
- * This object and its attributes have to be serializable because
- * Google App-Engine uses dataStore and memCache to store session objects.
- * 
- * @author Manolo Carrasco Moñino
- * 
- */
-public class UploadListener extends AbstractUploadListener {
+public class UploadListener implements ProgressListener {
 
-  /**
-   * A class which is executed in a new thread, so its able to detect
-   * when an upload process is frozen and sets an exception in order to
-   * be canceled.
-   * This doesn't work in Google application engine
-   */
-  public class TimeoutWatchDog extends Thread implements Serializable {
-    private static final long serialVersionUID = -649803529271569237L;
-    
-    AbstractUploadListener listener;
-    private long lastData = (new Date()).getTime();
-    private long lastBytesRead = 0L;
-    
-    public TimeoutWatchDog(AbstractUploadListener l) {
-      listener = l;
-    }
-    
-    public void cancel() {
-      listener = null;
-    }
+  private static final int DEFAULT_SAVE_INTERVAL = 1000;
+  private final FileRepository repo;
+  private final Integer fileToken;
+  private Date lastSaved = new Date();
+  private long lastCurrentBytes = 0;
+  private int uploadDelay;
 
-    private boolean isFrozen() {
-      long now = (new Date()).getTime();
-      if (bytesRead > lastBytesRead) {
-        lastData = now;
-        lastBytesRead = bytesRead;
-      } else if (now - lastData > MAX_TIME_WITHOUT_DATA) { 
-        return true; 
-      }
-      return false;
-    }
-    
-    @Override
-    public void run() {
+  public UploadListener(FileRepository repo, Integer fileToken, int uploadDelay) {
+    this.repo = repo;
+    this.fileToken = fileToken;
+    this.uploadDelay = uploadDelay;
+  }
+
+  /** This method is called each time the server receives a block of bytes--could be very often. */
+  public void update(long currentBytes, long totalBytes, int item) {
+    // To avoid cache overloading, this object is saved when the upload starts, 
+    // when it has finished, or when the interval from the last save is significant. 
+    boolean save = lastCurrentBytes == 0 && currentBytes > 0 || currentBytes >= totalBytes || (new Date()).getTime() - lastSaved.getTime() > DEFAULT_SAVE_INTERVAL;
+    lastCurrentBytes = currentBytes;
+    if (!save)
+      return;
+    lastSaved = new Date();
+
+    // If other request has set an exception, e.g. message=cancelled, stop so the
+    // commons-fileupload's parser stops and the connection is closed.
+    final FileProgress p = repo.loadProgress(fileToken);
+    if (p.getMessage() != null) { throw new UploadCancelledException(p.getMessage()); }
+
+    repo.saveProgress(fileToken, currentBytes, totalBytes);
+
+    // Just a way to slow down the upload process and see the progress bar in fast networks.
+    if (uploadDelay > 0 && currentBytes < totalBytes) {
       try {
-        Thread.sleep(WATCHER_INTERVAL);
+        Thread.sleep(uploadDelay);
       } catch (InterruptedException e) {
-        logger.error(className + " " + sessionId + " TimeoutWatchDog: sleep Exception: " + e.getMessage());
-      }
-      if (listener != null) {
-        if (listener.getBytesRead() > 0 && listener.getPercent() >= 100 || listener.isCanceled()) {
-          logger.debug(className + " " + sessionId + " TimeoutWatchDog: upload process has finished, stoping watcher");
-          listener = null;
-        } else {
-          if (isFrozen()) {
-            logger.info(className + " " + sessionId + " TimeoutWatchDog: the recepcion seems frozen:" + listener.getBytesRead() + "/" + listener.getContentLength() + " bytes (" + listener.getPercent() + "%) " );
-            exception = new UploadTimeoutException("No new data received after " + MAX_TIME_WITHOUT_DATA/1000 + " seconds");
-          } else {
-            run();
-          }
-        }
-      }
-    }
-  }
-  
-  private static final long serialVersionUID = -6431275569719042836L;
-  
-  protected static final String ATTR_LISTENER = "LISTENER";
-
-  private static final int MAX_TIME_WITHOUT_DATA = 20000;
-  
-  private static final int WATCHER_INTERVAL = 5000;
-  
-  public static AbstractUploadListener current(HttpServletRequest request) {
-    return (AbstractUploadListener) request.getSession().getAttribute(ATTR_LISTENER);
-  }
-
-  private TimeoutWatchDog watcher = null;
-
-  /**
-   * Default constructor.
-   * 
-   */
-  public UploadListener(int sleepMilliseconds, int requestSize) {
-    super(sleepMilliseconds, requestSize);
-    startWatcher();
-  }
-
-  /* (non-Javadoc)
-   * @see gwtupload.server.AbstractUploadListener#remove()
-   */
-  public void remove() {
-    logger.info(className + " " + sessionId + " remove: " + toString());
-    if (session() != null)
-      session().removeAttribute(ATTR_LISTENER);
-    saved = new Date();
-  }
-  
-  public static AbstractUploadListener current(String sessionId) {
-    return (AbstractUploadListener)session().getAttribute(ATTR_LISTENER);
-  }
-
-  
-  /**
-   *  Upload servlet saves the current request as a ThreadLocal,
-   *  so it is accessible from any class.
-   *  
-   *  @return request of the current thread
-   */
-  private static HttpServletRequest request() {
-    return UploadServlet.getThreadLocalRequest(); 
-  }
-
-  /* (non-Javadoc)
-   * @see gwtupload.server.AbstractUploadListener#save()
-   */
-  public void save() {
-    if (session() != null)
-      session().setAttribute(ATTR_LISTENER, this);
-    saved = new Date();
-    logger.debug(className + " " + sessionId + " save " + toString());
-  }
-  
-  /**
-   * @return current HttpSession
-   */
-  private static HttpSession session() {
-    return request() != null ? request().getSession() : null; 
-  }
-
-  private void startWatcher() {
-    if (watcher == null) {
-      try {
-        watcher = new TimeoutWatchDog(this);
-        watcher.start();
-      } catch (Exception e) {
-        logger.info(className + " " + sessionId + " unable to create watchdog: " + e.getMessage());
+        Thread.currentThread().interrupt();
       }
     }
   }
 
-  private void stopWatcher() {
-    if (watcher != null)
-      watcher.cancel();
-  }
-  
-  /* (non-Javadoc)
-   * @see gwtupload.server.AbstractUploadListener#update(long, long, int)
-   */
-  @Override
-  public void update(long done, long total, int item) {
-    super.update(done, total, item);
-    if (getPercent() >= 100) 
-      stopWatcher();
-  }
 }

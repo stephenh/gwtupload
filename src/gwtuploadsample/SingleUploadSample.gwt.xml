@@ -1,4 +1,0 @@
-<module>
-  <inherits name="gwtupload.GWTUpload"/>
-  <entry-point class="gwtuploadsample.client.SingleUploadSample"/>
-</module>
