@@ -98,7 +98,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   private static final int DEFAULT_AJAX_TIMEOUT = 10000;
   private static final int DEFAULT_TIME_MAX_WITHOUT_RESPONSE = 60000;
   private static final int DEFAULT_UPDATE_INTERVAL = 3000;
-  public static final String DEFAULT_SERVLET_PATH = "servlet.gupld";
+  public static final String DEFAULT_SERVLET_PATH = "servlet.gupld?";
 
   public final static String PARAMETER_SHOW = "show";
 
@@ -110,28 +110,28 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   protected static final String STYLE_MAIN = "GWTUpld";
   protected static final String STYLE_STATUS = "upld-status";
 
-  private String fileInputPrefix = "GWTU";
-  private Uploader _this = this;
-  private boolean uploading = false;
-  private boolean cancelled = false;
-  private boolean autoSubmit = false;
-  private boolean finished = false;
-  private boolean waitingForResponse = false;
-  private int requestsCounter = 0;
-  private boolean successful = false;
-  private Integer fileToken = null;
-  private boolean avoidRepeatedFiles = false;
-  private String[] validExtensions = null;
-  private String validExtensionsMsg = "";
+  protected String fileInputPrefix = "GWTU";
+  protected Uploader _this = this;
+  protected boolean uploading = false;
+  protected boolean cancelled = false;
+  protected boolean autoSubmit = false;
+  protected boolean finished = false;
+  protected boolean waitingForResponse = false;
+  protected int requestsCounter = 0;
+  protected boolean successful = false;
+  protected Integer fileToken = null;
+  protected boolean avoidRepeatedFiles = false;
+  protected String[] validExtensions = null;
+  protected String validExtensionsMsg = "";
 
-  private String serverResponse = null;
+  protected String serverResponse = null;
 
-  private IUploadStatus statusWidget = new BaseUploadStatus();
+  protected IUploadStatus statusWidget = new BaseUploadStatus();
   protected UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
-  private long lastData = now();
+  protected long lastData = now();
 
-  private IFileInput fileInput;
-  private FormPanel uploadForm;
+  protected IFileInput fileInput;
+  protected FormPanel uploadForm;
   protected HorizontalPanel uploaderPanel;
 
   /**
@@ -255,7 +255,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   public void setFileToken(Integer fileToken) {
     if (this.fileToken == null && fileToken != null) {
       this.fileToken = fileToken;
-      uploadForm.setAction(uploadForm.getAction() + "?fileToken=" + fileToken);
+      uploadForm.setAction(uploadForm.getAction() + "fileToken=" + fileToken + "&");
       uploadForm.submit();
     }
   }
