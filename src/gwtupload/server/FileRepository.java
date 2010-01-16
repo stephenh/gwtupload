@@ -3,11 +3,12 @@ package gwtupload.server;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public interface FileRepository {
 
-  void saveData(Integer fileToken, String contentType, InputStream data);
+  void saveData(Integer fileToken, String contentType, InputStream data, HttpServletRequest request);
 
   void saveProgress(Integer fileToken, long currentBytes, long totalBytes);
  

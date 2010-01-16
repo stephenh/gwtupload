@@ -140,6 +140,9 @@ public abstract class UploadServlet extends HttpServlet {
     final Integer fileToken = getToken(request, "fileToken");
     if (fileToken == null) { throw new UploadCancelledException("Missing token"); }
 
+    // reset any old error in case they are trying again
+    repo.saveError(fileToken, null);
+
     final UploadListener listener = new UploadListener(repo, fileToken, uploadDelay);
     logger.debug("(" + fileToken + ") new upload request received.");
 
@@ -160,7 +163,7 @@ public abstract class UploadServlet extends HttpServlet {
         if (!s.isFormField()) {
           InputStream in = s.openStream();
           try {
-            repo.saveData(fileToken, s.getContentType(), in);
+            repo.saveData(fileToken, s.getContentType(), in, request);
           } finally {
             IOUtils.closeQuietly(in);
           }
