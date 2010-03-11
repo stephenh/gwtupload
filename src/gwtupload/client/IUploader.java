@@ -172,13 +172,6 @@ public interface IUploader extends HasJsData, HasWidgets {
 	public void setServletPath(String path);
 
 	/**
-	 * Set it to true if you want to avoid uploading files that already has been sent
-	 * 
-	 * @param avoidRepeatFiles
-	 */
-	public void avoidRepeatFiles(boolean avoidRepeatFiles);
-	
-	/**
 	 * Returns the link reference to the uploaded file in the web server.
 	 * It is useful to show uploaded images or to create links to uploaded documents.
 	 * 

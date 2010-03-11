@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class MultiUploader extends Composite implements IUploader {
 
-  private boolean avoidRepeat = true;
+  // private boolean avoidRepeat = true;
   private Uploader currentUploader = null;
   private String fileInputPrefix = "GWTMU";
   private UploaderConstants i18nStrs = GWT.create(UploaderConstants.class);
@@ -159,8 +159,8 @@ public class MultiUploader extends Composite implements IUploader {
    * @see gwtupload.client.IUploader#avoidRepeatFiles(boolean)
    */
   public void avoidRepeatFiles(boolean avoidRepeatFiles) {
-    avoidRepeat = avoidRepeatFiles;
-    currentUploader.avoidRepeatFiles(avoidRepeat);
+    // avoidRepeat = avoidRepeatFiles;
+    // currentUploader.avoidRepeatFiles(avoidRepeat);
   }
 
   /* (non-Javadoc)
@@ -308,12 +308,13 @@ public class MultiUploader extends Composite implements IUploader {
     }
 
     // Create a new uploader
-    currentUploader = new Uploader(true);
+    currentUploader = new Uploader();
+    // currentUploader.setAutoSubmit(true);
     uploaders.add(currentUploader);
     currentUploader.setStatusWidget(statusWidget);
     currentUploader.setValidExtensions(validExtensions);
     currentUploader.setServletPath(servletPath);
-    currentUploader.avoidRepeatFiles(avoidRepeat);
+    // currentUploader.avoidRepeatFiles(avoidRepeat);
     currentUploader.setI18Constants(i18nStrs);
     // Set the handlers
     currentUploader.addOnStartUploadHandler(startHandler);

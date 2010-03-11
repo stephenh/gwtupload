@@ -26,103 +26,35 @@ import com.google.gwt.user.client.Timer;
  * @author Manolo Carrasco Moñino
  * 
  */
-public class UpdateTimer extends Timer {
-  
-    private UpdateTimer _this;
-    
-    private IsUpdateable updateable;
+public class UpdateTimer {
 
-    private int interval = 1500;
-
-    private boolean isRunning = true;
-    
-    private Timer delayedStarter = new Timer() {
-      public void run() {
-        _this.start();
-      }
-    };
-
-    public UpdateTimer(IsUpdateable updateable, int periodMillis) {
-        this.updateable = updateable;
-        this.interval = periodMillis;
-        _this = this;
-    }
-
-    /* (non-Javadoc)
-     * @see com.google.gwt.user.client.Timer#run()
-     */
+  private final IsUpdateable updateable;
+  private final int interval;
+  private final Timer realTimer = new Timer() {
+    @Override
     public void run() {
+      if (pastFirstTime) {
         updateable.update();
+      }
+      pastFirstTime = true;
     }
-    
-    /* (non-Javadoc)
-     * @see com.google.gwt.user.client.Timer#scheduleRepeating(int)
-     */
-    @Override
-    public void scheduleRepeating(int periodMillis) {
-      isRunning = true;
-      super.scheduleRepeating(periodMillis);
-    }
-    
-    /* (non-Javadoc)
-     * @see com.google.gwt.user.client.Timer#cancel()
-     */
-    @Override
-    public void cancel(){
-      isRunning = false;
-      super.cancel();
-    }
+  };
+  private boolean pastFirstTime = false;
 
-    /**
-     * start the timer
-     */
-    public void start() {
-    	scheduleRepeating(interval);
-    }
-    
-    /**
-     * Schedules the timer's start to elapse in the future.
-     * The time to wait is the default configured period.
-     */
-    public void squeduleStart() {
-      squeduleStart(interval);
-    }
-    
-    /**
-     * Schedules the timer's start to elapse in the future.
-     * 
-     * @param delayMillis time in milliseconds to wait before start the timer
-     */
-    public void squeduleStart(int delayMillis) {
-      delayedStarter.schedule(delayMillis);
-    }
+  public UpdateTimer(IsUpdateable updateable, int periodMillis) {
+    this.updateable = updateable;
+    this.interval = periodMillis;
+  }
 
-    /**
-     * stop the timer
-     */
-    public void finish() {
-    	cancel();
-    }
+  /** Schedules the timer's start to elapse in the future. The time to wait is the default configured period. */
+  public void squeduleStart() {
+    pastFirstTime = false;
+    realTimer.scheduleRepeating(interval);
+  }
 
+  /** stop the timer */
+  public void finish() {
+    realTimer.cancel();
+  }
 
-    /**
-     * @return 
-     *     interval
-     */
-    public int getInterval() {
-        return interval;
-    }
-
-    /**
-     * @param periodMillis
-     */
-    public void setInterval(int periodMillis) {
-        if (this.interval != periodMillis) {
-            this.interval = periodMillis;
-            if (isRunning) {
-                finish();
-                start();
-            }
-        }
-    }
 }
