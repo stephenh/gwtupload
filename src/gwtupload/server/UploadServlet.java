@@ -115,49 +115,52 @@ public abstract class UploadServlet extends HttpServlet {
     try {
       parsePostRequest(request, response);
       renderXmlResponse(request, response, finishedXml("OK"));
-    } catch (UploadCancelledException e) {       // our error, expected cancelled
-      renderXmlResponse(request, response, wrapXml("cancelled", "true") + errorXml(e.getMessage()));
-    } catch (IOFileUploadException io) {         // commons errors, unwrap the IOException
+    } catch (UploadErrorException e) { // our error, "expected" error 
+      renderXmlResponse(request, response, errorXml(e.getMessage()));
+    } catch (UploadCancelledException e) { // our error, expected cancelled
+      renderXmlResponse(request, response, wrapXml("cancelled", "true"));
+    } catch (IOFileUploadException io) { // commons errors, unwrap the IOException
       throw (IOException) io.getCause();
     } catch (FileSizeLimitExceededException e) { // commons error, bad size
       renderXmlResponse(request, response, errorXml(e.getMessage()));
-    } catch (SizeLimitExceededException e) {     // commons error, bad size
+    } catch (SizeLimitExceededException e) { // commons error, bad size
       renderXmlResponse(request, response, errorXml(e.getMessage()));
-    } catch (FileUploadException e) {            // commons error, not expected
+    } catch (FileUploadException e) { // commons error, not expected
       logger.error("Upload exception: " + e.getMessage(), e);
       renderXmlResponse(request, response, errorXml(e.getMessage()));
-    } catch (RuntimeException e) {               // not expected
+    } catch (RuntimeException e) { // not expected
       logger.error("Upload exception: " + e.getMessage(), e);
       renderXmlResponse(request, response, errorXml(e.getMessage()));
     }
   }
 
-  protected void parsePostRequest(HttpServletRequest request, HttpServletResponse response) throws FileUploadException, IOException {
-    try {
-      String delay = request.getParameter("delay");
-      uploadDelay = Integer.parseInt(delay);
-    } catch (Exception e) {}
+  protected void parsePostRequest(HttpServletRequest request, HttpServletResponse response) throws UploadErrorException, FileUploadException, IOException {
+    final int delay;
+    if (request.getParameter("delay") != null) {
+      delay = Integer.valueOf(request.getParameter("delay"));
+    } else {
+      delay = uploadDelay;
+    }
 
     // set file upload progress listener to store status in the db
     final Integer fileToken = getToken(request, "fileToken");
-    if (fileToken == null || true) {
-      throw new UploadCancelledException("Missing token");
+    if (fileToken == null) {
+      throw new UploadErrorException("Missing token");
+    } else {
+      logger.debug("(" + fileToken + ") new upload request received.");
     }
 
-    // reset any old error in case they are trying again
-    repo.saveError(fileToken, null);
-
-    final UploadListener listener = new UploadListener(repo, fileToken, uploadDelay);
-    logger.debug("(" + fileToken + ") new upload request received.");
-
     try {
+      // reset any old error in case they are trying again
+      repo.saveError(fileToken, null);
+
       // Call to a method which the user can override
       checkRequest(request);
 
       // Create the factory used for uploading files,
       ServletFileUpload uploader = new ServletFileUpload();
       uploader.setSizeMax(maxSize);
-      uploader.setProgressListener(listener);
+      uploader.setProgressListener(new UploadListener(repo, fileToken, delay));
 
       // Receive the files--well, file, I hacked this to only support 1 file
       logger.debug("(" + fileToken + ") parsing HTTP POST request");
@@ -176,9 +179,7 @@ public abstract class UploadServlet extends HttpServlet {
       }
       logger.debug("(" + fileToken + ") parsed request, item received.");
 
-      if (!found) {
-        // Exception so that it gets called into repo.saveError
-        throw new UploadCancelledException("File was empty");
+      if (!found) { throw new UploadErrorException("File was empty"); // so that we repo.saveError
       }
     } catch (IOException io) {
       repo.saveError(fileToken, io.getMessage());
@@ -186,7 +187,11 @@ public abstract class UploadServlet extends HttpServlet {
     } catch (FileUploadException fue) {
       repo.saveError(fileToken, fue.getMessage());
       throw fue;
+    } catch (UploadErrorException uee) {
+      repo.saveError(fileToken, uee.getMessage());
+      throw uee;
     } catch (UploadCancelledException uce) {
+      // this should only happen if message=error already, so don't re-saveError it
       throw uce;
     } catch (RuntimeException e) {
       repo.saveError(fileToken, e.getMessage());

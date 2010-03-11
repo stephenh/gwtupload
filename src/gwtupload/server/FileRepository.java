@@ -8,7 +8,13 @@ import javax.servlet.http.HttpServletResponse;
 
 public interface FileRepository {
 
-  void saveData(Integer fileToken, String contentType, InputStream data, HttpServletRequest request);
+  /** Save the data.
+   * 
+   * @throws UploadErrorException if the data is invalid and to show a message to the user
+   * @throws IOException if the client browser upload fails to stop the upload
+   * @throws RuntimeException if something unexpected happens that you want logged
+   */
+  void saveData(Integer fileToken, String contentType, InputStream data, HttpServletRequest request) throws IOException, UploadErrorException;
 
   void saveProgress(Integer fileToken, long currentBytes, long totalBytes);
  
