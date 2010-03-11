@@ -335,7 +335,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 
     if (error != null) {
       successful = false;
-      cancelUpload(error);
+      statusWidget.setError(error);
+      uploadFinished();
       return;
     } else if (Utils.getXmlNodeValue(doc, TAG_WAIT) != null) {
       // waiting...?
@@ -360,7 +361,8 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 
     if (now() - lastData > uploadTimeout) {
       successful = false;
-      cancelUpload(i18nStrs.uploaderTimeout());
+      statusWidget.setError(i18nStrs.uploaderTimeout());
+      uploadFinished();
       try {
         sendAjaxRequestToCancelCurrentUpload();
       } catch (Exception e) {}
@@ -458,16 +460,6 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
       }
     }
   };
-
-  /**
-   * Cancel upload process and show an error message to the user
-   */
-  private void cancelUpload(String msg) {
-    successful = false;
-    uploadFinished();
-    statusWidget.setStatus(IUploadStatus.Status.ERROR);
-    statusWidget.setError(msg);
-  }
 
   /**
    * Cancel the current upload process
@@ -604,15 +596,15 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   }
 
   private native JavaScriptObject getDataImpl(String url, String inputName, String fileName, String baseName, String serverResponse, String status) /*-{
-                                                                                                                                                    return {
-                                                                                                                                                    url: url,
-                                                                                                                                                    name: inputName,
-                                                                                                                                                    filename: fileName,
-                                                                                                                                                    basename: baseName,
-                                                                                                                                                    response: serverResponse,
-                                                                                                                                                    status:  status
-                                                                                                                                                    };
-                                                                                                                                                    }-*/;
+    return {
+    url: url,
+    name: inputName,
+    filename: fileName,
+    basename: baseName,
+    response: serverResponse,
+    status:  status
+    };
+  }-*/;
 
   /**
    * Get the status progress used
