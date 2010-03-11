@@ -2,7 +2,7 @@
 <project name="GWTUpload" default="build" basedir=".">
 	<property name="project" value="gwtupload" />
 	<property name="jsproject" value="jsupload" />
-	<property name="version" value="0.5.8-bizo" />
+	<property name="version" value="0.5.9-bizo" />
 
 	<property name="tmp.dir" value="${project}-${version}" />
 	<property name="jar.file" value="${project}-${version}.jar" />
@@ -12,7 +12,7 @@
 	<property name="lib.dir" value="${tmp.dir}/lib" />
 	<property name="src.dir" value="${tmp.dir}/src" />
 
-	<property name="gwt.sdk" location="/home/stephen/apps/gwt-2.0.0" />
+	<property name="gwt.sdk" location="/home/stephen/apps/gwt-2.0.2" />
 
 	<path id="project.class.path">
 		<pathelement location="war/WEB-INF/classes" />
