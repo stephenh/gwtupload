@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.FileUploadBase.FileSizeLimitExceededException;
 import org.apache.commons.fileupload.FileUploadBase.IOFileUploadException;
 import org.apache.commons.fileupload.FileUploadBase.SizeLimitExceededException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -114,18 +115,19 @@ public abstract class UploadServlet extends HttpServlet {
     try {
       parsePostRequest(request, response);
       renderXmlResponse(request, response, finishedXml("OK"));
-    } catch (UploadCancelledException e) {
-      // expected cancelled error
+    } catch (UploadCancelledException e) {       // our error, expected cancelled
       renderXmlResponse(request, response, wrapXml("cancelled", "true") + errorXml(e.getMessage()));
-    } catch (IOFileUploadException io) {
-      // expected io error and upwrap the IOException
+    } catch (IOFileUploadException io) {         // commons errors, unwrap the IOException
       throw (IOException) io.getCause();
-    } catch (SizeLimitExceededException e) {
-      // expected size error
+    } catch (FileSizeLimitExceededException e) { // commons error, bad size
       renderXmlResponse(request, response, errorXml(e.getMessage()));
-    } catch (Exception e) {
-      // not expected
-      logger.error("Exception -> " + e.getMessage(), e);
+    } catch (SizeLimitExceededException e) {     // commons error, bad size
+      renderXmlResponse(request, response, errorXml(e.getMessage()));
+    } catch (FileUploadException e) {            // commons error, not expected
+      logger.error("Upload exception: " + e.getMessage(), e);
+      renderXmlResponse(request, response, errorXml(e.getMessage()));
+    } catch (RuntimeException e) {               // not expected
+      logger.error("Upload exception: " + e.getMessage(), e);
       renderXmlResponse(request, response, errorXml(e.getMessage()));
     }
   }
@@ -138,7 +140,9 @@ public abstract class UploadServlet extends HttpServlet {
 
     // set file upload progress listener to store status in the db
     final Integer fileToken = getToken(request, "fileToken");
-    if (fileToken == null) { throw new UploadCancelledException("Missing token"); }
+    if (fileToken == null || true) {
+      throw new UploadCancelledException("Missing token");
+    }
 
     // reset any old error in case they are trying again
     repo.saveError(fileToken, null);
@@ -182,6 +186,8 @@ public abstract class UploadServlet extends HttpServlet {
     } catch (FileUploadException fue) {
       repo.saveError(fileToken, fue.getMessage());
       throw fue;
+    } catch (UploadCancelledException uce) {
+      throw uce;
     } catch (RuntimeException e) {
       repo.saveError(fileToken, e.getMessage());
       throw e;

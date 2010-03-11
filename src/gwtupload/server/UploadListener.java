@@ -48,7 +48,9 @@ public class UploadListener implements ProgressListener {
     // If other request has set an exception, e.g. message=cancelled, stop so the
     // commons-fileupload's parser stops and the connection is closed.
     final FileProgress p = repo.loadProgress(fileToken);
-    if (p.getMessage() != null) { throw new UploadCancelledException(p.getMessage()); }
+    if (p.getMessage() != null) {
+      throw new UploadCancelledException(p.getMessage());
+    }
 
     repo.saveProgress(fileToken, currentBytes, totalBytes);
 

@@ -416,6 +416,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
 
       uploading = true;
       finished = false;
+      cancelled = false;
 
       if (autoSubmit) {
         (new Timer() {
@@ -491,6 +492,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
     if (uploading) {
       updateStatusTimer.finish();
       try {
+        // uploadFinished will be called when our main upload completes
         sendAjaxRequestToCancelCurrentUpload();
       } catch (Exception e) {
         GWT.log("Exception cancelling request " + e.getMessage(), e);
@@ -809,7 +811,7 @@ public class Uploader extends Composite implements IsUpdateable, IUploader, HasJ
   }
 
   private void sendAjaxRequestToCancelCurrentUpload() throws RequestException {
-    RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("cancel=true"));
+    RequestBuilder reqBuilder = new RequestBuilder(RequestBuilder.GET, composeURL("cancel=" + fileToken));
     reqBuilder.sendRequest("cancel_upload", onCancelReceivedCallback);
   }
 
