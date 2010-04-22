@@ -302,5 +302,7 @@ public interface IUploader extends HasJsData, HasWidgets {
    */
   public void setFileInputPrefix(String prefix);
   
+  /** Sets the file token to use in the file POST. */
+  public void setFileToken(Integer fileToken);
 	
 }

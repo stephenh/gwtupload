@@ -99,7 +99,6 @@ public abstract class UploadServlet extends HttpServlet {
         renderXmlResponse(request, response, errorXml("Missing token"));
       }
     }
-
   }
 
   /**
