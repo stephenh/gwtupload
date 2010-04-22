@@ -34,9 +34,9 @@ import com.google.gwt.user.client.ui.FormPanel;
  * </p>
  *
  */
-public class SingleUploader extends Uploader{
+public class SingleUploader extends Uploader {
 
-  private Button button;
+  protected Button button;
 
   /**
    * If no status gadget is provided, it uses a basic one.
