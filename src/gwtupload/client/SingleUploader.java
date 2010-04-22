@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.FormPanel;
 public class SingleUploader extends Uploader {
 
   protected Button button;
+  protected boolean enabled = true;
 
   /**
    * If no status gadget is provided, it uses a basic one.
@@ -128,4 +129,12 @@ public class SingleUploader extends Uploader {
     button.setText(strs.uploaderSend());
   }
 
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    button.setEnabled(enabled);
+    this.enabled = enabled;
+  }
 }
